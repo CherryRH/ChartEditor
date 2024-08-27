@@ -1,0 +1,32 @@
+﻿<Window x:Class="ChartEditor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ChartEditor"
+        mc:Ignorable="d"
+        Title="谱面编辑器" Height="600" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="9*"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+
+        </Grid>
+        
+        <Grid Grid.Row="1">
+            <TextBlock HorizontalAlignment="Left" Padding="0" Margin="10" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Center"/>
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Horizontal">
+                <Button Margin="10">新建歌曲</Button>
+                <Button Margin="10">设置</Button>
+            </StackPanel>
+            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10" Orientation="Horizontal">
+                <TextBlock Text="{Binding AppVersion, StringFormat='Version: {0}'}"/>
+            </StackPanel>
+            <Border BorderBrush="Black" BorderThickness="1"/>
+
+        </Grid>
+
+    </Grid>
+</Window>
