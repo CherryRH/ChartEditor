@@ -1,0 +1,144 @@
+﻿<Page x:Class="ChartEditor.Pages.ChartListPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+      xmlns:uci="clr-namespace:ChartEditor.UserControls.Items"
+      xmlns:local="clr-namespace:ChartEditor.Pages"
+      mc:Ignorable="d" 
+      d:DesignHeight="800" d:DesignWidth="1200"
+      Title="ChartListPage">
+
+    <materialDesign:DialogHost
+        Identifier="ChartListDialog">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="80"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="50"/>
+            </Grid.RowDefinitions>
+
+            <materialDesign:Card
+                Grid.Row="0"
+                Background="{DynamicResource MaterialDesign.Brush.Primary.Light}"
+                materialDesign:ElevationAssist.Elevation="Dp5"
+                >
+                <Grid>
+                    <Button
+                        x:Name="BackButton"
+                        HorizontalAlignment="Left" 
+                        VerticalAlignment="Center"
+                        Margin="10" 
+                        Background="Transparent" 
+                        Style="{StaticResource MaterialDesignIconButton}"
+                        Click="HomeButton_Click"
+                        ToolTip="主页">
+                        <materialDesign:PackIcon Foreground="White" Background="Transparent" Height="30" Width="30" Kind="Home" />
+                    </Button>
+                    <TextBlock 
+                        HorizontalAlignment="Center" 
+                        Margin="10" 
+                        VerticalAlignment="Center" 
+                        Style="{StaticResource MaterialDesignHeadline5TextBlock}"
+                        Foreground="White"
+                        Text="{Binding Title}"/>
+                    <Button
+                        x:Name="CreateChartMusicButton"
+                        HorizontalAlignment="Right" 
+                        VerticalAlignment="Center"
+                        Margin="10" 
+                        Background="Transparent" 
+                        Style="{StaticResource MaterialDesignIconButton}"
+                        ToolTip="创建新谱面"
+                        Click="CreateChartButton_Click">
+                        <materialDesign:PackIcon Foreground="White" Background="Transparent" Height="30" Width="30" Kind="Add" />
+                    </Button>
+                </Grid>
+            </materialDesign:Card>
+
+            <Grid Grid.Row="1">
+                <Viewbox
+                    Stretch="UniformToFill">
+                    <Image
+                        x:Name="MusicCover"
+                        Opacity="0.5"
+                        Source="{Binding Cover}"/>
+                </Viewbox>
+
+                <ListBox
+                    x:Name="ChartMusicList"
+                    ItemsSource="{Binding ChartItemModels}"
+                    HorizontalContentAlignment="Stretch"
+                    >
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <materialDesign:Card
+                                Width="auto"
+                                Height="100"
+                                Opacity="0.8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1*"/>
+                                        <ColumnDefinition Width="70"/>
+                                        <ColumnDefinition Width="70"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Grid Grid.Column="0">
+                                        <uci:ChartItem/>
+                                    </Grid>
+
+                                    <Grid Grid.Column="1">
+                                        <materialDesign:PopupBox
+                                            HorizontalAlignment="Center">
+                                            <StackPanel>
+                                                <Button
+                                                    Content="谱面设置"
+                                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                                    Click="ChartSettingButton_Click"/>
+                                                <Separator/>
+                                                <Button
+                                                    Content="删除谱面"
+                                                    Style="{StaticResource MaterialDesignFlatSecondaryButton}"
+                                                    Click="ChartDeleteButton_Click"/>
+                                            </StackPanel>
+                                        </materialDesign:PopupBox>
+                                    </Grid>
+
+                                    <Grid Grid.Column="2">
+                                        <Button
+                                            x:Name="ChartItemButton"
+                                            HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"
+                                            Background="Transparent" 
+                                            Style="{StaticResource MaterialDesignIconButton}"
+                                            ToolTip="编辑谱面"
+                                            Click="ChartItemButton_Click">
+                                            <materialDesign:PackIcon Background="Transparent" Height="20" Width="20" Kind="ArrowRight" />
+                                        </Button>
+                                    </Grid>
+                                </Grid>
+                            </materialDesign:Card>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+
+            <materialDesign:Card
+                Grid.Row="2"
+                materialDesign:ElevationAssist.Elevation="Dp5"
+                >
+                <Grid>
+                    <TextBlock 
+                    HorizontalAlignment="Left"
+                    Foreground="{DynamicResource MaterialDesign.Brush.Primary.Light}" 
+                    Margin="10" 
+                    Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
+                    Text="{Binding ChartNum, StringFormat='共 {0} 张谱面'}" 
+                    VerticalAlignment="Center"/>
+                </Grid>
+            </materialDesign:Card>
+        </Grid>
+    </materialDesign:DialogHost>
+    
+</Page>

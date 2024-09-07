@@ -1,0 +1,148 @@
+﻿<Page x:Class="ChartEditor.Pages.ChartMusicListPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+      xmlns:colors="clr-namespace:MaterialDesignColors;assembly=MaterialDesignColors"
+      xmlns:local="clr-namespace:ChartEditor.Pages"
+      xmlns:uci="clr-namespace:ChartEditor.UserControls.Items"
+      mc:Ignorable="d"
+      d:DesignHeight="800" d:DesignWidth="1200"
+      Title="ChartMusicListPage"
+      KeepAlive="True">
+    <materialDesign:DialogHost 
+        Identifier="ChartMusicListDialog">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="80"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="50"/>
+            </Grid.RowDefinitions>
+
+            <materialDesign:Card 
+                Grid.Row="0"
+                Background="{DynamicResource MaterialDesign.Brush.Primary.Light}"
+                materialDesign:ElevationAssist.Elevation="Dp5"
+                >
+                <Grid>
+                    <Button
+                        x:Name="CreateChartMusicButton"
+                        HorizontalAlignment="Right" 
+                        VerticalAlignment="Center"
+                        Margin="10" 
+                        Background="Transparent" 
+                        Style="{StaticResource MaterialDesignIconButton}"
+                        ToolTip="创建新歌曲"
+                        Click="CreateChartMusicButton_Click">
+                        <materialDesign:PackIcon Foreground="White" Background="Transparent" Height="30" Width="30" Kind="Add" />
+                    </Button>
+                    <TextBlock 
+                        HorizontalAlignment="Center" 
+                        Margin="10" 
+                        VerticalAlignment="Center" 
+                        Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
+                        Foreground="White" 
+                        Text="歌曲列表"/>
+                    <Button
+                        x:Name="SettingButton"
+                        HorizontalAlignment="Left" 
+                        VerticalAlignment="Center"
+                        Margin="10" 
+                        Background="Transparent" 
+                        Style="{StaticResource MaterialDesignIconButton}"
+                        ToolTip="设置"
+                        Click="SettingButton_Click">
+                        <materialDesign:PackIcon Foreground="White" Background="Transparent" Height="30" Width="30" Kind="Settings" />
+                    </Button>
+                </Grid>
+            </materialDesign:Card>
+
+            <Grid Grid.Row="1">
+                <ListBox
+                    x:Name="ChartMusicList"
+                    ItemsSource="{Binding ChartMusicItemModels}"
+                    VirtualizingStackPanel.IsVirtualizing="True"
+                    HorizontalContentAlignment="Stretch"
+                    >
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <materialDesign:Card
+                                Width="auto"
+                                Height="100"
+                                Opacity="0.8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1*"/>
+                                        <ColumnDefinition Width="70"/>
+                                        <ColumnDefinition Width="70"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Grid Grid.Column="0">
+                                        <uci:ChartMusicItem/>
+                                    </Grid>
+
+                                    <Grid Grid.Column="1">
+                                        <materialDesign:PopupBox
+                                            HorizontalAlignment="Center">
+                                            <StackPanel>
+                                                <Button
+                                                    Content="歌曲设置"
+                                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                                    Click="ChartMusicSettingButton_Click"/>
+                                                <Separator/>
+                                                <Button
+                                                    Content="删除歌曲"
+                                                    Style="{StaticResource MaterialDesignFlatSecondaryButton}"
+                                                    Click="ChartMusicDeleteButton_Click"/>
+                                            </StackPanel>
+                                        </materialDesign:PopupBox>
+                                    </Grid>
+
+                                    <Grid Grid.Column="2">
+                                        <Button
+                                            x:Name="ChartMusicItemButton"
+                                            HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"
+                                            Background="Transparent" 
+                                            Style="{StaticResource MaterialDesignIconButton}"
+                                            ToolTip="打开谱面列表"
+                                            Click="ChartMusicItemButton_Click">
+                                            <materialDesign:PackIcon Background="Transparent" Height="20" Width="20" Kind="ArrowRight" />
+                                        </Button>
+                                    </Grid>
+                                </Grid>
+                            </materialDesign:Card>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+
+            <materialDesign:Card
+            Grid.Row="2"
+            materialDesign:ElevationAssist.Elevation="Dp5"
+            >
+                <Grid>
+                    <TextBlock 
+                        HorizontalAlignment="Left"
+                        Foreground="{DynamicResource MaterialDesign.Brush.Primary.Light}" 
+                        Margin="10" 
+                        Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
+                        Text="{Binding ChartMusicNum, StringFormat='共 {0} 首歌曲'}" 
+                        VerticalAlignment="Center"/>
+                    <TextBlock 
+                        HorizontalAlignment="Center" 
+                        Margin="10" 
+                        VerticalAlignment="Center"
+                        Style="{StaticResource MaterialDesignSubtitle2TextBlock}"
+                        Text="创建歌曲，编辑你的谱面吧！"/>
+                    <TextBlock 
+                        HorizontalAlignment="Right" 
+                        Margin="10" 
+                        VerticalAlignment="Center" 
+                        Text="{Binding Settings.AppVersion, StringFormat='Version: {0}'}"/>
+                </Grid>
+            </materialDesign:Card>
+        </Grid>
+    </materialDesign:DialogHost>
+</Page>

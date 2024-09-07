@@ -1,0 +1,84 @@
+﻿<Page x:Class="ChartEditor.Pages.SettingPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+      xmlns:local="clr-namespace:ChartEditor.Pages"
+      mc:Ignorable="d" 
+      d:DesignHeight="800" d:DesignWidth="1200"
+      Title="SettingPage">
+    <materialDesign:DialogHost 
+        Identifier="SettingDialog">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="80"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+
+            <materialDesign:Card 
+                Grid.Row="0"
+                Background="{DynamicResource MaterialDesign.Brush.Primary.Light}"
+                materialDesign:ElevationAssist.Elevation="Dp5"
+                >
+                <Grid>
+                    <Button
+                        x:Name="BackButton"
+                        HorizontalAlignment="Left" 
+                        VerticalAlignment="Center"
+                        Margin="10" 
+                        Background="Transparent" 
+                        Style="{StaticResource MaterialDesignIconButton}"
+                        ToolTip="返回"
+                        Click="BackButton_Click">
+                        <materialDesign:PackIcon Foreground="White" Background="Transparent" Height="30" Width="30" Kind="ArrowBack" />
+                    </Button>
+                    <TextBlock 
+                        HorizontalAlignment="Center" 
+                        Margin="10" 
+                        VerticalAlignment="Center" 
+                        Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
+                        Foreground="White" 
+                        Text="设置"/>
+                    <Button
+                        x:Name="ResetButton"
+                        HorizontalAlignment="Right" 
+                        VerticalAlignment="Center"
+                        Margin="10" 
+                        Background="Transparent" 
+                        Style="{StaticResource MaterialDesignIconButton}"
+                        ToolTip="恢复默认设置">
+                        <materialDesign:PackIcon Foreground="White" Background="Transparent" Height="30" Width="30" Kind="Delete" />
+                    </Button>
+                </Grid>
+            </materialDesign:Card>
+
+            <StackPanel Grid.Row="1">
+
+                <TextBox 
+                    TextWrapping="NoWrap"
+                    Text="{Binding Settings.Username}" 
+                    HorizontalAlignment="Left"
+                    Margin="50, 50, 50, 20"
+                    materialDesign:HintAssist.HelperText="请输入你创建谱面的默认名字"
+                    materialDesign:HintAssist.Hint="谱师名"
+                    Width="400"
+                    FontSize="16"
+                    Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                <TextBox
+                    Text="{Binding Settings.AppPath}" 
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Left"
+                    Margin="50, 20, 50, 20"
+                    materialDesign:HintAssist.HelperText="制谱器根目录，谱面等数据都在这里哦"
+                    materialDesign:HintAssist.Hint="应用路径"
+                    Width="auto"
+                    MinWidth="400"
+                    FontSize="16"
+                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                    IsEnabled="False"/>
+            </StackPanel>
+        </Grid>
+    </materialDesign:DialogHost>
+</Page>

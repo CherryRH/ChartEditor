@@ -1,0 +1,99 @@
+﻿<UserControl x:Class="ChartEditor.UserControls.Items.ChartMusicItem"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:local="clr-namespace:ChartEditor.UserControls.Items"
+             mc:Ignorable="d"
+             d:DesignHeight="100" d:DesignWidth="1200">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+
+        <Grid Grid.Column="0">
+            <materialDesign:Card
+                Margin="10"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="White"
+                materialDesign:ElevationAssist.Elevation="Dp12"
+                >
+                <Viewbox Stretch="Uniform">
+                    <Image
+                        x:Name="MusicCover"
+                        Stretch="Uniform"
+                        Source="{Binding Cover}"/>
+                </Viewbox>
+            </materialDesign:Card>
+        </Grid>
+
+        <Grid Grid.Column="1">
+            <TextBlock
+                x:Name="MusicTitle"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Left"
+                FontWeight="Bold"
+                TextWrapping="WrapWithOverflow"
+                Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                Text="{Binding Title}"/>
+        </Grid>
+
+        <Grid Grid.Column="2">
+            <TextBlock
+                x:Name="MusicArtist"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Left"
+                TextWrapping="WrapWithOverflow"
+                Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                Text="{Binding Artist}"/>
+        </Grid>
+
+        <Grid Grid.Column="3">
+            <TextBlock
+                x:Name="MusicDuration"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                TextWrapping="WrapWithOverflow"
+                Style="{StaticResource MaterialDesignTitleSmallTextBlock}"
+                Text="{Binding Duration}"/>
+        </Grid>
+
+        <Grid Grid.Column="4">
+            <TextBlock
+                x:Name="MusicBpm"
+                VerticalAlignment="Center"
+                TextWrapping="WrapWithOverflow"
+                HorizontalAlignment="Center"
+                Style="{StaticResource MaterialDesignTitleSmallTextBlock}"
+                Text="{Binding Bpm}"/>
+        </Grid>
+
+        <Grid Grid.Column="5">
+            <TextBlock
+                x:Name="MusicCreatedAt"
+                VerticalAlignment="Center"
+                TextWrapping="WrapWithOverflow"
+                HorizontalAlignment="Center"
+                Style="{StaticResource MaterialDesignTitleSmallTextBlock}"
+                Text="{Binding CreatedAt}"/>
+        </Grid>
+
+        <Grid Grid.Column="6">
+            <TextBlock
+                x:Name="MusicUpdatedAt"
+                VerticalAlignment="Center"
+                TextWrapping="WrapWithOverflow"
+                HorizontalAlignment="Center"
+                Style="{StaticResource MaterialDesignTitleSmallTextBlock}"
+                Text="{Binding UpdatedAt}"/>
+        </Grid>
+    </Grid>
+</UserControl>

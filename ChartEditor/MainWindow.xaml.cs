@@ -1,4 +1,7 @@
-﻿using System;
+﻿using ChartEditor.Models;
+using ChartEditor.ViewModels;
+using ChartEditor.Pages;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -13,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using ChartEditor.Utils;
 
 namespace ChartEditor
 {
@@ -21,14 +25,23 @@ namespace ChartEditor
     /// </summary>
     public partial class MainWindow : Window
     {
-        public string AppVersion { get; private set; }
-
         public MainWindow()
         {
             InitializeComponent();
-            // 获取版本号
-            AppVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-            this.DataContext = this;
+            this.SetFolders();
+
+            MainWindowModel mainWindowModel = new MainWindowModel();
+            ChartMusicListPage chartMusicListPage = new ChartMusicListPage(mainWindowModel);
+            mainWindowModel.ChartMusicListPage = chartMusicListPage;
+            MainPage.Navigate(chartMusicListPage);
+        }
+
+        /// <summary>
+        /// 窗口启动时设置文件夹
+        /// </summary>
+        private void SetFolders()
+        {
+            Common.SetBasicFolders();
         }
     }
 }
