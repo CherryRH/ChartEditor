@@ -112,11 +112,12 @@ namespace ChartEditor.ViewModels
             {
                 if (Directory.Exists(chartMusic.FolderPath))
                 {
+                    FileSystem.DeleteDirectory(chartMusic.FolderPath, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+
                     chartMusic.CoverPath = string.Empty;
                     this.chartMusics.Remove(chartMusic);
                     this.OnPropertyChanged(nameof(ChartMusicNum));
                     this.OnPropertyChanged(nameof(ChartMusicItemModels));
-                    FileSystem.DeleteDirectory(chartMusic.FolderPath, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
                     // 移除封面的缓存
                     CoverImageCache.Instance.RemoveImage(chartMusic.CoverPath);
                     Console.WriteLine(logTag + "歌曲文件夹已删除");

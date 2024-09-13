@@ -1,4 +1,5 @@
 ﻿using ChartEditor.Models;
+using ChartEditor.UserControls.Boards;
 using ChartEditor.UserControls.Dialogs;
 using ChartEditor.Utils.ChartUtils;
 using ChartEditor.ViewModels;
@@ -97,8 +98,11 @@ namespace ChartEditor.Pages
             {
                 if (sender is Button item && item.DataContext is ChartItemModel selectedItem)
                 {
-                    this.Model.DeleteChart(selectedItem.ChartInfo);
-                    this.MainWindowModel.UpdateChartMusic(this.Model.ChartMusic);
+                    bool deleteResult = this.Model.DeleteChart(selectedItem.ChartInfo);
+                    if (deleteResult)
+                    {
+                        this.MainWindowModel.UpdateChartMusic(this.Model.ChartMusic);
+                    }
                 }
             }
         }

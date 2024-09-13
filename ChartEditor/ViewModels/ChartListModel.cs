@@ -94,24 +94,28 @@ namespace ChartEditor.ViewModels
         }
 
         /// <summary>
-        /// 删除谱面（回收站）
+        /// 删除谱面（回收站），删除失败返回false
         /// </summary>
-        public void DeleteChart(ChartInfo chartInfo)
+        public bool DeleteChart(ChartInfo chartInfo)
         {
             try
             {
                 if (Directory.Exists(chartInfo.FolderPath))
                 {
+                    FileSystem.DeleteDirectory(chartInfo.FolderPath, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+
                     this.chartInfos.Remove(chartInfo);
                     this.OnPropertyChanged(nameof(ChartItemModels));
                     this.OnPropertyChanged(nameof(ChartNum));
-                    FileSystem.DeleteDirectory(chartInfo.FolderPath, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
                     Console.WriteLine(logTag + "谱面文件夹已删除");
+                    return true;
                 }
+                return false;
             }
             catch (Exception ex)
             {
                 Console.WriteLine(logTag + ex.ToString());
+                return false;
             }
         }
 

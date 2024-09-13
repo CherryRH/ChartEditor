@@ -15,6 +15,45 @@ namespace ChartEditor.Utils
         private static string logTag = "[Common]";
 
         /// <summary>
+        /// 游戏屏幕坐标系范围
+        /// </summary>
+        public static double XMax = 800;
+        public static double YMax = 600;
+        public static double XMin = -800;
+        public static double YMin = -600;
+
+        /// <summary>
+        /// 轨道编辑面板默认列数
+        /// </summary>
+        public static int ColumnNum = 4;
+
+        /// <summary>
+        /// 每一列的宽度
+        /// </summary>
+        public static double ColumnWidth = 60;
+
+        /// <summary>
+        /// 列之间间隔的宽度占比
+        /// </summary>
+        public static double ColumnGap = 1.0 / 12.0;
+
+        /// <summary>
+        /// 每一行的宽度（一拍为一行）
+        /// </summary>
+        public static double RowWidth = 160;
+
+        /// <summary>
+        /// Beat侧栏的宽度
+        /// </summary>
+        public static double BeatBarWidth = 50;
+
+        /// <summary>
+        /// 判定线所处位置比例
+        /// </summary>
+        public static double JudgeLineRate = 0.2;
+        public static double JudgeLineRateOp = 0.8;
+
+        /// <summary>
         /// 关键文件名
         /// </summary>
         public static string ChartMusicConfigFileName = "music_config.json";
@@ -49,7 +88,7 @@ namespace ChartEditor.Utils
         /// </summary>
         public static string GetChartMusicFolderPath()
         {
-            return Path.Combine(GetDataFolderPath(), "chart");
+            return Path.Combine(GetDataFolderPath(), "charts");
         }
 
         /// <summary>
@@ -58,6 +97,14 @@ namespace ChartEditor.Utils
         public static string GetResourcesFolderPath()
         {
             return Path.Combine(GetDataFolderPath(), "Resources");
+        }
+
+        /// <summary>
+        /// 获取谱面导出所在文件夹路径
+        /// </summary>
+        public static string GetExportFolderPath()
+        {
+            return Path.Combine(GetDataFolderPath(), "exports");
         }
 
         /// <summary>
@@ -72,6 +119,10 @@ namespace ChartEditor.Utils
             if (!Directory.Exists(GetChartMusicFolderPath()))
             {
                 Directory.CreateDirectory(GetChartMusicFolderPath());
+            }
+            if (!Directory.Exists(GetExportFolderPath()))
+            {
+                Directory.CreateDirectory(GetExportFolderPath());
             }
             Console.WriteLine(logTag + "基础文件夹已设置");
         }

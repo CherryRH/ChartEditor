@@ -9,9 +9,9 @@
       mc:Ignorable="d" 
       d:DesignHeight="800" d:DesignWidth="1200"
       Title="ChartListPage">
-
     <materialDesign:DialogHost
-        Identifier="ChartListDialog">
+        Identifier="ChartListDialog"
+        CloseOnClickAway="True">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="80"/>

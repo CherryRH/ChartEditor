@@ -6,6 +6,8 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:local="clr-namespace:ChartEditor.Windows"
         mc:Ignorable="d"
+        Closing="Window_Closing"
+        Closed="Window_Closed"
         Title="谱面编辑" Height="800" Width="1200" MinHeight="800" MinWidth="1200">
     <Grid>
         <Frame Name="ChartPage" NavigationUIVisibility="Hidden"/>

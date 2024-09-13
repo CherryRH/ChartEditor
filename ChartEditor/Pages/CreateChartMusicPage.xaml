@@ -10,7 +10,8 @@
       Title="CreateChartMusicPage">
 
     <materialDesign:DialogHost 
-        Identifier="CreateChartMusicDialog">
+        Identifier="CreateChartMusicDialog"
+        CloseOnClickAway="True">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="80"/>

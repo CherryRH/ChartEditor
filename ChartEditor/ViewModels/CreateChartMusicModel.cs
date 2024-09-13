@@ -105,15 +105,7 @@ namespace ChartEditor.ViewModels
                     Directory.CreateDirectory(chartMusicPath);
                 }
 
-                // 创建歌曲配置文件
-                double duration;
-                using (var file = TagLib.File.Create(this.musicPath))
-                {
-                    duration = file.Properties.Duration.TotalSeconds;
-                }
-
-                ChartMusic music = new ChartMusic(this.title, this.artist, this.bpm, duration, chartMusicPath);
-                File.WriteAllText(Path.Combine(chartMusicPath, Common.ChartMusicConfigFileName), music.toJsonString());
+                ChartMusic music = new ChartMusic(this.title, this.artist, this.bpm, 0, chartMusicPath);
 
                 // 保存封面图片和音频文件
                 if (!string.IsNullOrEmpty(this.coverPath))
@@ -139,6 +131,13 @@ namespace ChartEditor.ViewModels
                 {
                     File.Copy(this.musicPath, music.GetMusicPath(), overwrite: true);
                 }
+
+                // 创建歌曲配置文件
+                using (var file = TagLib.File.Create(music.GetMusicPath()))
+                {
+                    music.Duration = file.Properties.Duration.TotalSeconds;
+                }
+                File.WriteAllText(Path.Combine(chartMusicPath, Common.ChartMusicConfigFileName), music.toJsonString());
 
                 Console.WriteLine(logTag + "歌曲文件夹已创建");
                 return music;

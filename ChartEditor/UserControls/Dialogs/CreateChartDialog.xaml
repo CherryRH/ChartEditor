@@ -9,7 +9,7 @@
              d:DesignHeight="300" d:DesignWidth="400">
     <materialDesign:DialogHost
         Identifier="CreateChartDialog">
-        <Grid>
+        <Grid Margin="10">
             <StackPanel
                 Margin="10"
                 VerticalAlignment="Center">
@@ -45,6 +45,7 @@
                     Margin="0, 10"
                     Width="300">
                     <Button
+                        x:Name="CancelButton"
                         Content="取消"
                         Width="100"
                         HorizontalAlignment="Left"
@@ -53,6 +54,7 @@
                         Click="CancelButton_Click"/>
 
                     <Button
+                        x:Name="CreateChartButton"
                         Content="创建"
                         Width="100"
                         HorizontalAlignment="Right"

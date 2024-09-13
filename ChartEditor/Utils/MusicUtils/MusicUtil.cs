@@ -28,7 +28,7 @@ namespace ChartEditor.Utils
             }
 
             // 设置 FFmpeg 命令参数
-            var arguments = $"-i \"{inputFilePath}\" -c:a libvorbis -b:a 192k \"{outputFilePath}\"";
+            var arguments = $"-i \"{inputFilePath}\" -map 0:a:0 -c:a libvorbis -b:a 192k \"{outputFilePath}\"";
 
             // 创建一个新的进程来运行 FFmpeg
             var process = new Process

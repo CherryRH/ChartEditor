@@ -1,5 +1,6 @@
 ﻿using ChartEditor.Models;
 using ChartEditor.Pages;
+using ChartEditor.UserControls.Boards;
 using ChartEditor.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -22,12 +23,25 @@ namespace ChartEditor.Windows
     /// </summary>
     public partial class ChartWindow : Window
     {
+        private ChartEditPage ChartEditPage;
+
         public ChartWindow(ChartInfo chartInfo, MainWindowModel mainWindowModel, ChartListModel chartListModel)
         {
             InitializeComponent();
             this.Title = chartInfo.Name + " - " + chartInfo.ChartMusic.Title;
             ChartEditPage chartEditPage = new ChartEditPage(chartInfo, mainWindowModel, chartListModel);
+            this.ChartEditPage = chartEditPage;
             ChartPage.Navigate(chartEditPage);
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            this.ChartEditPage.TrackEditBoard.Dispose();
         }
     }
 }

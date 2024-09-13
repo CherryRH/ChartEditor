@@ -63,7 +63,7 @@
       <HintPath>..\packages\Microsoft.Win32.Registry.5.0.0\lib\net461\Microsoft.Win32.Registry.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Xaml.Behaviors, Version=1.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Xaml.Behaviors.Wpf.1.1.122\lib\net462\Microsoft.Xaml.Behaviors.dll</HintPath>
+      <HintPath>..\packages\Microsoft.Xaml.Behaviors.Wpf.1.1.135\lib\net462\Microsoft.Xaml.Behaviors.dll</HintPath>
     </Reference>
     <Reference Include="NAudio, Version=2.2.1.0, Culture=neutral, PublicKeyToken=e279aa5131008a41, processorArchitecture=MSIL">
       <HintPath>..\packages\NAudio.2.2.1\lib\net472\NAudio.dll</HintPath>
@@ -76,6 +76,9 @@
     </Reference>
     <Reference Include="NAudio.Midi, Version=2.2.1.0, Culture=neutral, PublicKeyToken=e279aa5131008a41, processorArchitecture=MSIL">
       <HintPath>..\packages\NAudio.Midi.2.2.1\lib\netstandard2.0\NAudio.Midi.dll</HintPath>
+    </Reference>
+    <Reference Include="NAudio.Vorbis, Version=1.5.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.Vorbis.1.5.0\lib\netstandard2.0\NAudio.Vorbis.dll</HintPath>
     </Reference>
     <Reference Include="NAudio.Wasapi, Version=2.2.1.0, Culture=neutral, PublicKeyToken=e279aa5131008a41, processorArchitecture=MSIL">
       <HintPath>..\packages\NAudio.Wasapi.2.2.1\lib\netstandard2.0\NAudio.Wasapi.dll</HintPath>
@@ -91,6 +94,12 @@
     </Reference>
     <Reference Include="NVorbis, Version=0.10.5.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\NVorbis.0.10.5\lib\net45\NVorbis.dll</HintPath>
+    </Reference>
+    <Reference Include="SoundTouch.Net, Version=2.3.0.0, Culture=neutral, PublicKeyToken=fd94608088498f78, processorArchitecture=MSIL">
+      <HintPath>..\packages\SoundTouch.Net.2.3.2\lib\net461\SoundTouch.Net.dll</HintPath>
+    </Reference>
+    <Reference Include="SoundTouch.Net.NAudioSupport, Version=2.3.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SoundTouch.Net.NAudioSupport.2.3.2\lib\net45\SoundTouch.Net.NAudioSupport.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -141,9 +150,13 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Models\BeatTime.cs" />
     <Compile Include="Models\ChartInfo.cs" />
     <Compile Include="Models\ChartMusic.cs" />
+    <Compile Include="Models\KeyPoint.cs" />
+    <Compile Include="Models\Note.cs" />
     <Compile Include="Models\Settings.cs" />
+    <Compile Include="Models\Track.cs" />
     <Compile Include="Pages\ChartEditPage.xaml.cs">
       <DependentUpon>ChartEditPage.xaml</DependentUpon>
     </Compile>
@@ -159,14 +172,35 @@
     <Compile Include="Pages\SettingPage.xaml.cs">
       <DependentUpon>SettingPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UserControls\Boards\AttributeEditBoard.xaml.cs">
+      <DependentUpon>AttributeEditBoard.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\Boards\TrackEditBoard.xaml.cs">
+      <DependentUpon>TrackEditBoard.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\Boards\UnityBoard.xaml.cs">
+      <DependentUpon>UnityBoard.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UserControls\Dialogs\ConfirmDialog.xaml.cs">
       <DependentUpon>ConfirmDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="UserControls\Dialogs\CreateChartDialog.xaml.cs">
       <DependentUpon>CreateChartDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UserControls\Dialogs\DivideDialog.xaml.cs">
+      <DependentUpon>DivideDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UserControls\Dialogs\LoadingDialog.xaml.cs">
       <DependentUpon>LoadingDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\Dialogs\PlaySpeedDialog.xaml.cs">
+      <DependentUpon>PlaySpeedDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\Dialogs\TrackGridSizeDialog.xaml.cs">
+      <DependentUpon>TrackGridSizeDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\Dialogs\VolumeDialog.xaml.cs">
+      <DependentUpon>VolumeDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="UserControls\Dialogs\WarnDialog.xaml.cs">
       <DependentUpon>WarnDialog.xaml</DependentUpon>
@@ -181,8 +215,11 @@
     <Compile Include="Utils\ChartMusicReader.cs" />
     <Compile Include="Utils\ChartUtils\ChartUtilV1.cs" />
     <Compile Include="Utils\Common.cs" />
+    <Compile Include="Utils\Drawers\NoteDrawer.cs" />
+    <Compile Include="Utils\Drawers\TrackGridDrawer.cs" />
     <Compile Include="Utils\ImageUtil.cs" />
-    <Compile Include="Utils\MusicUtil.cs" />
+    <Compile Include="Utils\MusicUtils\MusicPlayer.cs" />
+    <Compile Include="Utils\MusicUtils\MusicUtil.cs" />
     <Compile Include="ViewModels\ChartEditModel.cs" />
     <Compile Include="ViewModels\ChartItemModel.cs" />
     <Compile Include="ViewModels\ChartListModel.cs" />
@@ -225,6 +262,18 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="UserControls\Boards\AttributeEditBoard.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UserControls\Boards\TrackEditBoard.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UserControls\Boards\UnityBoard.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="UserControls\Dialogs\ConfirmDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -233,7 +282,23 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="UserControls\Dialogs\DivideDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="UserControls\Dialogs\LoadingDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UserControls\Dialogs\PlaySpeedDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UserControls\Dialogs\TrackGridSizeDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UserControls\Dialogs\VolumeDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -277,6 +342,7 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <None Include="README.md" />
     <None Include="Resources\ffmpeg\LICENSE" />
     <None Include="Resources\ffmpeg\presets\libvpx-1080p.ffpreset" />
     <None Include="Resources\ffmpeg\presets\libvpx-1080p50_60.ffpreset" />
@@ -300,6 +366,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Resources\Audios\" />
     <Folder Include="Services\" />
   </ItemGroup>
   <ItemGroup>

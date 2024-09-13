@@ -61,12 +61,6 @@ namespace ChartEditor.Models
         public int Volume { get { return volume; } set { volume = value; } }
 
         /// <summary>
-        /// 歌曲速度/谱面速度
-        /// </summary>
-        private double speed;
-        public double Speed { get { return speed; } set { speed = value; } }
-
-        /// <summary>
         /// 谱面时长
         /// </summary>
         private double duration;
@@ -111,7 +105,6 @@ namespace ChartEditor.Models
             this.updatedAt = DateTime.Now;
             this.difficulty = 0;
             this.volume = 0;
-            this.speed = 1.0;
             this.duration = 0;
             this.delay = 0;
             this.preview = 0;
@@ -131,7 +124,6 @@ namespace ChartEditor.Models
                 ["CreatedAt"] = this.createdAt,
                 ["UpdatedAt"] = this.updatedAt,
                 ["Volume"] = this.volume,
-                ["Speed"] = this.speed,
                 ["Duration"] = this.duration,
                 ["Delay"] = this.delay,
                 ["Preview"] = this.preview,
@@ -156,7 +148,6 @@ namespace ChartEditor.Models
                 this.createdAt = (DateTime)jObject["CreatedAt"];
                 this.updatedAt = (DateTime)jObject["UpdatedAt"];
                 this.volume = (int)jObject["Volume"];
-                this.speed = (double)jObject["Speed"];
                 this.duration = (double)jObject["Duration"];
                 this.delay = (double)jObject["Delay"];
                 this.preview = (double)jObject["Preview"];

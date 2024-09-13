@@ -1,4 +1,5 @@
 ﻿using ChartEditor.Models;
+using ChartEditor.UserControls.Boards;
 using ChartEditor.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -28,7 +29,7 @@ namespace ChartEditor.Pages
         private MainWindowModel MainWindowModel;
 
         /// <summary>
-        /// 
+        /// 谱面列表数据
         /// </summary>
         private ChartListModel ChartListModel;
 
@@ -37,6 +38,11 @@ namespace ChartEditor.Pages
         /// </summary>
         private ChartEditModel Model;
 
+        /// <summary>
+        /// 轨道编辑板对象
+        /// </summary>
+        public TrackEditBoard trackEditBoard;
+
         public ChartEditPage(ChartInfo chartInfo, MainWindowModel mainWindowModel, ChartListModel chartListModel)
         {
             InitializeComponent();
@@ -44,6 +50,12 @@ namespace ChartEditor.Pages
             this.ChartListModel = chartListModel;
             this.Model = new ChartEditModel(chartInfo);
             this.DataContext = this.Model;
+            TrackEditBoard.DataContext = this.Model;
+            TrackEditBoard.MainWindowModel = this.MainWindowModel;
+            UnityBoard.DataContext = this.DataContext;
+            AttributeEditBoard.DataContext = this.DataContext;
+
+            this.trackEditBoard = TrackEditBoard;
         }
     }
 }
