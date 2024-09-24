@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Shapes;
 
 namespace ChartEditor.Models
 {
@@ -11,8 +12,6 @@ namespace ChartEditor.Models
     /// </summary>
     public class Track
     {
-        public int Id { get; set; }
-
         /// <summary>
         /// 开始时间
         /// </summary>
@@ -55,13 +54,19 @@ namespace ChartEditor.Models
         private List<OpacityKeyPoint> opacityKeyPoints;
         public List<OpacityKeyPoint> OpacityKeyPoints { get { return opacityKeyPoints; } set { opacityKeyPoints = value; } }
 
+        /// <summary>
+        /// 对应的图形
+        /// </summary>
+        private Rectangle rectangle = null;
+        public Rectangle Rectangle { get { return rectangle; } set { rectangle = value; } }
+
         public Track() { }
 
-        public Track(BeatTime startTime, BeatTime endTime)
+        public Track(BeatTime startTime, BeatTime endTime, int columnIndex)
         {
-            this.columnIndex = 0;
             this.startTime = startTime;
             this.endTime = endTime;
+            this.columnIndex = columnIndex;
             this.notes = new List<Note>();
             // 初始化关键点序列，并添加起始点（起始点必须存在，不允许删除）
             this.positionKeyPoints = new List<PositionKeyPoint>();
@@ -70,6 +75,88 @@ namespace ChartEditor.Models
             this.angleKeyPoints.Add(new AngleKeyPoint(0, this.startTime));
             this.opacityKeyPoints = new List<OpacityKeyPoint>();
             this.opacityKeyPoints.Add(new OpacityKeyPoint(1, this.endTime));
+        }
+
+        /// <summary>
+        /// 是否在轨道范围内
+        /// </summary>
+        public bool IsInTrack(BeatTime beatTime, int columnIndex)
+        {
+            if (beatTime == null || columnIndex != this.columnIndex) return false;
+            if (beatTime.IsEarlierThan(this.startTime) || beatTime.IsLaterThan(this.endTime)) return false;
+            return true;
+        }
+
+        /// <summary>
+        /// 尝试添加非Hold的Note
+        /// </summary>
+        public Note AddNote(BeatTime beatTime, NoteType noteType)
+        {
+            // 不能与其他非Hold的Note重叠
+            foreach(Note note in this.notes)
+            {
+                if (note.Type == NoteType.Hold) continue;
+                if (note.Time.IsEqualTo(beatTime)) return null;
+            }
+            switch (noteType)
+            {
+                case NoteType.Tap:
+                    {
+                        TapNote tapNote = new TapNote(beatTime, this);
+                        this.Notes.Add(tapNote);
+                        return tapNote;
+                    }
+                case NoteType.Flick:
+                    {
+                        FlickNote flickNote = new FlickNote(beatTime, this);
+                        this.Notes.Add(flickNote);
+                        return flickNote;
+                    }
+                case NoteType.Catch:
+                    {
+                        CatchNote catchNote = new CatchNote(beatTime, this);
+                        this.Notes.Add(catchNote);
+                        return catchNote;
+                    }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 尝试添加HoldNoteHeader
+        /// </summary>
+        public bool AddHoldNoteHeader(BeatTime startTime)
+        {
+            // 不能放在轨道结尾处
+            if (startTime.IsEqualTo(this.endTime)) return false;
+            // 不能与其他HoldNote重叠
+            foreach(var note in this.Notes)
+            {
+                if (note.Type == NoteType.Hold && !startTime.IsEarlierThan(note.Time) && startTime.IsEarlierThan(((HoldNote)note).EndTime))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// 尝试添加HoldNote
+        /// </summary>
+        public HoldNote AddHoldNoteFooter(BeatTime startTime , BeatTime endTime)
+        {
+            // 不能与其他HoldNote重叠
+            foreach (var note in this.Notes)
+            {
+                if (note.Type == NoteType.Hold && startTime.IsEarlierThan(note.Time) && endTime.IsLaterThan(note.Time))
+                {
+                    return null;
+                }
+            }
+            // 可以添加HoldNote
+            HoldNote holdNote = new HoldNote(startTime, endTime, this);
+            this.Notes.Add(holdNote);
+            return holdNote;
         }
     }
 }

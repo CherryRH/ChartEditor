@@ -101,7 +101,7 @@ namespace ChartEditor.Models
         /// </summary>
         public bool IsEqualTo(BeatTime other)
         {
-            return (this.beat == other.beat && this.divide == other.divide && this.divideIndex == other.divideIndex);
+            return (this.beat == other.beat && this.divideIndex * other.divide == other.divideIndex * this.divide);
         }
 
         /// <summary>

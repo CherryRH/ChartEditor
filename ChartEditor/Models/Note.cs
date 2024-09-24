@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Shapes;
 
 namespace ChartEditor.Models
 {
@@ -11,8 +12,6 @@ namespace ChartEditor.Models
     /// </summary>
     public class Note
     {
-        public int Id { get; set; }
-
         /// <summary>
         /// 音符的时间
         /// </summary>
@@ -30,11 +29,16 @@ namespace ChartEditor.Models
         /// </summary>
         public Track Track { get; set; }
 
+        /// <summary>
+        /// 对应的图形
+        /// </summary>
+        private Rectangle rectangle = null;
+        public Rectangle Rectangle { get { return rectangle; } set { rectangle = value; } }
+
         public Note() { }
 
-        public Note(int id, BeatTime time, NoteType type, Track track)
+        public Note(BeatTime time, NoteType type, Track track)
         {
-            this.Id = id;
             this.time = time;
             this.type = type;
             this.Track = track;
@@ -46,8 +50,8 @@ namespace ChartEditor.Models
     /// </summary>
     public class TapNote : Note
     {
-        public TapNote(int id, BeatTime time, Track track)
-            : base(id, time, NoteType.Tap, track)
+        public TapNote(BeatTime time, Track track)
+            : base(time, NoteType.Tap, track)
         {
 
         }
@@ -58,8 +62,8 @@ namespace ChartEditor.Models
     /// </summary>
     public class CatchNote : Note
     {
-        public CatchNote(int id, BeatTime time, Track track)
-            : base(id, time, NoteType.Tap, track)
+        public CatchNote(BeatTime time, Track track)
+            : base(time, NoteType.Catch, track)
         {
 
         }
@@ -67,16 +71,10 @@ namespace ChartEditor.Models
 
     public class FlickNote : Note
     {
-        /// <summary>
-        /// 是否是向上划
-        /// </summary>
-        private bool isUp;
-        public bool IsUp { get { return isUp; } set { isUp = value; } }
-
-        public FlickNote(int id, BeatTime time, Track track, bool isUp = true)
-            : base(id, time, NoteType.Flick, track)
+        public FlickNote(BeatTime time, Track track)
+            : base(time, NoteType.Flick, track)
         {
-            this.isUp = isUp;
+            
         }
     }
 
@@ -88,8 +86,8 @@ namespace ChartEditor.Models
         private BeatTime endTime;
         public BeatTime EndTime { get { return endTime; } set { endTime = value; } }
 
-        public HoldNote(int id, BeatTime time, BeatTime endTime, Track track)
-            : base(id, time, NoteType.Hold, track)
+        public HoldNote(BeatTime time, BeatTime endTime, Track track)
+            : base(time, NoteType.Hold, track)
         {
             this.endTime = endTime;
         }
@@ -99,6 +97,7 @@ namespace ChartEditor.Models
     {
         Tap,
         Flick,
-        Hold
+        Hold,
+        Catch
     }
 }

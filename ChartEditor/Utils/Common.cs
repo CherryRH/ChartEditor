@@ -43,11 +43,6 @@ namespace ChartEditor.Utils
         public static double RowWidth = 160;
 
         /// <summary>
-        /// Beat侧栏的宽度
-        /// </summary>
-        public static double BeatBarWidth = 50;
-
-        /// <summary>
         /// 判定线所处位置比例
         /// </summary>
         public static double JudgeLineRate = 0.2;

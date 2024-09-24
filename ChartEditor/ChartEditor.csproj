@@ -214,8 +214,10 @@
     <Compile Include="Utils\Cache\CoverImageCache.cs" />
     <Compile Include="Utils\ChartMusicReader.cs" />
     <Compile Include="Utils\ChartUtils\ChartUtilV1.cs" />
+    <Compile Include="Utils\ColorProvider.cs" />
     <Compile Include="Utils\Common.cs" />
     <Compile Include="Utils\Drawers\NoteDrawer.cs" />
+    <Compile Include="Utils\Drawers\TimeLineDrawer.cs" />
     <Compile Include="Utils\Drawers\TrackGridDrawer.cs" />
     <Compile Include="Utils\ImageUtil.cs" />
     <Compile Include="Utils\MusicUtils\MusicPlayer.cs" />

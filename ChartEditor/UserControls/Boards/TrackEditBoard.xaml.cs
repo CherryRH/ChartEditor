@@ -42,9 +42,11 @@ namespace ChartEditor.UserControls.Boards
 
         private NoteDrawer noteDrawer;
 
-        public MainWindowModel MainWindowModel { get; set; }
-
         private TrackGridDrawer trackGridDrawer;
+
+        private TimeLineDrawer timeLineDrawer;
+
+        public MainWindowModel MainWindowModel { get; set; }
 
         private MusicPlayer musicPlayer;
 
@@ -56,14 +58,25 @@ namespace ChartEditor.UserControls.Boards
 
         private bool isScrollViewerDragging = false;
 
-        private BeatTime notePutBeatTime = null;
+        // TrackHeader的位置
+        private BeatTime trackHeaderPutBeatTime = null;
+        private int trackHeaderPutColumnIndex = 0;
 
+        // HoldNoteHeader的位置
+        private BeatTime holdNoteHeaderPutBeatTime = null;
+        private int holdNoteHeaderPutColumnIndex = 0;
+
+        // Track正在放置中
         private bool isTrackPutting = false;
 
+        // HoldNote正在放置中
         private bool isHoldNotePutting = false;
 
-        // 是否处于滚动状态
-        private bool isScrolling = false;
+        // 播放状态
+        private bool isPlaying = false;
+
+        // 选择状态
+        private bool isPicking = false;
 
         public ChartEditModel Model
         {
@@ -76,6 +89,10 @@ namespace ChartEditor.UserControls.Boards
             this.Loaded += TrackEditBoard_Loaded;
             this.trackGridDrawer = new TrackGridDrawer();
             TrackCanvas.Children.Add(this.trackGridDrawer);
+            this.timeLineDrawer = new TimeLineDrawer();
+            TimeLineCanvas.Children.Add(this.timeLineDrawer);
+            // 设置UI颜色
+            this.SetUIColor();
         }
 
         ~TrackEditBoard()
@@ -102,10 +119,13 @@ namespace ChartEditor.UserControls.Boards
             else if (e.PropertyName == nameof(this.Model.ColumnWidth))
             {
                 this.DrawTrackGrid();
+                this.noteDrawer.RedrawWhenColumnWidthChanged();
             }
             else if (e.PropertyName == nameof(this.Model.RowWidth))
             {
                 this.DrawTrackGrid();
+                this.DrawTimeLine();
+                this.noteDrawer.RedrawWhenRowWidthChanged();
             }
             else if (e.PropertyName == nameof(this.Model.Divide))
             {
@@ -124,14 +144,22 @@ namespace ChartEditor.UserControls.Boards
                     // 初始化音乐播放器
                     this.musicPlayer = new MusicPlayer(this.Model.ChartInfo, this.MusicPlayer_PlaybackStopped);
                     
+                    // 添加UI同步绘制
                     CompositionTarget.Rendering += CompositionTarget_Rendering;
+
+                    // 绘制网格
+                    this.DrawTrackGrid();
+
+                    // 绘制时间轴
+                    this.DrawTimeLine();
+
                     // 启动时回到当前节拍
                     this.ScrollToCurrentBeat();
                     this.isInitializing = false;
                     Console.WriteLine(logTag + "加载完成");
 
                     // 初始化Note绘制器
-                    this.noteDrawer = new NoteDrawer(TrackCanvas);
+                    this.noteDrawer = new NoteDrawer(TrackCanvas, TrackCanvasViewer, this.Model);
                 }
             }
             catch(Exception ex)
@@ -142,16 +170,15 @@ namespace ChartEditor.UserControls.Boards
 
         private void CompositionTarget_Rendering(object sender, EventArgs e)
         {
-            if (isScrolling)
+            if (isPlaying)
             {
                 double currentHeight = ((DateTime.Now - this.musicStartDateTime).TotalSeconds + this.musicStartTime) * this.Model.ScrollSpeed;
                 TrackCanvasViewer.ScrollToVerticalOffset(this.Model.TotalHeight - currentHeight);
             }
 
-            if (this.Model.NoteSelectedIndex != -1 && this.canvasMousePosition.HasValue && this.IsPointInTrackGrid(canvasMousePosition) && !isScrolling)
+            if (this.Model.NoteSelectedIndex != -1 && this.canvasMousePosition.HasValue && this.IsPointInTrackGrid(canvasMousePosition) && !isPlaying && !isPicking)
             {
-                this.noteDrawer.ShowPreviewNote(this.Model.NoteSelectedIndex, this.canvasMousePosition, this.Model.ColumnWidth, this.Model.RowWidth, 
-                    TrackCanvas.ActualHeight, TrackCanvasViewer.ActualHeight, this.Model.Divide);
+                this.noteDrawer.ShowPreviewerAt(this.canvasMousePosition, this.Model.Divide);
             }
         }
 
@@ -160,19 +187,35 @@ namespace ChartEditor.UserControls.Boards
         /// </summary>
         private void DrawTrackGrid()
         {
-            // 计算Canvas尺寸
-            this.trackGridDrawer.DrawTrackGrid(this.Model.BeatNum, this.Model.TotalWidth, this.Model.TotalHeight, TrackCanvasViewer.ActualHeight
+            this.trackGridDrawer.DrawTrackGrid(this.Model.BeatNum, this.Model.TotalWidth, this.Model.TotalHeight
                 , this.Model.ColumnWidth, this.Model.RowWidth, this.Model.ColumnNum, this.Model.Divide);
-            TrackCanvas.Width = this.Model.TotalWidth + Common.BeatBarWidth * 2;
-            TrackCanvas.Height = this.Model.TotalHeight + TrackCanvasViewer.ActualHeight;
+            // 计算Canvas尺寸
+            TrackCanvas.Width = this.Model.TotalWidth;
+            TrackCanvas.Height = this.Model.TotalHeight;
+            TrackCanvasFloor.Width = this.Model.TotalWidth + 50;
+            TrackCanvasFloor.Height = this.Model.TotalHeight + TrackCanvasViewer.ActualHeight;
+            Canvas.SetTop(TrackCanvas, TrackCanvasViewer.ActualHeight * Common.JudgeLineRateOp);
         }
 
         /// <summary>
-        /// 当Canvas尺寸变化时重绘
+        /// 绘制时间轴
         /// </summary>
-        private void TrackCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
+        private void DrawTimeLine()
         {
-            this.DrawTrackGrid();
+            this.timeLineDrawer.DrawTimeLine(this.Model.BeatNum, this.Model.RowWidth);
+            // 计算Canvas尺寸
+            TimeLineCanvas.Height = this.Model.TotalHeight;
+            TimeLineCanvasFloor.Height = this.Model.TotalHeight + TimeLineCanvasViewer.ActualHeight;
+            Canvas.SetTop(TimeLineCanvas, TimeLineCanvasViewer.ActualHeight * Common.JudgeLineRateOp);
+        }
+
+        /// <summary>
+        /// 当CanvasViewer尺寸变化时重绘
+        /// </summary>
+        private void TrackCanvasViewer_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            TrackCanvasFloor.Height = this.Model.TotalHeight + TrackCanvasViewer.ActualHeight;
+            Canvas.SetTop(TrackCanvas, TrackCanvasViewer.ActualHeight * Common.JudgeLineRateOp);
             this.DrawJudgementLine();
         }
 
@@ -267,9 +310,8 @@ namespace ChartEditor.UserControls.Boards
         /// </summary>
         private bool IsPointInTrackGrid(Point? point)
         {
-            if (point.Value.X <= Common.BeatBarWidth || point.Value.X >= TrackCanvas.ActualWidth - Common.BeatBarWidth) return false;
-            double canvasBottomBlank = Common.JudgeLineRate * TrackCanvasViewer.ActualHeight;
-            if (point.Value.Y <= TrackCanvasViewer.ActualHeight - canvasBottomBlank || point.Value.Y >= TrackCanvas.ActualHeight - canvasBottomBlank) return false;
+            if (point.Value.X <= 0 || point.Value.X >= TrackCanvas.ActualWidth) return false;
+            if (point.Value.Y <= 0 || point.Value.Y >= TrackCanvas.ActualHeight) return false;
             return true;
         }
 
@@ -295,8 +337,8 @@ namespace ChartEditor.UserControls.Boards
                 if (mousePosition.HasValue && this.IsPointInTrackGrid(mousePosition))
                 {
                     BeatTime beatTime = new BeatTime(this.Model.Divide);
-                    beatTime.UpdateFromJudgeLineOffset(TrackCanvas.ActualHeight - mousePosition.Value.Y - Common.JudgeLineRate * TrackCanvasViewer.ActualHeight, this.Model.RowWidth);
-                    int columnIndex = (int)((mousePosition.Value.X - Common.BeatBarWidth) / this.Model.ColumnWidth);
+                    beatTime.UpdateFromJudgeLineOffset(TrackCanvas.Height - mousePosition.Value.Y, this.Model.RowWidth);
+                    int columnIndex = (int)(mousePosition.Value.X / this.Model.ColumnWidth);
                     this.TryPutNote(beatTime, columnIndex);
                 }
             }
@@ -315,6 +357,7 @@ namespace ChartEditor.UserControls.Boards
             }
             this.canvasMousePosition = e.GetPosition(TrackCanvas);
         }
+
         private void TrackCanvasViewer_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
             if (this.isScrollViewerDragging)
@@ -327,14 +370,31 @@ namespace ChartEditor.UserControls.Boards
 
         private void PickerButton_Checked(object sender, RoutedEventArgs e)
         {
+            this.isPicking = true;
             Mouse.OverrideCursor = Cursors.Hand;
+            PickerButton.Background = Brushes.LightGray;
             TrackCanvasViewer.Focus();
+            this.noteDrawer.HidePreviewer();
+            // 清除所有放置状态
+            if (this.isTrackPutting)
+            {
+                this.isTrackPutting = false;
+                this.noteDrawer.HideTrackHeader();
+            }
+            else if (this.isHoldNotePutting)
+            {
+                this.isHoldNotePutting = false;
+                this.noteDrawer.HideHoldNoteHeader();
+            }
         }
 
         private void PickerButton_Unchecked(object sender, RoutedEventArgs e)
         {
+            this.isPicking = false;
             Mouse.OverrideCursor = null;
+            PickerButton.Background = Brushes.White;
             TrackCanvasViewer.Focus();
+            this.noteDrawer.ShowPreviewer();
         }
 
         /// <summary>
@@ -344,7 +404,7 @@ namespace ChartEditor.UserControls.Boards
         {
             if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
             {
-                this.Model.IsCatching = true;
+                PickerButton.IsChecked = true;
                 Mouse.OverrideCursor = Cursors.Hand;
             }
         }
@@ -353,7 +413,7 @@ namespace ChartEditor.UserControls.Boards
         {
             if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
             {
-                this.Model.IsCatching = true;
+                PickerButton.IsChecked = false;
                 Mouse.OverrideCursor = null;
             }
         }
@@ -375,7 +435,7 @@ namespace ChartEditor.UserControls.Boards
 
         private void MusicPlayer_PlaybackStopped(object sender, StoppedEventArgs e)
         {
-            this.PauseChart();
+            PlayButton.IsChecked = false;
         }
 
         /// <summary>
@@ -390,16 +450,21 @@ namespace ChartEditor.UserControls.Boards
                     this.SetMessage("音乐播放异常，再试一次吧", 3, MessageType.Error);
                     return;
                 }
+                // 临时取消事件订阅，防止触发 PlayButton_Checked
+                PlayButton.Checked -= PlayButton_Checked;
 
                 PlayButton.IsChecked = true;
+                PlayIcon.Kind = PackIconKind.Pause;
                 this.Model.ResetCurrentBeatTime();
                 this.ScrollToCurrentBeat();
-                PlayIcon.Kind = PackIconKind.Pause;
                 this.musicStartDateTime = DateTime.Now;
                 this.musicStartTime = this.Model.CurrentTime;
-                isScrolling = true;
+                isPlaying = true;
+                this.noteDrawer.HidePreviewer();
+                // 恢复事件订阅
+                PlayButton.Checked += PlayButton_Checked;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(logTag + ex.ToString());
                 
@@ -427,7 +492,8 @@ namespace ChartEditor.UserControls.Boards
                 PlayIcon.Kind = PackIconKind.Pause;
                 this.musicStartDateTime = DateTime.Now;
                 this.musicStartTime = this.Model.CurrentTime;
-                isScrolling = true;
+                this.isPlaying = true;
+                this.noteDrawer.HidePreviewer();
             }
             catch (Exception ex)
             {
@@ -444,8 +510,8 @@ namespace ChartEditor.UserControls.Boards
             this.musicPlayer.PauseMusic();
 
             PlayIcon.Kind = PackIconKind.Play;
-            PlayButton.IsChecked = false;
-            isScrolling = false;
+            this.isPlaying = false;
+            this.noteDrawer.ShowPreviewer();
         }
 
         private void PlayButton_Unchecked(object sender, RoutedEventArgs e)
@@ -462,13 +528,17 @@ namespace ChartEditor.UserControls.Boards
         {
             this.isInitializing = true;
             // 隐藏Note预置图形
-            this.noteDrawer.HidePreviewNote(this.Model.NoteSelectedIndex);
-            BeatTime lastBeat = new BeatTime(this.Model.CurrentBeat);
+            this.noteDrawer.HidePreviewer();
             await DialogHost.Show(new TrackGridSizeDialog(this.Model), "TrackEditDialog");
+            if (!this.isPlaying)
+            {
+                BeatTime lastBeat = new BeatTime(this.Model.CurrentBeat);
+                this.ScrollToCurrentBeat(lastBeat);
+            }
             this.isInitializing = false;
-            this.ScrollToCurrentBeat(lastBeat);
+            
             // 显示预置图形
-            this.noteDrawer.ShowPreviewNote(this.Model.NoteSelectedIndex);
+            this.noteDrawer.ShowPreviewer();
         }
 
         private async void DivideButton_Click(object sender, RoutedEventArgs e)
@@ -498,20 +568,26 @@ namespace ChartEditor.UserControls.Boards
 
         private void TrackCanvasViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            if (isInitializing) return;
-            this.Model.UpdateCurrentBeatTime(TrackCanvasViewer.VerticalOffset, TrackCanvasViewer.ExtentHeight, TrackCanvasViewer.ActualHeight);
+            // 同步时间轴滚动条
+            TimeLineCanvasViewer.ScrollToVerticalOffset(TrackCanvasViewer.VerticalOffset);
+            if (!this.isInitializing)
+            {
+                this.Model.UpdateCurrentBeatTime(TrackCanvasViewer.VerticalOffset, TrackCanvasViewer.ExtentHeight, TrackCanvasViewer.ActualHeight);
+            }
         }
 
         private void TrackCanvasViewer_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Space)
             {
-                if (this.isScrolling)
+                if (this.isPlaying)
                 {
+                    PlayButton.IsChecked = false;
                     this.PauseChart();
                 }
                 else
                 {
+                    PlayButton.IsChecked = true;
                     this.PlayChart();
                 }
             }
@@ -525,13 +601,24 @@ namespace ChartEditor.UserControls.Boards
 
         private void NoteSelectBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            this.noteDrawer.ShowPreviewNote(this.Model.NoteSelectedIndex);
+            // 清除当前对应放置状态
+            if (this.noteDrawer.PreviewerIndex == 0)
+            {
+                this.isTrackPutting = false;
+                this.noteDrawer.HideTrackHeader();
+            }
+            else if (this.noteDrawer.PreviewerIndex == 3)
+            {
+                this.isHoldNotePutting = false;
+                this.noteDrawer.HideHoldNoteHeader();
+            }
+            this.noteDrawer.SwitchPreviewer(this.Model.NoteSelectedIndex);
         }
 
         private Point? canvasMousePosition = null;
         private void TrackCanvas_MouseMove(object sender, MouseEventArgs e)
         {
-            if (this.isInitializing || this.isScrollViewerDragging || this.isScrolling) return;
+            if (this.isInitializing || this.isScrollViewerDragging || this.isPlaying) return;
             
         }
 
@@ -545,31 +632,133 @@ namespace ChartEditor.UserControls.Boards
         /// </summary>
         private void TryPutNote(BeatTime beatTime, int columnIndex)
         {
-            if (this.isTrackPutting)
+            if (this.isPicking || this.isPlaying) return;
+            switch (this.Model.NoteSelectedIndex)
             {
-
-            }
-            else if (this.isHoldNotePutting)
-            {
-
-            }
-            else
-            {
-                if (this.Model.NoteSelectedIndex == 0)
-                {
-                    bool tryResult = this.Model.AddTrackHead(beatTime, columnIndex);
-                    if (tryResult)
+                case 0:
                     {
-                        // 轨道头部放置成功
-                        this.isTrackPutting = true;
-
+                        if (this.isTrackPutting)
+                        {
+                            Track newTrack = this.Model.AddTrackFooter(this.trackHeaderPutBeatTime, this.trackHeaderPutColumnIndex, beatTime, columnIndex);
+                            if (newTrack != null)
+                            {
+                                this.noteDrawer.HideTrackHeader();
+                                // 显示轨道
+                                this.noteDrawer.CreateTrackItem(newTrack);
+                                this.isTrackPutting = false;
+                            }
+                            else
+                            {
+                                this.SetMessage("此处不允许放置", 3, MessageType.Warn);
+                            }
+                        }
+                        else
+                        {
+                            bool tryResult = this.Model.AddTrackHeader(beatTime, columnIndex);
+                            if (tryResult)
+                            {
+                                // 轨道头部放置成功，记录位置
+                                this.isTrackPutting = true;
+                                this.trackHeaderPutBeatTime = beatTime;
+                                this.trackHeaderPutColumnIndex = columnIndex;
+                                this.noteDrawer.ShowTrackHeaderAt(beatTime, columnIndex);
+                            }
+                            else
+                            {
+                                this.SetMessage("此处不允许放置", 3, MessageType.Warn);
+                            }
+                        }
+                        break;
                     }
-                    else
+                case 1:
                     {
-                        this.SetMessage("此处不允许放置", 3, MessageType.Warn);
+                        TapNote newTapNote = (TapNote)this.Model.AddNote(beatTime, columnIndex, NoteType.Tap);
+                        if (newTapNote != null)
+                        {
+                            // 显示Note
+                            this.noteDrawer.CreateNoteItem(newTapNote);
+                        }
+                        else
+                        {
+                            this.SetMessage("此处不允许放置", 3, MessageType.Warn);
+                        }
+                        break;
                     }
-                }
+                case 2:
+                    {
+                        FlickNote newFlickNote = (FlickNote)this.Model.AddNote(beatTime, columnIndex, NoteType.Flick);
+                        if (newFlickNote != null)
+                        {
+                            // 显示Note
+                            this.noteDrawer.CreateNoteItem(newFlickNote);
+                        }
+                        else
+                        {
+                            this.SetMessage("此处不允许放置", 3, MessageType.Warn);
+                        }
+                        break;
+                    }
+                case 3:
+                    {
+                        if (this.isHoldNotePutting)
+                        {
+                            HoldNote newHoldNote = this.Model.AddHoldNoteFooter(this.holdNoteHeaderPutBeatTime, this.holdNoteHeaderPutColumnIndex, beatTime, columnIndex);
+                            if (newHoldNote != null)
+                            {
+                                this.noteDrawer.HideHoldNoteHeader();
+                                this.noteDrawer.CreateNoteItem(newHoldNote);
+                                this.isHoldNotePutting = false;
+                            }
+                            else
+                            {
+                                this.SetMessage("此处不允许放置", 3, MessageType.Warn);
+                            }
+                        }
+                        else
+                        {
+                            bool tryResult = this.Model.AddHoldNoteHeader(beatTime, columnIndex);
+                            if (tryResult)
+                            {
+                                // HoldNote头部放置成功，记录位置
+                                this.isHoldNotePutting = true;
+                                this.holdNoteHeaderPutBeatTime = beatTime;
+                                this.holdNoteHeaderPutColumnIndex = columnIndex;
+                                this.noteDrawer.ShowHoldNoteHeaderAt(beatTime, columnIndex);
+                            }
+                            else
+                            {
+                                this.SetMessage("此处不允许放置", 3, MessageType.Warn);
+                            }
+                        }
+                        break;
+                    }
+                case 4:
+                    {
+                        CatchNote newCatchNote = (CatchNote)this.Model.AddNote(beatTime, columnIndex, NoteType.Catch);
+                        if (newCatchNote != null)
+                        {
+                            // 显示Note
+                            this.noteDrawer.CreateNoteItem(newCatchNote);
+                        }
+                        else
+                        {
+                            this.SetMessage("此处不允许放置", 3, MessageType.Warn);
+                        }
+                        break;
+                    }
             }
+        }
+
+        /// <summary>
+        /// 设置UI的颜色
+        /// </summary>
+        private void SetUIColor()
+        {
+            TrackSelectBox.Foreground = ColorProvider.TrackBorderBrush;
+            TapNoteSelectBox.Foreground = ColorProvider.TapNoteBorderBrush;
+            FlickNoteSelectBox.Foreground = ColorProvider.FlickNoteBorderBrush;
+            HoldNoteSelectBox.Foreground = ColorProvider.HoldNoteBorderBrush;
+            CatchNoteSelectBox.Foreground = ColorProvider.CatchNoteBorderBrush;
         }
     }
 }

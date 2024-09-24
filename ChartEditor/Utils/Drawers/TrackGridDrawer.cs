@@ -63,11 +63,11 @@ namespace ChartEditor.Utils.Drawers
             return null;
         }
 
-        public void DrawTrackGrid(int beatNum, double totalWidth, double totalHeight, double canvasViewerHeight, double columnWidth, double rowWidth, int columnNum, int divide)
+        public void DrawTrackGrid(int beatNum, double totalWidth, double totalHeight, double columnWidth, double rowWidth, int columnNum, int divide)
         {
             this.RemoveVisualChild(this.currentGrid);
 
-            string key = $"{beatNum}_{totalWidth}_{totalHeight}_{canvasViewerHeight}_{columnWidth}_{rowWidth}_{columnNum}_{divide}";
+            string key = $"{beatNum}_{totalWidth}_{totalHeight}_{columnWidth}_{rowWidth}_{columnNum}_{divide}";
             DrawingVisual cacheDrawingVisual = GetCache(key);
             if (cacheDrawingVisual != null)
             {
@@ -86,11 +86,11 @@ namespace ChartEditor.Utils.Drawers
                 {
                     if (i == 0 || i == columnNum)
                     {
-                        dc.DrawLine(columnBorderPen1, new Point(i * columnWidth + Common.BeatBarWidth, canvasViewerHeight * Common.JudgeLineRateOp), new Point(i * columnWidth + Common.BeatBarWidth, totalHeight + canvasViewerHeight * Common.JudgeLineRateOp));
+                        dc.DrawLine(columnBorderPen1, new Point(i * columnWidth, 0), new Point(i * columnWidth, totalHeight));
                     }
                     else
                     {
-                        dc.DrawLine(columnBorderPen2, new Point(i * columnWidth + Common.BeatBarWidth, canvasViewerHeight * Common.JudgeLineRateOp), new Point(i * columnWidth + Common.BeatBarWidth, totalHeight + canvasViewerHeight * Common.JudgeLineRateOp));
+                        dc.DrawLine(columnBorderPen2, new Point(i * columnWidth, 0), new Point(i * columnWidth, totalHeight));
                     }
                 }
                 // 绘制行
@@ -101,158 +101,147 @@ namespace ChartEditor.Utils.Drawers
 
                 for (int i = 0; i <= beatNum; i++)
                 {
-                    double lineY = canvasViewerHeight * Common.JudgeLineRateOp + i * rowWidth;
+                    double lineY = i * rowWidth;
                     // 绘制拍线
-                    dc.DrawLine(beatPen, new Point(Common.BeatBarWidth, lineY), new Point(Common.BeatBarWidth + totalWidth, lineY));
+                    dc.DrawLine(beatPen, new Point(0, lineY), new Point(totalWidth, lineY));
 
                     if (i < beatNum)
                     {
-                        // 绘制拍号
-                        FormattedText formattedText = new FormattedText(
-                            (beatNum - i).ToString(),
-                            CultureInfo.InvariantCulture,
-                            FlowDirection.LeftToRight,
-                            new Typeface("Consolas"),
-                            16,
-                            Brushes.Gray,
-                            VisualTreeHelper.GetDpi(drawingVisual).PixelsPerDip
-                        );
-                        dc.DrawText(formattedText, new Point(0, canvasViewerHeight * Common.JudgeLineRateOp + (i + 0.5) * rowWidth - formattedText.Height / 2));
                         // 绘制分割线
                         switch (divide)
                         {
                             case 2:
                                 {
-                                    dc.DrawLine(dividePen1, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 2), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 2));
+                                    dc.DrawLine(dividePen1, new Point(0, lineY + rowWidth * 1 / 2), new Point(totalWidth, lineY + rowWidth * 1 / 2));
                                     break;
                                 }
                             case 4:
                                 {
-                                    dc.DrawLine(dividePen1, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 2), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 2));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 4), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 4));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 3 / 4), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 3 / 4));
+                                    dc.DrawLine(dividePen1, new Point(0, lineY + rowWidth * 1 / 2), new Point(totalWidth, lineY + rowWidth * 1 / 2));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 1 / 4), new Point(totalWidth, lineY + rowWidth * 1 / 4));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 3 / 4), new Point(totalWidth, lineY + rowWidth * 3 / 4));
                                     break;
                                 }
                             case 8:
                                 {
-                                    dc.DrawLine(dividePen1, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 2), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 2));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 4), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 4));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 3 / 4), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 3 / 4));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 8));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 3 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 3 / 8));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 5 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 5 / 8));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 7 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 7 / 8));
+                                    dc.DrawLine(dividePen1, new Point(0, lineY + rowWidth * 1 / 2), new Point(totalWidth, lineY + rowWidth * 1 / 2));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 1 / 4), new Point(totalWidth, lineY + rowWidth * 1 / 4));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 3 / 4), new Point(totalWidth, lineY + rowWidth * 3 / 4));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 1 / 8), new Point(totalWidth, lineY + rowWidth * 1 / 8));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 3 / 8), new Point(totalWidth, lineY + rowWidth * 3 / 8));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 5 / 8), new Point(totalWidth, lineY + rowWidth * 5 / 8));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 7 / 8), new Point(totalWidth, lineY + rowWidth * 7 / 8));
                                     break;
                                 }
                             case 16:
                                 {
-                                    dc.DrawLine(dividePen1, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 2), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 2));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 4), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 4));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 3 / 4), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 3 / 4));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 8));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 3 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 3 / 8));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 5 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 5 / 8));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 7 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 7 / 8));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 16));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 3 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 3 / 16));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 5 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 5 / 16));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 7 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 7 / 16));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 9 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 9 / 16));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 11 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 11 / 16));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 13 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 13 / 16));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 15 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 15 / 16));
+                                    dc.DrawLine(dividePen1, new Point(0, lineY + rowWidth * 1 / 2), new Point(totalWidth, lineY + rowWidth * 1 / 2));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 1 / 4), new Point(totalWidth, lineY + rowWidth * 1 / 4));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 3 / 4), new Point(totalWidth, lineY + rowWidth * 3 / 4));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 1 / 8), new Point(totalWidth, lineY + rowWidth * 1 / 8));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 3 / 8), new Point(totalWidth, lineY + rowWidth * 3 / 8));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 5 / 8), new Point(totalWidth, lineY + rowWidth * 5 / 8));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 7 / 8), new Point(totalWidth, lineY + rowWidth * 7 / 8));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 1 / 16), new Point(totalWidth, lineY + rowWidth * 1 / 16));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 3 / 16), new Point(totalWidth, lineY + rowWidth * 3 / 16));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 5 / 16), new Point(totalWidth, lineY + rowWidth * 5 / 16));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 7 / 16), new Point(totalWidth, lineY + rowWidth * 7 / 16));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 9 / 16), new Point(totalWidth, lineY + rowWidth * 9 / 16));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 11 / 16), new Point(totalWidth, lineY + rowWidth * 11 / 16));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 13 / 16), new Point(totalWidth, lineY + rowWidth * 13 / 16));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 15 / 16), new Point(totalWidth, lineY + rowWidth * 15 / 16));
                                     break;
                                 }
                             case 32:
                                 {
-                                    dc.DrawLine(dividePen1, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 2), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 2));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 4), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 4));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 3 / 4), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 3 / 4));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 8));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 3 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 3 / 8));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 5 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 5 / 8));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 7 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 7 / 8));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 16));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 3 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 3 / 16));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 5 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 5 / 16));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 7 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 7 / 16));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 9 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 9 / 16));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 11 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 11 / 16));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 13 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 13 / 16));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 15 / 16), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 15 / 16));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 32));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 3 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 3 / 32));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 5 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 5 / 32));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 7 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 7 / 32));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 9 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 9 / 32));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 11 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 11 / 32));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 13 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 13 / 32));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 15 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 15 / 32));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 17 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 17 / 32));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 19 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 19 / 32));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 21 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 21 / 32));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 23 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 23 / 32));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 25 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 25 / 32));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 27 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 27 / 32));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 29 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 29 / 32));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 31 / 32), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 31 / 32));
+                                    dc.DrawLine(dividePen1, new Point(0, lineY + rowWidth * 1 / 2), new Point(totalWidth, lineY + rowWidth * 1 / 2));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 1 / 4), new Point(totalWidth, lineY + rowWidth * 1 / 4));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 3 / 4), new Point(totalWidth, lineY + rowWidth * 3 / 4));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 1 / 8), new Point(totalWidth, lineY + rowWidth * 1 / 8));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 3 / 8), new Point(totalWidth, lineY + rowWidth * 3 / 8));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 5 / 8), new Point(totalWidth, lineY + rowWidth * 5 / 8));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 7 / 8), new Point(totalWidth, lineY + rowWidth * 7 / 8));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 1 / 16), new Point(totalWidth, lineY + rowWidth * 1 / 16));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 3 / 16), new Point(totalWidth, lineY + rowWidth * 3 / 16));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 5 / 16), new Point(totalWidth, lineY + rowWidth * 5 / 16));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 7 / 16), new Point(totalWidth, lineY + rowWidth * 7 / 16));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 9 / 16), new Point(totalWidth, lineY + rowWidth * 9 / 16));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 11 / 16), new Point(totalWidth, lineY + rowWidth * 11 / 16));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 13 / 16), new Point(totalWidth, lineY + rowWidth * 13 / 16));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 15 / 16), new Point(totalWidth, lineY + rowWidth * 15 / 16));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 1 / 32), new Point(totalWidth, lineY + rowWidth * 1 / 32));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 3 / 32), new Point(totalWidth, lineY + rowWidth * 3 / 32));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 5 / 32), new Point(totalWidth, lineY + rowWidth * 5 / 32));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 7 / 32), new Point(totalWidth, lineY + rowWidth * 7 / 32));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 9 / 32), new Point(totalWidth, lineY + rowWidth * 9 / 32));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 11 / 32), new Point(totalWidth, lineY + rowWidth * 11 / 32));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 13 / 32), new Point(totalWidth, lineY + rowWidth * 13 / 32));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 15 / 32), new Point(totalWidth, lineY + rowWidth * 15 / 32));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 17 / 32), new Point(totalWidth, lineY + rowWidth * 17 / 32));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 19 / 32), new Point(totalWidth, lineY + rowWidth * 19 / 32));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 21 / 32), new Point(totalWidth, lineY + rowWidth * 21 / 32));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 23 / 32), new Point(totalWidth, lineY + rowWidth * 23 / 32));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 25 / 32), new Point(totalWidth, lineY + rowWidth * 25 / 32));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 27 / 32), new Point(totalWidth, lineY + rowWidth * 27 / 32));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 29 / 32), new Point(totalWidth, lineY + rowWidth * 29 / 32));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 31 / 32), new Point(totalWidth, lineY + rowWidth * 31 / 32));
                                     break;
                                 }
                             case 3:
                                 {
-                                    dc.DrawLine(dividePen1, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 3), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 3));
-                                    dc.DrawLine(dividePen1, new Point(Common.BeatBarWidth, lineY + rowWidth * 2 / 3), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 2 / 3));
+                                    dc.DrawLine(dividePen1, new Point(0, lineY + rowWidth * 1 / 3), new Point(totalWidth, lineY + rowWidth * 1 / 3));
+                                    dc.DrawLine(dividePen1, new Point(0, lineY + rowWidth * 2 / 3), new Point(totalWidth, lineY + rowWidth * 2 / 3));
                                     break;
                                 }
                             case 6:
                                 {
-                                    dc.DrawLine(dividePen1, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 3), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 3));
-                                    dc.DrawLine(dividePen1, new Point(Common.BeatBarWidth, lineY + rowWidth * 2 / 3), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 2 / 3));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 6), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 6));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 2), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 2));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 5 / 6), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 5 / 6));
+                                    dc.DrawLine(dividePen1, new Point(0, lineY + rowWidth * 1 / 3), new Point(totalWidth, lineY + rowWidth * 1 / 3));
+                                    dc.DrawLine(dividePen1, new Point(0, lineY + rowWidth * 2 / 3), new Point(totalWidth, lineY + rowWidth * 2 / 3));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 1 / 6), new Point(totalWidth, lineY + rowWidth * 1 / 6));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 1 / 2), new Point(totalWidth, lineY + rowWidth * 1 / 2));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 5 / 6), new Point(totalWidth, lineY + rowWidth * 5 / 6));
                                     break;
                                 }
                             case 12:
                                 {
-                                    dc.DrawLine(dividePen1, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 3), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 3));
-                                    dc.DrawLine(dividePen1, new Point(Common.BeatBarWidth, lineY + rowWidth * 2 / 3), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 2 / 3));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 6), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 6));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 2), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 2));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 5 / 6), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 5 / 6));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 12), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 12));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 4), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 4));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 5 / 12), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 5 / 12));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 7 / 12), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 7 / 12));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 3 / 4), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 3 / 4));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 11 / 12), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 11 / 12));
+                                    dc.DrawLine(dividePen1, new Point(0, lineY + rowWidth * 1 / 3), new Point(totalWidth, lineY + rowWidth * 1 / 3));
+                                    dc.DrawLine(dividePen1, new Point(0, lineY + rowWidth * 2 / 3), new Point(totalWidth, lineY + rowWidth * 2 / 3));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 1 / 6), new Point(totalWidth, lineY + rowWidth * 1 / 6));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 1 / 2), new Point(totalWidth, lineY + rowWidth * 1 / 2));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 5 / 6), new Point(totalWidth, lineY + rowWidth * 5 / 6));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 1 / 12), new Point(totalWidth, lineY + rowWidth * 1 / 12));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 1 / 4), new Point(totalWidth, lineY + rowWidth * 1 / 4));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 5 / 12), new Point(totalWidth, lineY + rowWidth * 5 / 12));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 7 / 12), new Point(totalWidth, lineY + rowWidth * 7 / 12));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 3 / 4), new Point(totalWidth, lineY + rowWidth * 3 / 4));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 11 / 12), new Point(totalWidth, lineY + rowWidth * 11 / 12));
                                     break;
                                 }
                             case 24:
                                 {
-                                    dc.DrawLine(dividePen1, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 3), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 3));
-                                    dc.DrawLine(dividePen1, new Point(Common.BeatBarWidth, lineY + rowWidth * 2 / 3), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 2 / 3));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 6), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 6));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 2), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 2));
-                                    dc.DrawLine(dividePen2, new Point(Common.BeatBarWidth, lineY + rowWidth * 5 / 6), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 5 / 6));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 12), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 12));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 4), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 4));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 5 / 12), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 5 / 12));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 7 / 12), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 7 / 12));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 3 / 4), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 3 / 4));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 11 / 12), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 11 / 12));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 24), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 24));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 1 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 1 / 8));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 5 / 24), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 5 / 24));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 7 / 24), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 7 / 24));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 3 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 3 / 8));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 11 / 24), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 11 / 24));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 13 / 24), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 13 / 24));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 5 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 5 / 8));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 17 / 24), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 17 / 24));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 19 / 24), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 19 / 24));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 7 / 8), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 7 / 8));
-                                    dc.DrawLine(dividePen3, new Point(Common.BeatBarWidth, lineY + rowWidth * 23 / 24), new Point(Common.BeatBarWidth + totalWidth, lineY + rowWidth * 23 / 24));
+                                    dc.DrawLine(dividePen1, new Point(0, lineY + rowWidth * 1 / 3), new Point(totalWidth, lineY + rowWidth * 1 / 3));
+                                    dc.DrawLine(dividePen1, new Point(0, lineY + rowWidth * 2 / 3), new Point(totalWidth, lineY + rowWidth * 2 / 3));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 1 / 6), new Point(totalWidth, lineY + rowWidth * 1 / 6));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 1 / 2), new Point(totalWidth, lineY + rowWidth * 1 / 2));
+                                    dc.DrawLine(dividePen2, new Point(0, lineY + rowWidth * 5 / 6), new Point(totalWidth, lineY + rowWidth * 5 / 6));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 1 / 12), new Point(totalWidth, lineY + rowWidth * 1 / 12));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 1 / 4), new Point(totalWidth, lineY + rowWidth * 1 / 4));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 5 / 12), new Point(totalWidth, lineY + rowWidth * 5 / 12));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 7 / 12), new Point(totalWidth, lineY + rowWidth * 7 / 12));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 3 / 4), new Point(totalWidth, lineY + rowWidth * 3 / 4));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 11 / 12), new Point(totalWidth, lineY + rowWidth * 11 / 12));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 1 / 24), new Point(totalWidth, lineY + rowWidth * 1 / 24));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 1 / 8), new Point(totalWidth, lineY + rowWidth * 1 / 8));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 5 / 24), new Point(totalWidth, lineY + rowWidth * 5 / 24));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 7 / 24), new Point(totalWidth, lineY + rowWidth * 7 / 24));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 3 / 8), new Point(totalWidth, lineY + rowWidth * 3 / 8));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 11 / 24), new Point(totalWidth, lineY + rowWidth * 11 / 24));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 13 / 24), new Point(totalWidth, lineY + rowWidth * 13 / 24));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 5 / 8), new Point(totalWidth, lineY + rowWidth * 5 / 8));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 17 / 24), new Point(totalWidth, lineY + rowWidth * 17 / 24));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 19 / 24), new Point(totalWidth, lineY + rowWidth * 19 / 24));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 7 / 8), new Point(totalWidth, lineY + rowWidth * 7 / 8));
+                                    dc.DrawLine(dividePen3, new Point(0, lineY + rowWidth * 23 / 24), new Point(totalWidth, lineY + rowWidth * 23 / 24));
                                     break;
                                 }
                             default: { break; }

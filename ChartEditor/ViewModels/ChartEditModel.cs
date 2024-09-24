@@ -6,11 +6,13 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Shapes;
 
 namespace ChartEditor.ViewModels
 {
     public class ChartEditModel : INotifyPropertyChanged
     {
+        private static string logTag = "[ChartEditModel]";
         /// <summary>
         /// 谱面信息
         /// </summary>
@@ -55,7 +57,7 @@ namespace ChartEditor.ViewModels
         /// <summary>
         /// 一拍的时长（四分音符）
         /// </summary>
-        public double BeatTime { get { return 60 / this.ChartInfo.ChartMusic.Bpm; } }
+        public double BeatTime { get { return 60 / (this.ChartInfo.ChartMusic.Bpm * this.speed); } }
 
         /// <summary>
         /// 轨道所有列的总尺寸
@@ -66,7 +68,7 @@ namespace ChartEditor.ViewModels
         /// <summary>
         /// 歌曲速度/谱面速度
         /// </summary>
-        private double speed = 1;
+        private double speed = 1.0;
         public double Speed { get { return speed; } set { speed = value; OnPropertyChanged(nameof(Speed)); } }
 
         /// <summary>
@@ -89,9 +91,6 @@ namespace ChartEditor.ViewModels
                 this.currentBeat.Divide = divide;
                 OnPropertyChanged(nameof(CurrentBeatStr));
             } }
-
-        private bool isMusicPlaying = false;
-        public bool IsMusicPlaying { get { return isMusicPlaying; } set { isMusicPlaying = value; } }
 
         /// <summary>
         /// 歌曲当前播放时间
@@ -157,15 +156,9 @@ namespace ChartEditor.ViewModels
         public int NoteSelectedIndex { get { return noteSelectedIndex; } set { noteSelectedIndex = value; } }
 
         /// <summary>
-        /// 是否处于抓取状态
+        /// 鼠标选中的元素
         /// </summary>
-        private bool isCatching = false;
-        public bool IsCatching { get { return isCatching; } set { isCatching = value; } }
-
-        /// <summary>
-        /// 鼠标选中的对象
-        /// </summary>
-        public Object SelectedElements {  get; set; }
+        public List<Rectangle> SelectedElements {  get; set; }
 
         /// <summary>
         /// 音乐音量
@@ -189,16 +182,97 @@ namespace ChartEditor.ViewModels
         /// <summary>
         /// 判断指定起始位置能否加入Track
         /// </summary>
-        public bool AddTrackHead(BeatTime start, int columnIndex)
+        public bool AddTrackHeader(BeatTime start, int columnIndex)
         {
             foreach (var item in tracks)
             {
-                if (columnIndex == item.ColumnIndex && start.IsLaterThan(item.StartTime) && start.IsEarlierThan(item.EndTime))
+                if (columnIndex == item.ColumnIndex && (start.IsEqualTo(item.StartTime) || start.IsLaterThan(item.StartTime)) && start.IsEarlierThan(item.EndTime))
                 {
                     return false;
                 }
             }
             return true;
+        }
+
+        /// <summary>
+        /// 判断指定终点位置能否加入Track
+        /// </summary>
+        public Track AddTrackFooter(BeatTime start, int startColumnIndex, BeatTime end, int endColumnIndex)
+        {
+            if (startColumnIndex != endColumnIndex || end.IsEarlierThan(start)) return null;
+            foreach (var item in tracks)
+            {
+                if (endColumnIndex == item.ColumnIndex && end.IsLaterThan(item.StartTime) && start.IsEarlierThan(item.StartTime))
+                {
+                    return null;
+                }
+            }
+            // 可以添加轨道
+            Track track = new Track(start, end, endColumnIndex);
+            this.tracks.Add(track);
+            Console.WriteLine(logTag + "成功放置一个轨道");
+            return track;
+        }
+
+        /// <summary>
+        /// 添加TapNote/FLickNote/CatchNote
+        /// </summary>
+        public Note AddNote(BeatTime beatTime, int columnIndex, NoteType noteType)
+        {
+            // Note必须要添加到一个Track中
+            foreach (var item in tracks)
+            {
+                if (item.IsInTrack(beatTime, columnIndex))
+                {
+                    Note newNote = item.AddNote(beatTime, noteType);
+                    if (newNote != null)
+                    {
+                        return newNote;
+                    }
+                    break;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 判断指定起始位置能否加入HoldNote
+        /// </summary>
+        public bool AddHoldNoteHeader(BeatTime start, int columnIndex)
+        {
+            foreach (var item in tracks)
+            {
+                if (item.IsInTrack(start, columnIndex))
+                {
+                    if (item.AddHoldNoteHeader(start))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 添加HoldNoteFooter
+        /// </summary>
+        public HoldNote AddHoldNoteFooter(BeatTime startTime, int startColumnIndex, BeatTime endTime, int endColumnIndex)
+        {
+            if (startColumnIndex != endColumnIndex || !startTime.IsEarlierThan(endTime)) return null;
+            // Note必须要添加到一个Track中
+            foreach (var item in tracks)
+            {
+                if (item.IsInTrack(endTime, endColumnIndex))
+                {
+                    HoldNote newHoldNote = item.AddHoldNoteFooter(startTime, endTime);
+                    if (newHoldNote != null)
+                    {
+                        return newHoldNote;
+                    }
+                    break;
+                }
+            }
+            return null;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
