@@ -94,9 +94,9 @@ namespace ChartEditor.Utils.Drawers
                     }
                 }
                 // 绘制行
-                Pen beatPen = new Pen(Brushes.Purple, 1);
-                Pen dividePen1 = new Pen(Brushes.DarkGreen, 0.8);
-                Pen dividePen2 = new Pen(Brushes.Cyan, 0.8);
+                Pen beatPen = new Pen(Brushes.Purple, 1.5);
+                Pen dividePen1 = new Pen(Brushes.DarkGreen, 1);
+                Pen dividePen2 = new Pen(Brushes.Cyan, 1);
                 Pen dividePen3 = new Pen(Brushes.Gray, 0.5);
 
                 for (int i = 0; i <= beatNum; i++)

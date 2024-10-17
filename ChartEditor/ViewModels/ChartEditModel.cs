@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Shapes;
 
 namespace ChartEditor.ViewModels
@@ -210,7 +211,6 @@ namespace ChartEditor.ViewModels
             // 可以添加轨道
             Track track = new Track(start, end, endColumnIndex);
             this.tracks.Add(track);
-            Console.WriteLine(logTag + "成功放置一个轨道");
             return track;
         }
 
@@ -273,6 +273,24 @@ namespace ChartEditor.ViewModels
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// 计算Canvas坐标的列序号
+        /// </summary>
+        public int GetColumnIndexFromPoint(Point? point)
+        {
+            return (int)((point.Value.X) / this.columnWidth);
+        }
+
+        /// <summary>
+        /// 计算Canvas坐标的节拍
+        /// </summary>
+        public BeatTime GetBeatTimeFromPoint(Point? point, double canvasHeight)
+        {
+            BeatTime newBeatTime = new BeatTime(this.divide);
+            newBeatTime.UpdateFromJudgeLineOffset(canvasHeight - point.Value.Y, this.rowWidth);
+            return newBeatTime;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

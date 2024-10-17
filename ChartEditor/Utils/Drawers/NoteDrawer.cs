@@ -1,4 +1,5 @@
 ﻿using ChartEditor.Models;
+using ChartEditor.UserControls.Boards;
 using ChartEditor.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -61,19 +62,26 @@ namespace ChartEditor.Utils.Drawers
         private int lastHoldNoteHeaderColumnIndex = 0;
 
         /// <summary>
+        /// 当前鼠标所处位置高光的图形
+        /// </summary>
+        private Rectangle highlightItem = null;
+
+        /// <summary>
         /// 矩形参数
         /// </summary>
         public static double MinHeight = 10;
-        public static int StrokeThickness = 2;
+        public static int StrokeThickness = 1;
+        public static int HighLightStrokeThickness = 3;
         public static int Radius = 5;
         public static double PreviewerOpacity = 0.2;
-        public static double HeaderOpacity = 0.3;
+        public static double HeaderOpacity = 0.5;
+        public static double TrackOpacity = 0.7;
 
-        public NoteDrawer(Canvas canvas, ScrollViewer scrollViewer, ChartEditModel chartEditModel)
+        public NoteDrawer(TrackEditBoard trackEditBoard)
         {
-            this.trackCanvas = canvas;
-            this.scrollViewer = scrollViewer;
-            this.ChartEditModel = chartEditModel;
+            this.trackCanvas = trackEditBoard.TrackCanvas;
+            this.scrollViewer = trackEditBoard.TrackCanvasViewer;
+            this.ChartEditModel = trackEditBoard.Model;
             this.previewers = new List<Rectangle>();
 
             this.InitPreviewNotes();
@@ -139,6 +147,45 @@ namespace ChartEditor.Utils.Drawers
         }
 
         /// <summary>
+        /// 根据Canvas坐标搜索一个图形并高光
+        /// </summary>
+        public void MakeItemHighLight(Point? point)
+        {
+            Rectangle searchItem = null;
+            // 搜索图形
+            foreach(var track in this.ChartEditModel.Tracks)
+            {
+                Rect trackRect = new Rect(Canvas.GetLeft(track.Rectangle), Canvas.GetTop(track.Rectangle), track.Rectangle.Width, track.Rectangle.Height);
+                if (trackRect.Contains(point.Value))
+                {
+                    Console.WriteLine("ddd");
+                    searchItem = track.Rectangle;
+                    // 搜索Note
+                    foreach (var note in track.Notes)
+                    {
+                        Rect noteRect = new Rect(Canvas.GetLeft(note.Rectangle), Canvas.GetTop(note.Rectangle), note.Rectangle.Width, note.Rectangle.Height);
+                        if (noteRect.Contains(point.Value))
+                        {
+                            searchItem = note.Rectangle;
+                            // 搜索到最顶层的非Hold则退出
+                            if (note.Type != NoteType.Hold) break;
+                        }
+                    }
+                    break;
+                }
+            }
+            if (searchItem == null || this.highlightItem == searchItem)
+            {
+                
+                return;
+            }
+            // 恢复上一个图形
+            if (this.highlightItem != null) this.highlightItem.StrokeThickness = StrokeThickness;
+            this.highlightItem = searchItem;
+            this.highlightItem.StrokeThickness = HighLightStrokeThickness;
+        }
+
+        /// <summary>
         /// 新建一个Track
         /// </summary>
         public void CreateTrackItem(Track track)
@@ -152,7 +199,7 @@ namespace ChartEditor.Utils.Drawers
                 Fill = ColorProvider.TrackGradientBrush,
                 RadiusX = Radius,
                 RadiusY = Radius,
-                Opacity = HeaderOpacity
+                Opacity = TrackOpacity
             };
             track.Rectangle = newTrack;
             this.trackCanvas.Children.Add(newTrack);
@@ -223,13 +270,12 @@ namespace ChartEditor.Utils.Drawers
         /// <summary>
         /// 在指定位置显示预览图形
         /// </summary>
-        public void ShowPreviewerAt(Point? point, int divide)
+        public void ShowPreviewerAt(Point? point)
         {
             if (!point.HasValue || !this.ifShowPreviewer) return;
             // 判断位置是否相同
-            BeatTime newBeatTime = new BeatTime(divide);
-            newBeatTime.UpdateFromJudgeLineOffset(this.trackCanvas.ActualHeight - point.Value.Y, this.ChartEditModel.RowWidth);
-            int columnIndex = (int)((point.Value.X) / this.ChartEditModel.ColumnWidth);
+            BeatTime newBeatTime = this.ChartEditModel.GetBeatTimeFromPoint(point, this.trackCanvas.ActualHeight);
+            int columnIndex = this.ChartEditModel.GetColumnIndexFromPoint(point);
             if (this.lastPreviewBeatTime.IsEqualTo(newBeatTime) && this.lastPreviewColumnIndex == columnIndex)
             {
                 return;

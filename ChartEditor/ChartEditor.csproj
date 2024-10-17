@@ -216,6 +216,7 @@
     <Compile Include="Utils\ChartUtils\ChartUtilV1.cs" />
     <Compile Include="Utils\ColorProvider.cs" />
     <Compile Include="Utils\Common.cs" />
+    <Compile Include="Utils\Controllers\TrackEditBoardController.cs" />
     <Compile Include="Utils\Drawers\NoteDrawer.cs" />
     <Compile Include="Utils\Drawers\TimeLineDrawer.cs" />
     <Compile Include="Utils\Drawers\TrackGridDrawer.cs" />
