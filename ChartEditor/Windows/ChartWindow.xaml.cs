@@ -25,23 +25,36 @@ namespace ChartEditor.Windows
     {
         private ChartEditPage ChartEditPage;
 
+        private MainWindowModel MainWindowModel;
+
+        private ChartListModel ChartListModel;
+
         public ChartWindow(ChartInfo chartInfo, MainWindowModel mainWindowModel, ChartListModel chartListModel)
         {
             InitializeComponent();
             this.Title = chartInfo.Name + " - " + chartInfo.ChartMusic.Title;
-            ChartEditPage chartEditPage = new ChartEditPage(chartInfo, mainWindowModel, chartListModel);
+            this.MainWindowModel = mainWindowModel;
+            this.ChartListModel = chartListModel;
+            ChartEditPage chartEditPage = new ChartEditPage(chartInfo, mainWindowModel, chartListModel, this);
             this.ChartEditPage = chartEditPage;
             ChartPage.Navigate(chartEditPage);
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            
+            // 保存谱面和工作区
+
+            // 刷新谱面列表
+
+            // 更新曲目数据
+            this.ChartListModel.GetChartInfos();
         }
 
         private void Window_Closed(object sender, EventArgs e)
         {
             this.ChartEditPage.TrackEditBoard.Dispose();
+            // 唤起主窗口
+            this.MainWindowModel.MainWindow.Show();
         }
     }
 }

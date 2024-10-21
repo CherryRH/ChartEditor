@@ -1,6 +1,7 @@
 ﻿using ChartEditor.Models;
 using ChartEditor.UserControls.Dialogs;
 using ChartEditor.Utils;
+using ChartEditor.Utils.ChartUtils;
 using ChartEditor.Utils.Controllers;
 using ChartEditor.ViewModels;
 using MaterialDesignThemes.Wpf;
@@ -26,10 +27,12 @@ namespace ChartEditor.UserControls.Boards
         // 是否处于初始化中
         private bool isInitializing = true;
 
-        // 是否处于加载中
-        private bool isLoading = false;
-
         private TrackEditBoardController TrackEditBoardController;
+
+        /// <summary>
+        /// 消息框队列
+        /// </summary>
+        public SnackbarMessageQueue MessageQueue { get; } = new SnackbarMessageQueue();
 
         public ChartEditModel Model
         {
@@ -42,6 +45,8 @@ namespace ChartEditor.UserControls.Boards
             
             // 设置UI颜色
             this.SetUIColor();
+
+            TrackEditBoardSnackbar.MessageQueue = this.MessageQueue;
 
             this.Loaded += TrackEditBoard_Loaded;
         }
@@ -183,57 +188,27 @@ namespace ChartEditor.UserControls.Boards
         /// </summary>
         public void SetMessage(string message, double time, MessageType messageType = MessageType.Notice)
         {
-            MessageBoxText.Text = message;
             switch (messageType)
             {
                 case MessageType.Notice:
                     {
-                        MessageBox.BorderBrush = System.Windows.Media.Brushes.Black;
-                        MessageBoxText.Foreground = System.Windows.Media.Brushes.Black;
+                        TrackEditBoardSnackbar.Foreground = ColorProvider.NoticeMessageBrush;
+                        this.MessageQueue.Enqueue(message, null, null, null, false, true, TimeSpan.FromSeconds(time));
                         break;
                     }
                 case MessageType.Warn:
                     {
-                        MessageBox.BorderBrush = System.Windows.Media.Brushes.Orange;
-                        MessageBoxText.Foreground = System.Windows.Media.Brushes.Orange;
+                        TrackEditBoardSnackbar.Foreground = ColorProvider.WarnMessageBrush;
+                        this.MessageQueue.Enqueue(message, null, null, null, false, true, TimeSpan.FromSeconds(time));
                         break;
                     }
                 case MessageType.Error:
                     {
-                        MessageBox.BorderBrush = System.Windows.Media.Brushes.Red;
-                        MessageBoxText.Foreground = System.Windows.Media.Brushes.Red;
+                        TrackEditBoardSnackbar.Foreground = ColorProvider.ErrorMessageBrush;
+                        this.MessageQueue.Enqueue(message, null, null, null, false, true, TimeSpan.FromSeconds(time));
                         break;
                     }
             }
-            
-            DoubleAnimation fadeInAnimation = new DoubleAnimation
-            {
-                From = 0,
-                To = 1,
-                Duration = TimeSpan.FromSeconds(0.5)
-            };
-            DoubleAnimation fadeOutAnimation = new DoubleAnimation
-            {
-                From = 1,
-                To = 0,
-                Duration = TimeSpan.FromSeconds(0.5),
-                BeginTime = TimeSpan.FromSeconds(time)
-            };
-            Storyboard storyboard = new Storyboard();
-            storyboard.Children.Add(fadeInAnimation);
-            storyboard.Children.Add(fadeOutAnimation);
-            Storyboard.SetTarget(fadeInAnimation, MessageBox);
-            Storyboard.SetTargetProperty(fadeInAnimation, new PropertyPath(UIElement.OpacityProperty));
-            Storyboard.SetTarget(fadeOutAnimation, MessageBox);
-            Storyboard.SetTargetProperty(fadeOutAnimation, new PropertyPath(UIElement.OpacityProperty));
-            storyboard.Begin();
-        }
-
-        public enum MessageType
-        {
-            Notice,
-            Warn,
-            Error
         }
 
         private void TrackCanvasViewer_PreviewMouseMove(object sender, MouseEventArgs e)
@@ -344,14 +319,9 @@ namespace ChartEditor.UserControls.Boards
 
         private async void SizeButton_Click(object sender, RoutedEventArgs e)
         {
-            this.isLoading = true;
+            this.TrackEditBoardController.SetIsSizeChanging(true);
             await DialogHost.Show(new TrackGridSizeDialog(this.Model), "TrackEditDialog");
-            if (!this.TrackEditBoardController.IsPlaying)
-            {
-                BeatTime lastBeat = new BeatTime(this.Model.CurrentBeat);
-                this.ScrollToCurrentBeat(lastBeat);
-            }
-            this.isLoading = false;
+            this.TrackEditBoardController.SetIsSizeChanging(false);
         }
 
         private async void DivideButton_Click(object sender, RoutedEventArgs e)
@@ -364,9 +334,21 @@ namespace ChartEditor.UserControls.Boards
 
         }
 
-        private void InfomationButton_Click(object sender, RoutedEventArgs e)
+        private async void InfomationButton_Click(object sender, RoutedEventArgs e)
         {
-
+            Object result = await DialogHost.Show(new ChartInfoDialog(this.Model), "TrackEditDialog");
+            if (result as bool? == true)
+            {
+                // 更新并保存文件
+                this.Model.ChartInfo.UpdateAtNow();
+                this.UpdateCurrentBeatTime();
+                if (!ChartUtilV1.SaveChartInfo(this.Model.ChartInfo))
+                {
+                    this.SetMessage("谱面信息保存失败", 2, MessageType.Error);
+                    return;
+                }
+                this.SetMessage("谱面信息保存成功", 2, MessageType.Notice);
+            }
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
@@ -381,9 +363,19 @@ namespace ChartEditor.UserControls.Boards
 
         private void TrackCanvasViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            // 同步时间轴滚动条
-            TimeLineCanvasViewer.ScrollToVerticalOffset(TrackCanvasViewer.VerticalOffset);
-            if (!this.isInitializing && !this.isLoading)
+            this.SetScrollViewerVerticalOffset(e.VerticalOffset);
+        }
+
+        /// <summary>
+        /// 设置纵向滚动条偏移位置
+        /// </summary>
+        public void SetScrollViewerVerticalOffset(double verticalOffset)
+        {
+            // 同步滚动条
+            if (TrackCanvasViewer.VerticalOffset != verticalOffset) TrackCanvasViewer.ScrollToVerticalOffset(verticalOffset);
+            if (TimeLineCanvasViewer.VerticalOffset != verticalOffset) TimeLineCanvasViewer.ScrollToVerticalOffset(verticalOffset);
+            // 更新当前时间信息
+            if (!this.isInitializing)
             {
                 this.Model.UpdateCurrentBeatTime(TrackCanvasViewer.VerticalOffset, TrackCanvasViewer.ExtentHeight, TrackCanvasViewer.ActualHeight);
             }
@@ -435,6 +427,29 @@ namespace ChartEditor.UserControls.Boards
             FlickNoteSelectBox.Foreground = ColorProvider.FlickNoteBorderBrush;
             HoldNoteSelectBox.Foreground = ColorProvider.HoldNoteBorderBrush;
             CatchNoteSelectBox.Foreground = ColorProvider.CatchNoteBorderBrush;
+        }
+
+        private void TimeLineCanvasViewer_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            Point? point = e.GetPosition(TimeLineCanvasViewer);
+            this.TrackEditBoardController.OnMouseDownInTimeLineCanvasViewer(point, e.ButtonState);
+        }
+
+        private void TimeLineCanvasViewer_PreviewMouseMove(object sender, MouseEventArgs e)
+        {
+            Point? point = e.GetPosition(TimeLineCanvasViewer);
+            this.TrackEditBoardController.OnMouseMoveInTimeLineCanvasViewer(point);
+        }
+
+        private void TimeLineCanvasViewer_PreviewMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            Point? point = e.GetPosition(TimeLineCanvasViewer);
+            this.TrackEditBoardController.OnMouseUpInTimeLineCanvasViewer(point);
+        }
+
+        private void TimeLineCanvasViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            this.SetScrollViewerVerticalOffset(e.VerticalOffset);
         }
     }
 }

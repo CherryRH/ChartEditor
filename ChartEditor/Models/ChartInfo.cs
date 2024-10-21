@@ -1,4 +1,5 @@
 ﻿using ChartEditor.Utils;
+using ChartEditor.Utils.ChartUtils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -19,7 +20,7 @@ namespace ChartEditor.Models
         private static string logTag = "[ChartInfo]";
 
         /// <summary>
-        /// 谱面歌曲信息
+        /// 谱面曲目信息
         /// </summary>
         private ChartMusic chartMusic;
         public ChartMusic ChartMusic { get { return chartMusic; } }
@@ -61,12 +62,6 @@ namespace ChartEditor.Models
         public int Volume { get { return volume; } set { volume = value; } }
 
         /// <summary>
-        /// 谱面时长
-        /// </summary>
-        private double duration;
-        public double Duration { get { return duration; } set { duration = value; } }
-
-        /// <summary>
         /// 谱面延迟
         /// </summary>
         private double delay;
@@ -77,12 +72,6 @@ namespace ChartEditor.Models
         /// </summary>
         private double preview;
         public double Preview { get { return preview; } set { preview = value; } }
-
-        /// <summary>
-        /// 是否镜像
-        /// </summary>
-        private bool isMirrored;
-        public bool IsMirrored { get { return isMirrored; } set { isMirrored = value; } }
 
         /// <summary>
         /// 谱面文件夹路径
@@ -100,15 +89,13 @@ namespace ChartEditor.Models
             this.chartMusic = chartMusic;
             this.name = name;
             this.author = author;
-            this.folderPath = Path.Combine(this.chartMusic.FolderPath, name);
             this.createdAt = DateTime.Now;
             this.updatedAt = DateTime.Now;
             this.difficulty = 0;
             this.volume = 0;
-            this.duration = 0;
             this.delay = 0;
             this.preview = 0;
-            this.isMirrored = false;
+            this.folderPath = ChartUtilV1.GenerateNewChartFolderPath(chartMusic.FolderPath, this.createdAt);
         }
 
         /// <summary>
@@ -124,10 +111,8 @@ namespace ChartEditor.Models
                 ["CreatedAt"] = this.createdAt,
                 ["UpdatedAt"] = this.updatedAt,
                 ["Volume"] = this.volume,
-                ["Duration"] = this.duration,
                 ["Delay"] = this.delay,
-                ["Preview"] = this.preview,
-                ["IsMirrored"] = this.isMirrored
+                ["Preview"] = this.preview
             };
         }
 
@@ -142,16 +127,14 @@ namespace ChartEditor.Models
                 this.folderPath = folder;
                 if (jObject == null) { return; }
                 // 解析并赋值属性
-                this.name = (string)jObject["Name"] ?? string.Empty;
-                this.difficulty = (int)jObject["Difficulty"];
-                this.author = (string)jObject["Author"] ?? string.Empty;
-                this.createdAt = (DateTime)jObject["CreatedAt"];
-                this.updatedAt = (DateTime)jObject["UpdatedAt"];
-                this.volume = (int)jObject["Volume"];
-                this.duration = (double)jObject["Duration"];
-                this.delay = (double)jObject["Delay"];
-                this.preview = (double)jObject["Preview"];
-                this.isMirrored = (bool)jObject["IsMirrored"];
+                this.name = jObject.Value<string>("Name") ?? string.Empty;
+                this.difficulty = jObject.Value<int?>("Difficulty") ?? 0;
+                this.author = jObject.Value<string>("Author") ?? string.Empty;
+                this.createdAt = jObject.Value<DateTime?>("CreatedAt") ?? DateTime.MinValue;
+                this.updatedAt = jObject.Value<DateTime?>("UpdatedAt") ?? DateTime.MinValue;
+                this.volume = jObject.Value<int?>("Volume") ?? 100;
+                this.delay = jObject.Value<double?>("Delay") ?? 0.0;
+                this.preview = jObject.Value<double?>("Preview") ?? 0.0;
             }
             catch (Exception ex)
             {

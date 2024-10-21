@@ -28,7 +28,10 @@ namespace ChartEditor.Utils.Controllers
         // TrackEditBoard及常用子组件
         private TrackEditBoard TrackEditBoard;
         private Canvas TrackCanvas { get { return TrackEditBoard.TrackCanvas; } }
+        private ScrollViewer TrackCanvasViewer { get { return TrackEditBoard.TrackCanvasViewer; } }
+        private ScrollViewer TimeLineCanvasViewer { get { return TrackEditBoard.TimeLineCanvasViewer; } }
         private ChartEditModel ChartEditModel { get { return TrackEditBoard.Model; } }
+        private ChartInfo ChartInfo { get { return ChartEditModel.ChartInfo; } }
 
         /// <summary>
         /// 绘图器
@@ -91,6 +94,9 @@ namespace ChartEditor.Utils.Controllers
         private bool isHoldNotePutting = false;
         public bool IsHoldNotePutting { get { return isHoldNotePutting; } }
 
+        // 当前拍数锚点
+        private BeatTime beatTimeAnchor = new BeatTime();
+
         public TrackEditBoardController(TrackEditBoard trackEditBoard)
         {
             this.TrackEditBoard = trackEditBoard;
@@ -132,8 +138,15 @@ namespace ChartEditor.Utils.Controllers
         {
             if (this.isPlaying)
             {
-                double currentHeight = ((DateTime.Now - this.musicStartDateTime).TotalSeconds + this.musicStartTime) * this.ChartEditModel.ScrollSpeed;
-                this.TrackEditBoard.TrackCanvasViewer.ScrollToVerticalOffset(this.ChartEditModel.TotalHeight - currentHeight);
+                double currentHeight = ((DateTime.Now - this.musicStartDateTime).TotalSeconds + this.musicStartTime - this.ChartInfo.Delay) * this.ChartEditModel.ScrollSpeed;
+                this.TrackCanvasViewer.ScrollToVerticalOffset(this.ChartEditModel.TotalHeight - currentHeight);
+            }
+            else
+            {
+                if (this.isSizeChanging)
+                {
+                    this.TrackEditBoard.ScrollToCurrentBeat(this.beatTimeAnchor);
+                }
             }
 
             if (this.ChartEditModel.NoteSelectedIndex != -1 && this.CanvasMousePosition.HasValue && this.TrackEditBoard.IsPointInTrackGrid(this.CanvasMousePosition) && !this.isPlaying && !this.isPicking)
@@ -158,8 +171,8 @@ namespace ChartEditor.Utils.Controllers
             {
                 double deltaX = mousePosition.Value.X - this.DragMousePosition.Value.X;
                 double deltaY = mousePosition.Value.Y - this.DragMousePosition.Value.Y;
-                this.TrackEditBoard.TrackCanvasViewer.ScrollToHorizontalOffset(this.TrackEditBoard.TrackCanvasViewer.HorizontalOffset - deltaX);
-                this.TrackEditBoard.TrackCanvasViewer.ScrollToVerticalOffset(this.TrackEditBoard.TrackCanvasViewer.VerticalOffset - deltaY);
+                this.TrackCanvasViewer.ScrollToHorizontalOffset(this.TrackCanvasViewer.HorizontalOffset - deltaX);
+                this.TrackCanvasViewer.ScrollToVerticalOffset(this.TrackCanvasViewer.VerticalOffset - deltaY);
                 this.DragMousePosition = mousePosition;
             }
         }
@@ -180,7 +193,7 @@ namespace ChartEditor.Utils.Controllers
                 {
                     this.DragMousePosition = mousePosition;
                     this.isScrollViewerDragging = true;
-                    this.TrackEditBoard.TrackCanvasViewer.CaptureMouse();
+                    this.TrackCanvasViewer.CaptureMouse();
                 }
             }
         }
@@ -195,7 +208,7 @@ namespace ChartEditor.Utils.Controllers
             {
                 this.isScrollViewerDragging = false;
                 this.DragMousePosition = null;
-                TrackEditBoard.TrackCanvasViewer.ReleaseMouseCapture();
+                this.TrackCanvasViewer.ReleaseMouseCapture();
             }
         }
 
@@ -232,6 +245,58 @@ namespace ChartEditor.Utils.Controllers
                     // 放置事件
                     this.TryPutNote(beatTime, columnIndex);
                 }
+            }
+        }
+
+        /// <summary>
+        /// 当鼠标在TimeLineCanvasViewer中移动
+        /// </summary>
+        public void OnMouseMoveInTimeLineCanvasViewer(Point? mousePosition)
+        {
+            if (this.isPlaying) return;
+
+            if (this.isScrollViewerDragging && this.DragMousePosition.HasValue)
+            {
+                double deltaX = mousePosition.Value.X - this.DragMousePosition.Value.X;
+                double deltaY = mousePosition.Value.Y - this.DragMousePosition.Value.Y;
+                this.TimeLineCanvasViewer.ScrollToHorizontalOffset(this.TimeLineCanvasViewer.HorizontalOffset - deltaX);
+                this.TimeLineCanvasViewer.ScrollToVerticalOffset(this.TimeLineCanvasViewer.VerticalOffset - deltaY);
+                this.DragMousePosition = mousePosition;
+            }
+        }
+
+        /// <summary>
+        /// 当鼠标在TimeLineCanvasViewer中点击
+        /// </summary>
+        public void OnMouseDownInTimeLineCanvasViewer(Point? mousePosition, MouseButtonState mouseButtonState)
+        {
+            if (this.isPlaying)
+            {
+                // 暂停播放
+                this.TrackEditBoard.PlayButton.IsChecked = false;
+            }
+            else
+            {
+                if (mouseButtonState == MouseButtonState.Pressed)
+                {
+                    this.DragMousePosition = mousePosition;
+                    this.isScrollViewerDragging = true;
+                    this.TimeLineCanvasViewer.CaptureMouse();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 当鼠标在TimeLineCanvasViewer中释放
+        /// </summary>
+        public void OnMouseUpInTimeLineCanvasViewer(Point? mousePosition)
+        {
+            if (this.isPlaying) return;
+            if (this.isScrollViewerDragging)
+            {
+                this.isScrollViewerDragging = false;
+                this.DragMousePosition = null;
+                this.TimeLineCanvasViewer.ReleaseMouseCapture();
             }
         }
 
@@ -294,7 +359,8 @@ namespace ChartEditor.Utils.Controllers
             this.isSizeChanging = isSizeChanging;
             if (this.isSizeChanging)
             {
-
+                // 保存拍数锚点
+                this.beatTimeAnchor = new BeatTime(this.ChartEditModel.CurrentBeat);
             }
             else
             {
@@ -339,7 +405,7 @@ namespace ChartEditor.Utils.Controllers
             {
                 if (!this.musicPlayer.ReplayMusic())
                 {
-                    this.TrackEditBoard.SetMessage("音乐播放异常，再试一次吧", 3, MessageType.Error);
+                    this.TrackEditBoard.SetMessage("音乐播放异常，再试一次吧", 2, MessageType.Error);
                     return;
                 }
                 this.TrackEditBoard.PlayButton.IsChecked = true;
@@ -354,7 +420,6 @@ namespace ChartEditor.Utils.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine(logTag + ex.ToString());
-
             }
         }
 
@@ -372,10 +437,9 @@ namespace ChartEditor.Utils.Controllers
                 }
                 if (!this.musicPlayer.PlayMusic(this.ChartEditModel.CurrentTime))
                 {
-                    this.TrackEditBoard.SetMessage("音乐播放异常，再试一次吧", 3, MessageType.Error);
+                    this.TrackEditBoard.SetMessage("音乐播放异常，再试一次吧", 2, MessageType.Error);
                     return;
                 }
-
                 this.TrackEditBoard.PlayIcon.Kind = PackIconKind.Pause;
                 this.musicStartDateTime = DateTime.Now;
                 this.musicStartTime = this.ChartEditModel.CurrentTime;
@@ -385,7 +449,6 @@ namespace ChartEditor.Utils.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine(logTag + ex.ToString());
-
             }
         }
 
@@ -423,7 +486,7 @@ namespace ChartEditor.Utils.Controllers
                             }
                             else
                             {
-                                this.TrackEditBoard.SetMessage("此处不允许放置", 3, MessageType.Warn);
+                                this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
                             }
                         }
                         else
@@ -439,7 +502,7 @@ namespace ChartEditor.Utils.Controllers
                             }
                             else
                             {
-                                this.TrackEditBoard.SetMessage("此处不允许放置", 3, MessageType.Warn);
+                                this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
                             }
                         }
                         break;
@@ -454,7 +517,7 @@ namespace ChartEditor.Utils.Controllers
                         }
                         else
                         {
-                            this.TrackEditBoard.SetMessage("此处不允许放置", 3, MessageType.Warn);
+                            this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
                         }
                         break;
                     }
@@ -468,7 +531,7 @@ namespace ChartEditor.Utils.Controllers
                         }
                         else
                         {
-                            this.TrackEditBoard.SetMessage("此处不允许放置", 3, MessageType.Warn);
+                            this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
                         }
                         break;
                     }
@@ -485,7 +548,7 @@ namespace ChartEditor.Utils.Controllers
                             }
                             else
                             {
-                                this.TrackEditBoard.SetMessage("此处不允许放置", 3, MessageType.Warn);
+                                this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
                             }
                         }
                         else
@@ -501,7 +564,7 @@ namespace ChartEditor.Utils.Controllers
                             }
                             else
                             {
-                                this.TrackEditBoard.SetMessage("此处不允许放置", 3, MessageType.Warn);
+                                this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
                             }
                         }
                         break;
@@ -516,7 +579,7 @@ namespace ChartEditor.Utils.Controllers
                         }
                         else
                         {
-                            this.TrackEditBoard.SetMessage("此处不允许放置", 3, MessageType.Warn);
+                            this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
                         }
                         break;
                     }
@@ -570,8 +633,8 @@ namespace ChartEditor.Utils.Controllers
             this.TrackCanvas.Width = this.ChartEditModel.TotalWidth;
             this.TrackCanvas.Height = this.ChartEditModel.TotalHeight;
             this.TrackEditBoard.TrackCanvasFloor.Width = this.ChartEditModel.TotalWidth + 50;
-            this.TrackEditBoard.TrackCanvasFloor.Height = this.ChartEditModel.TotalHeight + this.TrackEditBoard.TrackCanvasViewer.ActualHeight;
-            Canvas.SetTop(this.TrackCanvas, this.TrackEditBoard.TrackCanvasViewer.ActualHeight * Common.JudgeLineRateOp);
+            this.TrackEditBoard.TrackCanvasFloor.Height = this.ChartEditModel.TotalHeight + this.TrackCanvasViewer.ActualHeight;
+            Canvas.SetTop(this.TrackCanvas, this.TrackCanvasViewer.ActualHeight * Common.JudgeLineRateOp);
         }
 
         /// <summary>

@@ -11,14 +11,14 @@ using System.Windows.Media.Imaging;
 namespace ChartEditor.Models
 {
     /// <summary>
-    /// 谱面歌曲
+    /// 谱面曲目
     /// </summary>
     public class ChartMusic
     {
         private static string logTag = "[ChartMusic]";
 
         /// <summary>
-        /// 歌名
+        /// 曲名
         /// </summary>
         private string title;
         public string Title { get { return title; } set { title = value; } }
@@ -36,13 +36,13 @@ namespace ChartEditor.Models
         public double Bpm { get { return bpm; } set { bpm = value; } }
 
         /// <summary>
-        /// 歌曲时长
+        /// 曲目时长
         /// </summary>
         private double duration;
         public double Duration { get { return duration; } set { duration = value; } }
 
         /// <summary>
-        /// 歌曲文件夹路径
+        /// 曲目文件夹路径
         /// </summary>
         private string folderPath;
         public string FolderPath { get { return folderPath; } set { folderPath = value; } }
@@ -70,13 +70,13 @@ namespace ChartEditor.Models
 
         }
 
-        public ChartMusic(string title, string composer, double bpm, double duration, string folderPath)
+        public ChartMusic(string title, string composer, double bpm, double duration, string folderPath, DateTime? createdAt)
         {
             this.title = title;
             this.artist = composer;
             this.bpm = bpm;
             this.duration = duration;
-            this.createdAt = DateTime.Now;
+            this.createdAt = createdAt ?? DateTime.Now;
             this.updatedAt = DateTime.Now;
             this.folderPath = folderPath;
             this.coverPath = this.GetCoverPath();
@@ -126,7 +126,7 @@ namespace ChartEditor.Models
         /// <summary>
         /// 获取封面图片路径
         /// </summary>
-        public string GetCoverPath()
+        private string GetCoverPath()
         {
             return Path.Combine(this.folderPath, "cover.png");
         }

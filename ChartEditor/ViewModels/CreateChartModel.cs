@@ -12,14 +12,12 @@ namespace ChartEditor.ViewModels
         /// <summary>
         /// 谱面名称
         /// </summary>
-        private string name;
-        public string Name { set { name = value; } get { return name; } }
+        public string Name { set; get; }
 
         /// <summary>
         /// 谱师名称
         /// </summary>
-        private string author;
-        public string Author { set { author = value; } get { return author; } }
+        public string Author { set; get; }
 
         public CreateChartModel() { }
 

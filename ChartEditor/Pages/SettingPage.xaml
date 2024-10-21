@@ -53,32 +53,50 @@
                 </Grid>
             </materialDesign:Card>
 
-            <StackPanel Grid.Row="1">
+            <ScrollViewer Grid.Row="1">
+                <StackPanel>
+                    <TextBox 
+                        TextWrapping="NoWrap"
+                        Text="{Binding Settings.Username}" 
+                        HorizontalAlignment="Left"
+                        Margin="50, 50, 50, 20"
+                        materialDesign:HintAssist.HelperText="请输入你创建谱面的默认名字"
+                        materialDesign:HintAssist.Hint="谱师名"
+                        Width="400"
+                        FontSize="16"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
-                <TextBox 
-                    TextWrapping="NoWrap"
-                    Text="{Binding Settings.Username}" 
-                    HorizontalAlignment="Left"
-                    Margin="50, 50, 50, 20"
-                    materialDesign:HintAssist.HelperText="请输入你创建谱面的默认名字"
-                    materialDesign:HintAssist.Hint="谱师名"
-                    Width="400"
-                    FontSize="16"
-                    Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    <TextBlock
+                        Margin="50, 20, 50, 0"
+                        Text="自动保存间隔"/>
+                    <ListBox
+                        x:Name="AutoSaveSelectBox"
+                        Margin="50, 10, 50, 20"
+                        Style="{StaticResource MaterialDesignToolToggleFlatListBox}"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Left"
+                        SelectionChanged="AutoSaveSelectBox_SelectionChanged">
+                        <ListBoxItem Content="从不" FontSize="16"/>
+                        <ListBoxItem Content="1分钟" FontSize="16"/>
+                        <ListBoxItem Content="5分钟" FontSize="16"/>
+                        <ListBoxItem Content="10分钟" FontSize="16"/>
+                    </ListBox>
 
-                <TextBox
-                    Text="{Binding Settings.AppPath}" 
-                    VerticalAlignment="Center"
-                    HorizontalAlignment="Left"
-                    Margin="50, 20, 50, 20"
-                    materialDesign:HintAssist.HelperText="制谱器根目录，谱面等数据都在这里哦"
-                    materialDesign:HintAssist.Hint="应用路径"
-                    Width="auto"
-                    MinWidth="400"
-                    FontSize="16"
-                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                    IsEnabled="False"/>
-            </StackPanel>
+                    <TextBox
+                        Text="{Binding Settings.AppPath}" 
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Left"
+                        Margin="50, 20, 50, 20"
+                        materialDesign:HintAssist.HelperText="制谱器根目录，谱面等数据都在这里哦"
+                        materialDesign:HintAssist.Hint="应用路径"
+                        Width="auto"
+                        MinWidth="400"
+                        FontSize="16"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                        IsEnabled="False"/>
+                </StackPanel>
+            </ScrollViewer>
+
         </Grid>
     </materialDesign:DialogHost>
 </Page>

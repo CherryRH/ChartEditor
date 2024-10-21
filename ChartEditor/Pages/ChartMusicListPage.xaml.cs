@@ -1,5 +1,6 @@
 ﻿using ChartEditor.UserControls.Dialogs;
 using ChartEditor.UserControls.Items;
+using ChartEditor.Utils;
 using ChartEditor.ViewModels;
 using MaterialDesignThemes.Wpf;
 using System;
@@ -34,7 +35,7 @@ namespace ChartEditor.Pages
         }
 
         /// <summary>
-        /// 处理创建新歌曲按钮点击事件
+        /// 处理创建新曲目按钮点击事件
         /// </summary>
         private void CreateChartMusicButton_Click(object sender, RoutedEventArgs e)
         {
@@ -50,7 +51,7 @@ namespace ChartEditor.Pages
         }
 
         /// <summary>
-        /// 处理歌曲点击事件
+        /// 处理曲目点击事件
         /// </summary>
         private void ChartMusicItemButton_Click(object sender, RoutedEventArgs e)
         {
@@ -61,19 +62,27 @@ namespace ChartEditor.Pages
         }
 
         /// <summary>
-        /// 处理歌曲修改点击事件
+        /// 处理曲目修改点击事件
         /// </summary>
-        private void ChartMusicSettingButton_Click(Object sender, RoutedEventArgs e)
+        private async void ChartMusicSettingButton_Click(Object sender, RoutedEventArgs e)
         {
-
+            if (sender is Button item && item.DataContext is ChartMusicItemModel selectedItem)
+            {
+                Object result = await DialogHost.Show(new ChartMusicEditDialog(selectedItem.ChartMusic, this.Model), "ChartMusicListDialog");
+                if (result as bool? == true)
+                {
+                    // 更新曲目
+                    this.Model.UpdateChartMusic(selectedItem.ChartMusic);
+                }
+            }
         }
 
         /// <summary>
-        /// 处理歌曲删除点击事件
+        /// 处理曲目删除点击事件
         /// </summary>
         private async void ChartMusicDeleteButton_Click(Object sender, RoutedEventArgs e)
         {
-            bool result = (bool)await DialogHost.Show(new ConfirmDialog("确认要删除歌曲吗？删除后歌曲和谱面还可以在回收站中恢复。"), "ChartMusicListDialog");
+            bool result = (bool)await DialogHost.Show(new ConfirmDialog("确认要删除曲目吗？删除后曲目和谱面还可以在回收站中恢复。"), "ChartMusicListDialog");
             if (result)
             {
                 if (sender is Button item && item.DataContext is ChartMusicItemModel selectedItem)

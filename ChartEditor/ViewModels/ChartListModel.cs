@@ -19,7 +19,7 @@ namespace ChartEditor.ViewModels
         private static string logTag = "[ChartListModel]";
 
         /// <summary>
-        /// 谱面歌曲信息
+        /// 谱面曲目信息
         /// </summary>
         private ChartMusic chartMusic;
         public ChartMusic ChartMusic { get { return chartMusic; } }
@@ -56,10 +56,15 @@ namespace ChartEditor.ViewModels
 
         public ChartListModel(ChartMusic chartMusic)
         {
-            // 从歌曲文件夹读取谱面列表
-            this.chartInfos = ChartUtilV1.ReadChartList(chartMusic);
-            this.SortChartInfosByUpdatedAt();
             this.chartMusic = chartMusic;
+            this.GetChartInfos();
+        }
+        
+        public void GetChartInfos()
+        {
+            // 从曲目文件夹读取谱面列表
+            this.chartInfos = ChartUtilV1.ReadChartList(this.chartMusic);
+            this.SortChartInfosByUpdatedAt();
         }
 
         /// <summary>
@@ -82,7 +87,7 @@ namespace ChartEditor.ViewModels
         }
 
         /// <summary>
-        /// 歌曲是否存在，根据名称搜索
+        /// 曲目是否存在，根据名称搜索
         /// </summary>
         public bool IsChartExist(string name)
         {

@@ -32,7 +32,12 @@ namespace ChartEditor.ViewModels
         public ChartMusicListPage ChartMusicListPage { get { return chartMusicListPage; } set { chartMusicListPage = value; } }
 
         /// <summary>
-        /// 谱面歌曲数组
+        /// 主窗口实例
+        /// </summary>
+        public MainWindow MainWindow { get; set; }
+
+        /// <summary>
+        /// 谱面曲目数组
         /// </summary>
         private List<ChartMusic> chartMusics;
         public List<ChartMusic> ChartMusics { get { return chartMusics; } }
@@ -40,7 +45,7 @@ namespace ChartEditor.ViewModels
         public List<ChartMusicItemModel> ChartMusicItemModels {  get { return CreateChartMusicItemModels(); } }
 
         /// <summary>
-        /// 构建歌曲列表
+        /// 构建曲目列表
         /// </summary>
         private List<ChartMusicItemModel> CreateChartMusicItemModels()
         {
@@ -61,8 +66,8 @@ namespace ChartEditor.ViewModels
         public MainWindowModel()
         {
             this.settings = new Settings();
-            // 读取歌曲列表
-            this.chartMusics = ChartMusicReader.ReadChartMusics();
+            // 读取曲目列表
+            this.chartMusics = ChartMusicUtil.ReadChartMusics();
             this.SortChartMusicsByUpdatedAt();
         }
 
@@ -72,7 +77,7 @@ namespace ChartEditor.ViewModels
         }
 
         /// <summary>
-        /// 添加歌曲对象
+        /// 添加曲目对象
         /// </summary>
         public void AddChartMusic(ChartMusic chartMusic)
         {
@@ -83,7 +88,7 @@ namespace ChartEditor.ViewModels
         }
 
         /// <summary>
-        /// 根据更新时间对歌曲列表进行排序
+        /// 根据更新时间对曲目列表进行排序
         /// </summary>
         public void SortChartMusicsByUpdatedAt()
         {
@@ -92,7 +97,7 @@ namespace ChartEditor.ViewModels
         }
 
         /// <summary>
-        /// 歌曲是否存在，根据标题搜索
+        /// 曲目是否存在，根据标题搜索
         /// </summary>
         public bool IsChartMusicExist(string title)
         {
@@ -104,78 +109,41 @@ namespace ChartEditor.ViewModels
         }
 
         /// <summary>
-        /// 删除歌曲及其所有谱面和文件（回收站）
+        /// 删除曲目及其所有谱面和文件（回收站）
         /// </summary>
         public void DeleteChartMusic(ChartMusic chartMusic)
         {
-            try
+            if (ChartMusicUtil.DeleteChartMusic(chartMusic))
             {
-                if (Directory.Exists(chartMusic.FolderPath))
-                {
-                    FileSystem.DeleteDirectory(chartMusic.FolderPath, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
-
-                    chartMusic.CoverPath = string.Empty;
-                    this.chartMusics.Remove(chartMusic);
-                    this.OnPropertyChanged(nameof(ChartMusicNum));
-                    this.OnPropertyChanged(nameof(ChartMusicItemModels));
-                    // 移除封面的缓存
-                    CoverImageCache.Instance.RemoveImage(chartMusic.CoverPath);
-                    Console.WriteLine(logTag + "歌曲文件夹已删除");
-                }
+                chartMusic.CoverPath = string.Empty;
+                this.chartMusics.Remove(chartMusic);
+                this.OnPropertyChanged(nameof(ChartMusicNum));
+                this.OnPropertyChanged(nameof(ChartMusicItemModels));
+                // 移除封面的缓存
+                CoverImageCache.Instance.RemoveImage(chartMusic.CoverPath);
+                Console.WriteLine(logTag + "曲目文件夹已删除");
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine(logTag + ex.ToString());
-            }
-        }
-
-        /// <summary>
-        /// 更新歌曲信息
-        /// </summary>
-        public void UpdateChartMusic(ChartMusic chartMusic, string newTitle, string newArtist, double newBpm)
-        {
-            try
-            {
-                if (chartMusic == null || !this.chartMusics.Contains(chartMusic))
-                {
-                    return;
-                }
-                string oldTitle = chartMusic.Title;
-                chartMusic.Title = newTitle;
-                chartMusic.Artist = newArtist;
-                chartMusic.Bpm = newBpm;
-                chartMusic.UpdateAtNow();
-                File.WriteAllText(Path.Combine(chartMusic.FolderPath, Common.ChartMusicConfigFileName), chartMusic.toJsonString());
-                if (oldTitle != newTitle)
-                {
-                    Directory.Move(chartMusic.FolderPath, Path.Combine(Common.GetChartMusicFolderPath(), newTitle));
-                    chartMusic.FolderPath = Path.Combine(Common.GetChartMusicFolderPath(), newTitle);
-                }
-                Console.WriteLine(logTag + "歌曲信息已更新");
-                this.SortChartMusicsByUpdatedAt();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(logTag + ex.ToString());
+                Console.WriteLine(logTag + "曲目文件夹删除失败");
             }
         }
 
         public void UpdateChartMusic(ChartMusic chartMusic)
         {
-            try
+            if (chartMusic == null || !this.chartMusics.Contains(chartMusic))
             {
-                if (chartMusic == null || !this.chartMusics.Contains(chartMusic))
-                {
-                    return;
-                }
-                chartMusic.UpdateAtNow();
-                File.WriteAllText(Path.Combine(chartMusic.FolderPath, Common.ChartMusicConfigFileName), chartMusic.toJsonString());
-                Console.WriteLine(logTag + "歌曲信息已更新");
+                return;
+            }
+            chartMusic.UpdateAtNow();
+            if (ChartMusicUtil.SaveChartMusic(chartMusic))
+            {
+                Console.WriteLine(logTag + "曲目信息已更新");
                 this.SortChartMusicsByUpdatedAt();
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine(logTag + ex.ToString());
+                Console.WriteLine(logTag + "曲目信息更新失败");
             }
         }
 

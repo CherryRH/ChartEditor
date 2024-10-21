@@ -30,12 +30,16 @@ namespace ChartEditor.Models
         private string username;
         public string Username { get { return username; } set { username = value; } }
 
+        private AutoSaveType autoSaveType;
+        public AutoSaveType AutoSaveType { get { return autoSaveType; } set { autoSaveType = value; } }
+
         public string AppPath { get; set; }
 
         public Settings()
         {
             // 初始化数据
             this.username = "User";
+            this.autoSaveType = AutoSaveType.OneMinute;
             // 获取版本号
             this.appVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             // 读取本地设置
@@ -54,6 +58,7 @@ namespace ChartEditor.Models
             {
                 ["AppVersion"] = this.appVersion,
                 ["Username"] = this.username,
+                ["AutoSaveType"] = this.autoSaveType.ToString()
             };
 
             return jObject.ToString(Formatting.Indented);
@@ -93,7 +98,19 @@ namespace ChartEditor.Models
                     JObject jObject = JsonConvert.DeserializeObject<JObject>(File.ReadAllText(settingsFilePath));
                     if (jObject != null)
                     {
-                        this.Username = (string)jObject["Username"] ?? string.Empty;
+                        // 用户名
+                        this.username = jObject.Value<string>("Username") ?? string.Empty;
+                        // 自动保存类型
+                        string autoSaveTypeString = jObject.Value<string>("AutoSaveType") ?? string.Empty;
+                        if (Enum.TryParse(autoSaveTypeString, out AutoSaveType parsedAutoSaveType))
+                        {
+                            this.autoSaveType = parsedAutoSaveType;
+                        }
+                        else
+                        {
+                            this.autoSaveType = AutoSaveType.OneMinute;
+                        }
+
                         Console.WriteLine(logTag + "设置已读取");
                     }
                 }
@@ -104,5 +121,31 @@ namespace ChartEditor.Models
             }
 
         }
+
+        /// <summary>
+        /// 获取自动保存时间间隔（秒）
+        /// </summary>
+        public double GetAutoSaveInterval()
+        {
+            switch (this.autoSaveType)
+            {
+                case AutoSaveType.Never: return double.MaxValue;
+                case AutoSaveType.OneMinute: return 60.0;
+                case AutoSaveType.FiveMinutes: return 300.0;
+                case AutoSaveType.TenMinutes: return 600.0;
+            }
+            return double.MaxValue;
+        }
+    }
+
+    /// <summary>
+    /// 自动保存类型
+    /// </summary>
+    public enum AutoSaveType
+    {
+        Never,
+        OneMinute,
+        FiveMinutes,
+        TenMinutes
     }
 }

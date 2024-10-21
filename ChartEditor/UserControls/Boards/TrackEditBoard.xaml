@@ -73,7 +73,11 @@
                         <ScrollViewer
                             x:Name="TimeLineCanvasViewer"
                             HorizontalScrollBarVisibility="Hidden"
-                            VerticalScrollBarVisibility="Hidden">
+                            VerticalScrollBarVisibility="Hidden"
+                            ScrollChanged="TimeLineCanvasViewer_ScrollChanged"
+                            PreviewMouseDown="TimeLineCanvasViewer_PreviewMouseDown"
+                            PreviewMouseMove="TimeLineCanvasViewer_PreviewMouseMove"
+                            PreviewMouseUp="TimeLineCanvasViewer_PreviewMouseUp">
                             <Canvas
                                 x:Name="TimeLineCanvasFloor"
                                 HorizontalAlignment="Left">
@@ -119,27 +123,6 @@
                             x:Name="JudgementLine"
                             Stroke="Purple"
                             StrokeThickness="3"/>
-
-                        <Border
-                            x:Name="MessageBox"
-                            Opacity="0"
-                            Height="auto"
-                            MaxHeight="100"
-                            MaxWidth="300"
-                            Margin="20"
-                            BorderThickness="2" BorderBrush="Black" CornerRadius="10"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Bottom">
-                            <TextBlock
-                                VerticalAlignment="Center"
-                                x:Name="MessageBoxText"
-                                Foreground="Black"
-                                FontSize="16"
-                                FontWeight="Bold"
-                                TextWrapping="Wrap"
-                                Margin="10"
-                                Text=""/>
-                        </Border>
                     </Grid>
 
                     <materialDesign:Card Grid.Column="3">
@@ -237,6 +220,9 @@
                         </Grid>
                     </materialDesign:Card>
                 </Grid>
+
+                <materialDesign:Snackbar Grid.Row="1"
+                    x:Name="TrackEditBoardSnackbar"/>
             </Grid>
         </materialDesign:Card>
     </materialDesign:DialogHost>

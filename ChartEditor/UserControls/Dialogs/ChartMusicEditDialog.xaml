@@ -1,0 +1,108 @@
+﻿<UserControl x:Class="ChartEditor.UserControls.Dialogs.ChartMusicEditDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ChartEditor.UserControls.Dialogs"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d" 
+             d:DesignHeight="500" d:DesignWidth="800"
+             Width="800">
+    <materialDesign:DialogHost
+        Identifier="ChartMusicEditDialog"
+        CloseOnClickAway="True">
+        <StackPanel>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Column="0" Cursor="">
+                    <materialDesign:Card
+                        Margin="50"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Background="White"
+                        materialDesign:ElevationAssist.Elevation="Dp12">
+                        <Viewbox Stretch="Uniform">
+                            <Image
+                                x:Name="MusicCover"
+                                Source="pack://application:,,,/Resources/Textures/音乐.png"/>
+                        </Viewbox>
+                    </materialDesign:Card>
+                </Grid>
+
+                <StackPanel Grid.Column="1">
+                    <TextBox
+                        TextWrapping="NoWrap"
+                        Text="{Binding Title}"
+                        HorizontalAlignment="Left"
+                        Margin="50, 50, 50, 10"
+                        materialDesign:HintAssist.HelperText=""
+                        materialDesign:HintAssist.Hint="曲目名"
+                        Width="300"
+                        FontSize="16"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                    <TextBox
+                        TextWrapping="NoWrap"
+                        Text="{Binding Artist}"
+                        HorizontalAlignment="Left"
+                        Margin="50, 10, 50, 10"
+                        materialDesign:HintAssist.HelperText=""
+                        materialDesign:HintAssist.Hint="作曲艺术家"
+                        Width="300"
+                        FontSize="16"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                    <TextBox
+                        TextWrapping="NoWrap"
+                        Text="{Binding Bpm}"
+                        HorizontalAlignment="Left"
+                        Margin="50, 10, 50, 10"
+                        materialDesign:HintAssist.HelperText=""
+                        materialDesign:HintAssist.Hint="BPM"
+                        Width="300"
+                        FontSize="16"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                    <Button
+                        x:Name="SelectCoverButton"
+                        Width="200"
+                        HorizontalAlignment="Left"
+                        Margin="50, 10, 50, 10"
+                        Style="{StaticResource MaterialDesignOutlinedLightButton}"
+                        FontSize="16"
+                        Content="选择封面图片"
+                        Click="SelectCoverButton_Click"/>
+                    <TextBlock
+                        Text="{Binding CoverPath}"
+                        Margin="50, 0, 50, 10"
+                        TextWrapping="Wrap"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid
+                Margin="0, 10, 0, 50"
+                Width="300">
+                <Button
+                    x:Name="CancelButton"
+                    Content="取消"
+                    Width="100"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Bottom"
+                    Style="{StaticResource MaterialDesignOutlinedSecondaryDarkButton}"
+                    Click="CancelButton_Click"/>
+                <Button
+                    x:Name="ConfirmButton"
+                    Content="确定"
+                    Width="100"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Bottom"
+                    Style="{StaticResource MaterialDesignOutlinedLightButton}"
+                    Click="ConfirmButton_Click"/>
+            </Grid>
+        </StackPanel>
+    </materialDesign:DialogHost>
+</UserControl>

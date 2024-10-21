@@ -95,22 +95,27 @@ namespace ChartEditor.Pages
         {
             if (string.IsNullOrWhiteSpace(this.Model.Title))
             {
-                var result = await DialogHost.Show(new WarnDialog("歌曲名不能为空哦~"), "CreateChartMusicDialog");
+                var result = await DialogHost.Show(new WarnDialog("曲目名不能为空哦~"), "CreateChartMusicDialog");
                 return;
             }
             if (this.MainWindowModel.IsChartMusicExist(this.Model.Title))
             {
-                var result = await DialogHost.Show(new WarnDialog("此歌曲名已经创建了哦~"), "CreateChartMusicDialog");
+                var result = await DialogHost.Show(new WarnDialog("此曲目名已经创建了哦~"), "CreateChartMusicDialog");
                 return;
             }
             if (Directory.Exists(Path.Combine(Common.GetChartMusicFolderPath(), this.Model.Title)))
             {
-                var result = await DialogHost.Show(new WarnDialog("此歌曲名文件夹已经存在了，无法创建"), "CreateChartMusicDialog");
+                var result = await DialogHost.Show(new WarnDialog("此曲目名文件夹已经存在了，换个名字吧"), "CreateChartMusicDialog");
                 return;
             }
             if (string.IsNullOrWhiteSpace(this.Model.Artist))
             {
                 var result = await DialogHost.Show(new WarnDialog("作曲艺术家不能为空哦~"), "CreateChartMusicDialog");
+                return;
+            }
+            if (!double.TryParse(this.Model.Bpm, out double bpm) || bpm < 0)
+            {
+                await DialogHost.Show(new WarnDialog("BPM要为非负数字"), "CreateChartMusicDialog");
                 return;
             }
             if (string.IsNullOrWhiteSpace(this.Model.MusicPath))
@@ -128,7 +133,7 @@ namespace ChartEditor.Pages
                 }
             }
 
-            DialogHost.Show(new LoadingDialog("歌曲正在创建中~"), "CreateChartMusicDialog");
+            DialogHost.Show(new LoadingDialog("曲目正在创建中~"), "CreateChartMusicDialog");
             ChartMusic createResult = await this.Model.CreateChartMusicFolder();
             DialogHost.Close("CreateChartMusicDialog");
 
@@ -139,7 +144,7 @@ namespace ChartEditor.Pages
             }
             else
             {
-                var result = await DialogHost.Show(new WarnDialog("歌曲创建失败，再试试吧~"), "CreateChartMusicDialog");
+                var result = await DialogHost.Show(new WarnDialog("曲目创建失败，再试试吧~"), "CreateChartMusicDialog");
             }
         }
     }

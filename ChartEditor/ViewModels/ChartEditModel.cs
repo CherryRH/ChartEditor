@@ -1,5 +1,7 @@
 ﻿using ChartEditor.Models;
 using ChartEditor.Utils;
+using ChartEditor.Windows;
+using MaterialDesignThemes.Wpf;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -14,11 +16,16 @@ namespace ChartEditor.ViewModels
     public class ChartEditModel : INotifyPropertyChanged
     {
         private static string logTag = "[ChartEditModel]";
+
+        /// <summary>
+        /// 谱面编辑窗口实例
+        /// </summary>
+        public ChartWindow ChartWindow { get; private set; }
+
         /// <summary>
         /// 谱面信息
         /// </summary>
-        private ChartInfo chartInfo;
-        public ChartInfo ChartInfo { get { return chartInfo; } }
+        public ChartInfo ChartInfo { get; }
 
         /// <summary>
         /// 轨道，包含所有音符
@@ -67,7 +74,7 @@ namespace ChartEditor.ViewModels
         public double TotalWidth { get { return this.ColumnNum * this.ColumnWidth; } }
 
         /// <summary>
-        /// 歌曲速度/谱面速度
+        /// 曲目速度/谱面速度
         /// </summary>
         private double speed = 1.0;
         public double Speed { get { return speed; } set { speed = value; OnPropertyChanged(nameof(Speed)); } }
@@ -78,7 +85,7 @@ namespace ChartEditor.ViewModels
         public double ScrollSpeed { get { return RowWidth / this.BeatTime; } }
 
         /// <summary>
-        /// 歌曲实际结束的位置
+        /// 曲目实际结束的位置
         /// </summary>
         public double ActualHeight { get { return ScrollSpeed * this.ChartInfo.ChartMusic.Duration; } }
 
@@ -94,7 +101,7 @@ namespace ChartEditor.ViewModels
             } }
 
         /// <summary>
-        /// 歌曲当前播放时间
+        /// 曲目当前播放时间
         /// </summary>
         private double currentTime = 0;
         public double CurrentTime { get { return currentTime; } set { currentTime = value; } }
@@ -108,7 +115,7 @@ namespace ChartEditor.ViewModels
         }
 
         /// <summary>
-        /// 歌曲当前节拍
+        /// 曲目当前节拍
         /// </summary>
         private BeatTime currentBeat = new BeatTime();
         public BeatTime CurrentBeat { get { return currentBeat; } set { currentBeat = value; } }
@@ -135,17 +142,17 @@ namespace ChartEditor.ViewModels
         public void ResetCurrentBeatTime()
         {
             this.currentBeat.Reset();
-            this.currentTime = this.chartInfo.Delay;
+            this.currentTime = this.ChartInfo.Delay;
         }
 
         /// <summary>
-        /// 歌曲总时长
+        /// 曲目总时长
         /// </summary>
         public string MusicTimeString
         {
             get
             {
-                TimeSpan timeSpan = TimeSpan.FromSeconds(this.chartInfo.ChartMusic.Duration);
+                TimeSpan timeSpan = TimeSpan.FromSeconds(this.ChartInfo.ChartMusic.Duration);
                 return string.Format("{0:D2}:{1:D2}.{2:D3}", timeSpan.Minutes, timeSpan.Seconds, timeSpan.Milliseconds);
             }
         }
@@ -173,11 +180,12 @@ namespace ChartEditor.ViewModels
         private float noteVolume = 50;
         public float NoteVolume { get { return noteVolume; } set { noteVolume = value; OnPropertyChanged(nameof(NoteVolume)); } }
 
-        public ChartEditModel(ChartInfo chartInfo)
+        public ChartEditModel(ChartInfo chartInfo, ChartWindow chartWindow)
         {
-            this.chartInfo = chartInfo;
+            this.ChartWindow = chartWindow;
+            this.ChartInfo = chartInfo;
             this.tracks = new List<Track>();
-            this.currentTime = this.chartInfo.Delay;
+            this.currentTime = this.ChartInfo.Delay;
         }
 
         /// <summary>

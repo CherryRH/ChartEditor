@@ -1,0 +1,89 @@
+﻿<UserControl x:Class="ChartEditor.UserControls.Dialogs.ChartInfoDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ChartEditor.UserControls.Dialogs"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d" 
+             d:DesignHeight="500" d:DesignWidth="500">
+    <materialDesign:DialogHost
+        Identifier="ChartInfoDialog"
+        CloseOnClickAway="True">
+        <Grid>
+            <StackPanel
+                Margin="20"
+                VerticalAlignment="Center">
+
+                <StackPanel Margin="0, 10">
+                    <TextBox
+                        TextWrapping="NoWrap"
+                        Text="{Binding ChartName}"
+                        HorizontalAlignment="Center"
+                        Margin="0, 10"
+                        materialDesign:HintAssist.Hint="谱面名称"
+                        Width="400"
+                        FontSize="16"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    <TextBox
+                        TextWrapping="NoWrap"
+                        Text="{Binding Author}"
+                        HorizontalAlignment="Center"
+                        Margin="0, 10"
+                        materialDesign:HintAssist.Hint="谱师名称"
+                        Width="400"
+                        FontSize="16"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    <TextBox
+                        TextWrapping="NoWrap"
+                        Text="{Binding Difficulty}"
+                        HorizontalAlignment="Center"
+                        Margin="0, 10"
+                        materialDesign:HintAssist.Hint="难度（非负整数值）"
+                        Width="400"
+                        FontSize="16"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    <TextBox
+                        TextWrapping="NoWrap"
+                        Text="{Binding Delay}"
+                        HorizontalAlignment="Center"
+                        Margin="0, 10"
+                        materialDesign:HintAssist.Hint="音乐延迟（非负毫秒数）"
+                        Width="400"
+                        FontSize="16"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    <TextBox
+                        TextWrapping="NoWrap"
+                        Text="{Binding Preview}"
+                        HorizontalAlignment="Center"
+                        Margin="0, 10"
+                        materialDesign:HintAssist.Hint="预览时间（非负秒数）"
+                        Width="400"
+                        FontSize="16"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                </StackPanel>
+
+                <Grid
+                    Margin="0, 20"
+                    Width="300">
+                    <Button
+                        x:Name="CancelButton"
+                        Content="取消"
+                        Width="100"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom"
+                        Style="{StaticResource MaterialDesignOutlinedSecondaryDarkButton}"
+                        Click="CancelButton_Click"/>
+                    <Button
+                        x:Name="ConfirmButton"
+                        Content="确定"
+                        Width="100"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        Style="{StaticResource MaterialDesignOutlinedLightButton}"
+                        Click="ConfirmButton_Click"/>
+                </Grid>
+            </StackPanel>
+        </Grid>
+    </materialDesign:DialogHost>
+</UserControl>

@@ -41,7 +41,7 @@
                         VerticalAlignment="Center" 
                         Style="{StaticResource MaterialDesignHeadline5TextBlock}"
                         Foreground="White" 
-                        Text="创建新歌曲"/>
+                        Text="创建新曲目"/>
                     <Button
                         x:Name="CreateChartMusicButton"
                         HorizontalAlignment="Right" 
@@ -91,7 +91,7 @@
                             HorizontalAlignment="Left"
                             Margin="50, 50, 50, 20"
                             materialDesign:HintAssist.HelperText=""
-                            materialDesign:HintAssist.Hint="歌曲名"
+                            materialDesign:HintAssist.Hint="曲目名"
                             Width="350"
                             FontSize="16"
                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
@@ -139,15 +139,20 @@
                         x:Name="SelectMusicButton"
                         Width="200"
                         HorizontalAlignment="Center"
-                        Margin="50, 50, 50, 20"
+                        Margin="50, 50, 50, 10"
                         Style="{StaticResource MaterialDesignOutlinedLightButton}"
                         FontSize="16"
                         Content="选择音频"
                         Click="SelectMusicButton_Click"/>
                     <TextBlock
+                        Text="曲目创建后音频不可更改"
+                        HorizontalAlignment="Center"
+                        Margin="50, 0, 50, 10"
+                        TextWrapping="Wrap"/>
+                    <TextBlock
                         Text="{Binding MusicPath}"
                         HorizontalAlignment="Center"
-                        Margin="50, 0, 50, 0"
+                        Margin="50, 10, 50, 0"
                         TextWrapping="Wrap"/>
                 </StackPanel>
             </Grid>

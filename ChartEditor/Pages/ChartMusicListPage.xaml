@@ -11,8 +11,9 @@
       d:DesignHeight="800" d:DesignWidth="1200"
       Title="ChartMusicListPage"
       KeepAlive="True">
-    <materialDesign:DialogHost 
-        Identifier="ChartMusicListDialog">
+    <materialDesign:DialogHost
+        Identifier="ChartMusicListDialog"
+        CloseOnClickAway="True">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="80"/>
@@ -33,7 +34,7 @@
                         Margin="10" 
                         Background="Transparent" 
                         Style="{StaticResource MaterialDesignIconButton}"
-                        ToolTip="创建新歌曲"
+                        ToolTip="创建新曲目"
                         Click="CreateChartMusicButton_Click">
                         <materialDesign:PackIcon Foreground="White" Background="Transparent" Height="30" Width="30" Kind="Add" />
                     </Button>
@@ -43,7 +44,7 @@
                         VerticalAlignment="Center" 
                         Style="{StaticResource MaterialDesignHeadline5TextBlock}" 
                         Foreground="White" 
-                        Text="歌曲列表"/>
+                        Text="曲目列表"/>
                     <Button
                         x:Name="SettingButton"
                         HorizontalAlignment="Left" 
@@ -87,12 +88,12 @@
                                             HorizontalAlignment="Center">
                                             <StackPanel>
                                                 <Button
-                                                    Content="歌曲设置"
+                                                    Content="曲目设置"
                                                     Style="{StaticResource MaterialDesignFlatButton}"
                                                     Click="ChartMusicSettingButton_Click"/>
                                                 <Separator/>
                                                 <Button
-                                                    Content="删除歌曲"
+                                                    Content="删除曲目"
                                                     Style="{StaticResource MaterialDesignFlatSecondaryButton}"
                                                     Click="ChartMusicDeleteButton_Click"/>
                                             </StackPanel>
@@ -128,14 +129,14 @@
                         Foreground="{DynamicResource MaterialDesign.Brush.Primary.Light}" 
                         Margin="10" 
                         Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
-                        Text="{Binding ChartMusicNum, StringFormat='共 {0} 首歌曲'}" 
+                        Text="{Binding ChartMusicNum, StringFormat='共 {0} 首曲目'}" 
                         VerticalAlignment="Center"/>
                     <TextBlock 
                         HorizontalAlignment="Center" 
                         Margin="10" 
                         VerticalAlignment="Center"
                         Style="{StaticResource MaterialDesignSubtitle2TextBlock}"
-                        Text="创建歌曲，编辑你的谱面吧！"/>
+                        Text="创建曲目，编辑你的谱面吧！"/>
                     <TextBlock 
                         HorizontalAlignment="Right" 
                         Margin="10" 

@@ -181,6 +181,12 @@
     <Compile Include="UserControls\Boards\UnityBoard.xaml.cs">
       <DependentUpon>UnityBoard.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UserControls\Dialogs\ChartInfoDialog.xaml.cs">
+      <DependentUpon>ChartInfoDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\Dialogs\ChartMusicEditDialog.xaml.cs">
+      <DependentUpon>ChartMusicEditDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UserControls\Dialogs\ConfirmDialog.xaml.cs">
       <DependentUpon>ConfirmDialog.xaml</DependentUpon>
     </Compile>
@@ -212,7 +218,7 @@
       <DependentUpon>ChartMusicItem.xaml</DependentUpon>
     </Compile>
     <Compile Include="Utils\Cache\CoverImageCache.cs" />
-    <Compile Include="Utils\ChartMusicReader.cs" />
+    <Compile Include="Utils\ChartMusicUtil.cs" />
     <Compile Include="Utils\ChartUtils\ChartUtilV1.cs" />
     <Compile Include="Utils\ColorProvider.cs" />
     <Compile Include="Utils\Common.cs" />
@@ -224,8 +230,10 @@
     <Compile Include="Utils\MusicUtils\MusicPlayer.cs" />
     <Compile Include="Utils\MusicUtils\MusicUtil.cs" />
     <Compile Include="ViewModels\ChartEditModel.cs" />
+    <Compile Include="ViewModels\ChartInfoModel.cs" />
     <Compile Include="ViewModels\ChartItemModel.cs" />
     <Compile Include="ViewModels\ChartListModel.cs" />
+    <Compile Include="ViewModels\ChartMusicEditModel.cs" />
     <Compile Include="ViewModels\ChartMusicItemModel.cs" />
     <Compile Include="ViewModels\CreateChartModel.cs" />
     <Compile Include="ViewModels\CreateChartMusicModel.cs" />
@@ -274,6 +282,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UserControls\Boards\UnityBoard.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UserControls\Dialogs\ChartInfoDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UserControls\Dialogs\ChartMusicEditDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

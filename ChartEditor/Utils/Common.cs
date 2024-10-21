@@ -79,7 +79,7 @@ namespace ChartEditor.Utils
         }
 
         /// <summary>
-        /// 获取歌曲和谱面所在文件夹路径
+        /// 获取曲目和谱面所在文件夹路径
         /// </summary>
         public static string GetChartMusicFolderPath()
         {
@@ -129,5 +129,12 @@ namespace ChartEditor.Utils
         {
             return Path.Combine(GetResourcesFolderPath(), "ffmpeg/bin/ffmpeg.exe");
         }
+    }
+
+    public enum MessageType
+    {
+        Notice,
+        Warn,
+        Error
     }
 }

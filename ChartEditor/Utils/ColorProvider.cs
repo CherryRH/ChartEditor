@@ -14,6 +14,13 @@ namespace ChartEditor.Utils
     public class ColorProvider
     {
         /// <summary>
+        /// 消息框字体颜色
+        /// </summary>
+        public static SolidColorBrush NoticeMessageBrush = Brushes.White;
+        public static SolidColorBrush WarnMessageBrush = Brushes.Yellow;
+        public static SolidColorBrush ErrorMessageBrush = Brushes.Red;
+
+        /// <summary>
         /// Track以及Note的填充颜色和边界颜色
         /// </summary>
         public static SolidColorBrush TrackBrush = Brushes.LightGray;

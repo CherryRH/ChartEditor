@@ -31,6 +31,7 @@ namespace ChartEditor
             this.SetFolders();
 
             MainWindowModel mainWindowModel = new MainWindowModel();
+            mainWindowModel.MainWindow = this;
             ChartMusicListPage chartMusicListPage = new ChartMusicListPage(mainWindowModel);
             mainWindowModel.ChartMusicListPage = chartMusicListPage;
             MainPage.Navigate(chartMusicListPage);

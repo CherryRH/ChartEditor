@@ -10,6 +10,8 @@ using ChartEditor.Models;
 using ChartEditor.ViewModels;
 using Microsoft.VisualBasic.FileIO;
 using ChartEditor.Utils;
+using System.Windows.Interop;
+using System.Windows.Media;
 
 namespace ChartEditor
 {
@@ -19,6 +21,13 @@ namespace ChartEditor
     public partial class App : Application
     {
         private static string logTag = "[App]";
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            // 使用 GPU 硬件加速
+            RenderOptions.ProcessRenderMode = RenderMode.Default;
+            base.OnStartup(e);
+        }
 
         protected override void OnExit(ExitEventArgs e)
         {

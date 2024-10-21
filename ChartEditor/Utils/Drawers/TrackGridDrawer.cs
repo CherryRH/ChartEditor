@@ -16,7 +16,7 @@ namespace ChartEditor.Utils.Drawers
     /// </summary>
     public class TrackGridDrawer : FrameworkElement
     {
-        // 缓存已经绘制过的网格，提升速度
+        // 缓存已经绘制过的网格
         private Dictionary<string, DrawingVisual> gridCache = new Dictionary<string, DrawingVisual>();
         // 最不常使用LFU
         private Dictionary<string, int> frequencyMap = new Dictionary<string, int>();
@@ -67,7 +67,7 @@ namespace ChartEditor.Utils.Drawers
         {
             this.RemoveVisualChild(this.currentGrid);
 
-            string key = $"{beatNum}_{totalWidth}_{totalHeight}_{columnWidth}_{rowWidth}_{columnNum}_{divide}";
+            string key = $"{beatNum}_{columnWidth}_{rowWidth}_{columnNum}_{divide}";
             DrawingVisual cacheDrawingVisual = GetCache(key);
             if (cacheDrawingVisual != null)
             {

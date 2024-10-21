@@ -20,7 +20,7 @@ namespace ChartEditor.ViewModels
         private static string logTag = "[CreateChartMusicModel]";
 
         /// <summary>
-        /// 歌曲名
+        /// 曲目名
         /// </summary>
         private string title;
         public string Title { get { return  title; } set { title = value; } }
@@ -32,10 +32,10 @@ namespace ChartEditor.ViewModels
         public string Artist { get { return artist; } set { artist = value; } }
 
         /// <summary>
-        /// 歌曲Bpm
+        /// 曲目Bpm
         /// </summary>
-        private double bpm;
-        public double Bpm { get { return bpm; } set { bpm = value; } }
+        private string bpm;
+        public string Bpm { get { return bpm; } set { bpm = value; } }
 
         /// <summary>
         /// 封面图片路径
@@ -78,7 +78,7 @@ namespace ChartEditor.ViewModels
             this.coverPath = string.Empty;
             this.musicPath = string.Empty;
             this.artist = string.Empty;
-            this.bpm = 120;
+            this.bpm = "120";
         }
 
         ~CreateChartMusicModel()
@@ -92,20 +92,21 @@ namespace ChartEditor.ViewModels
         }
 
         /// <summary>
-        /// 创建并设置歌曲文件夹以及其他文件，返回一个歌曲对象
+        /// 创建并设置曲目文件夹以及其他文件，返回一个曲目对象
         /// </summary>
         public async Task<ChartMusic> CreateChartMusicFolder()
         {
             try
             {
-                // 歌曲文件夹路径
-                string chartMusicPath = Path.Combine(Common.GetChartMusicFolderPath(), this.title);
+                // 曲目文件夹路径
+                DateTime createdAt = DateTime.Now;
+                string chartMusicPath = ChartMusicUtil.GenerateNewChartMusicFolderPath(createdAt);
                 if (!Directory.Exists(chartMusicPath))
                 {
                     Directory.CreateDirectory(chartMusicPath);
                 }
 
-                ChartMusic music = new ChartMusic(this.title, this.artist, this.bpm, 0, chartMusicPath);
+                ChartMusic music = new ChartMusic(this.title, this.artist, Math.Round(double.Parse(this.bpm), 1), 0, chartMusicPath, createdAt);
 
                 // 保存封面图片和音频文件
                 if (!string.IsNullOrEmpty(this.coverPath))
@@ -132,14 +133,14 @@ namespace ChartEditor.ViewModels
                     File.Copy(this.musicPath, music.GetMusicPath(), overwrite: true);
                 }
 
-                // 创建歌曲配置文件
+                // 保存曲目文件
                 using (var file = TagLib.File.Create(music.GetMusicPath()))
                 {
                     music.Duration = file.Properties.Duration.TotalSeconds;
                 }
-                File.WriteAllText(Path.Combine(chartMusicPath, Common.ChartMusicConfigFileName), music.toJsonString());
+                ChartMusicUtil.SaveChartMusic(music);
 
-                Console.WriteLine(logTag + "歌曲文件夹已创建");
+                Console.WriteLine(logTag + "曲目文件夹已创建");
                 return music;
             }
             catch(Exception ex)

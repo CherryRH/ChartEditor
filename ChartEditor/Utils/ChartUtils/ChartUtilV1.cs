@@ -1,4 +1,5 @@
 ﻿using ChartEditor.Models;
+using ChartEditor.ViewModels;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -50,13 +51,14 @@ namespace ChartEditor.Utils.ChartUtils
         }
 
         /// <summary>
-        /// 读取指定歌曲的谱面列表
+        /// 读取指定曲目的谱面列表
         /// </summary>
         public static List<ChartInfo> ReadChartList(ChartMusic chartMusic)
         {
             List<ChartInfo> chartInfos = new List<ChartInfo>();
             try
             {
+                if (chartMusic == null) throw new Exception("ChartMusic对象为空");
                 if (!Directory.Exists(chartMusic.FolderPath))
                 {
                     return chartInfos;
@@ -80,9 +82,84 @@ namespace ChartEditor.Utils.ChartUtils
             }
             catch (Exception ex)
             {
-                Console.WriteLine(logTag + $"{ex.Message}");
+                Console.WriteLine(logTag + ex.Message);
                 return chartInfos;
             }
+        }
+
+        /// <summary>
+        /// 保存更新后的谱面信息
+        /// </summary>
+        public static bool SaveChartInfo(ChartInfo chartInfo)
+        {
+            try
+            {
+                if (chartInfo == null) throw new Exception("ChartInfo对象为空");
+                string chartFilePath = Path.Combine(chartInfo.FolderPath, Common.ChartFileName);
+                // 写入文件
+                string json = File.ReadAllText(chartFilePath);
+                var jObject = JObject.Parse(json);
+                if (jObject["ChartInfo"] != null)
+                {
+                    jObject["ChartInfo"] = chartInfo.ToJson();
+                    File.WriteAllText(chartFilePath, jObject.ToString(Formatting.Indented));
+                }
+                else
+                {
+                    throw new Exception("ChartInfo不存在");
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(logTag + ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 保存谱面
+        /// </summary>
+        public static bool SaveChart(ChartEditModel chartEditModel)
+        {
+            try
+            {
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(logTag + ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 保存工作区
+        /// </summary>
+        public static bool SaveWorkPlace(ChartEditModel chartEditModel)
+        {
+            try
+            {
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(logTag + ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 生成谱面唯一文件夹名称
+        /// </summary>
+        public static string GenerateNewChartFolderPath(string musicFolderPath, DateTime createdAt)
+        {
+            string timeStamp = createdAt.ToString("yyyyMMdd_HHmmss");
+            string randomSuffix = Guid.NewGuid().ToString().Substring(0, 8);
+            string folderName = $"chart_{timeStamp}_{randomSuffix}";
+            return Path.Combine(musicFolderPath, folderName);
         }
     }
 }

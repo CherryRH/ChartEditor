@@ -1,6 +1,7 @@
 ﻿using ChartEditor.Models;
 using ChartEditor.UserControls.Boards;
 using ChartEditor.UserControls.Dialogs;
+using ChartEditor.Utils.Cache;
 using ChartEditor.Utils.ChartUtils;
 using ChartEditor.ViewModels;
 using ChartEditor.Windows;
@@ -75,6 +76,7 @@ namespace ChartEditor.Pages
         {
             if (sender is Button item && item.DataContext is ChartItemModel selectedItem)
             {
+                this.MainWindowModel.MainWindow.Hide();
                 ChartWindow chartWindow = new ChartWindow(selectedItem.ChartInfo, this.MainWindowModel, this.Model);
                 chartWindow.Show();
             }

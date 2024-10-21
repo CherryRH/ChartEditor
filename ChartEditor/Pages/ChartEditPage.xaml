@@ -10,7 +10,8 @@
       d:DesignHeight="800" d:DesignWidth="1200"
       Title="ChartEditPage">
     <materialDesign:DialogHost
-        Identifier="ChartEditDialog">
+        Identifier="ChartEditDialog"
+        CloseOnClickAway="True">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*"/>

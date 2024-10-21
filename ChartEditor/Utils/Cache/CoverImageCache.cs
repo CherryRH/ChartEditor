@@ -54,6 +54,7 @@ namespace ChartEditor.Utils.Cache
             {
                 this.imageCache[imagePath] = null;
                 this.imageCache.Remove(imagePath);
+                Console.WriteLine(logTag + "图片缓存已移除");
                 GC.Collect();
             }
         }
@@ -68,6 +69,7 @@ namespace ChartEditor.Utils.Cache
                 ClearOldestCache();
             }
             this.imageCache[imagePath] = bitmap;
+            Console.WriteLine(logTag + "图片缓存已添加");
         }
 
         /// <summary>
