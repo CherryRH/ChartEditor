@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using ChartEditor.Utils;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -70,6 +71,9 @@ namespace ChartEditor.Models
 
         }
 
+        /// <summary>
+        /// 创建新曲目
+        /// </summary>
         public ChartMusic(string title, string composer, double bpm, double duration, string folderPath, DateTime? createdAt)
         {
             this.title = title;
@@ -79,7 +83,7 @@ namespace ChartEditor.Models
             this.createdAt = createdAt ?? DateTime.Now;
             this.updatedAt = DateTime.Now;
             this.folderPath = folderPath;
-            this.coverPath = this.GetCoverPath();
+            this.coverPath = ImageUtil.GenerateMusicCoverPath(folderPath);
         }
 
         /// <summary>
@@ -102,12 +106,12 @@ namespace ChartEditor.Models
         /// <summary>
         /// 从目录路径和Json字符串构造
         /// </summary>
-        public ChartMusic(string folder, string jsonString)
+        public ChartMusic(string folder, string coverFilePath, string jsonString)
         {
             try
             {
                 this.folderPath = folder;
-                this.coverPath = this.GetCoverPath();
+                this.coverPath = coverFilePath;
                 JObject jObject = JsonConvert.DeserializeObject<JObject>(jsonString);
                 // 解析并赋值属性
                 this.title = (string)jObject["Title"] ?? string.Empty;
@@ -124,19 +128,11 @@ namespace ChartEditor.Models
         }
 
         /// <summary>
-        /// 获取封面图片路径
-        /// </summary>
-        private string GetCoverPath()
-        {
-            return Path.Combine(this.folderPath, "cover.png");
-        }
-
-        /// <summary>
         /// 获取音频路径
         /// </summary>
         public string GetMusicPath()
         {
-            return Path.Combine(this.folderPath, "music.ogg");
+            return Path.Combine(this.folderPath, Common.ChartMusicFileName);
         }
 
         /// <summary>

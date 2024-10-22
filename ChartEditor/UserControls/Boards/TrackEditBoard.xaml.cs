@@ -347,6 +347,10 @@ namespace ChartEditor.UserControls.Boards
                     this.SetMessage("谱面信息保存失败", 2, MessageType.Error);
                     return;
                 }
+                // 更新主页曲目
+                this.MainWindowModel.UpdateChartMusic(this.Model.ChartInfo.ChartMusic);
+                // 更新谱面编辑窗口名
+                this.Model.ChartWindow.Title = Common.GenerateChartWindowTitle(this.Model.ChartInfo);
                 this.SetMessage("谱面信息保存成功", 2, MessageType.Notice);
             }
         }

@@ -70,7 +70,7 @@ namespace ChartEditor.Utils.ChartUtils
                 {
                     string chartFilePath = Path.Combine(folder, Common.ChartFileName);
 
-                    if (File.Exists(chartFilePath))
+                    if (CheckChartFolder(folder))
                     {
                         JObject jObject = JsonConvert.DeserializeObject<JObject>(File.ReadAllText(chartFilePath));
                         chartInfos.Add(new ChartInfo(folder, (JObject)jObject["ChartInfo"], chartMusic));
@@ -84,6 +84,30 @@ namespace ChartEditor.Utils.ChartUtils
             {
                 Console.WriteLine(logTag + ex.Message);
                 return chartInfos;
+            }
+        }
+
+        /// <summary>
+        /// 检测谱面文件是否完整
+        /// </summary>
+        public static bool CheckChartFolder(string folderPath)
+        {
+            try
+            {
+                if (!Directory.Exists(folderPath))
+                {
+                    return false;
+                }
+                if (!File.Exists(Path.Combine(folderPath, Common.ChartFileName)))
+                {
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(logTag + ex.Message);
+                return false;
             }
         }
 

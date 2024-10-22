@@ -9,7 +9,7 @@
              d:DesignHeight="400" d:DesignWidth="600">
     <Grid>
         <materialDesign:Card>
-
+            
         </materialDesign:Card>
     </Grid>
 </UserControl>

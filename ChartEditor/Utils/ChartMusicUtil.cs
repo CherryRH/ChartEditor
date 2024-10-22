@@ -34,9 +34,9 @@ namespace ChartEditor.Utils
                 {
                     string configFilePath = Path.Combine(folder, Common.ChartMusicConfigFileName);
 
-                    if (File.Exists(configFilePath))
+                    if (CheckChartMusicFolder(folder, out string coverFilePath))
                     {
-                        chartMusicList.Add(new ChartMusic(folder, File.ReadAllText(configFilePath)));
+                        chartMusicList.Add(new ChartMusic(folder, coverFilePath, File.ReadAllText(configFilePath)));
                     }
                 }
 
@@ -52,6 +52,42 @@ namespace ChartEditor.Utils
         }
 
         public ChartMusicUtil() { }
+
+        /// <summary>
+        /// 检测曲目文件是否完整
+        /// </summary>
+        public static bool CheckChartMusicFolder(string folderPath, out string coverFilePath)
+        {
+            try
+            {
+                if (!Directory.Exists(folderPath)) {
+                    coverFilePath = "";
+                    return false;
+                }
+                if (!File.Exists(Path.Combine(folderPath, Common.ChartMusicConfigFileName))) {
+                    coverFilePath = "";
+                    return false;
+                }
+                if (!File.Exists(Path.Combine(folderPath, Common.ChartMusicFileName))) {
+                    coverFilePath = "";
+                    return false;
+                }
+                var coverFiles = Directory.EnumerateFiles(folderPath, "cover_*.png", System.IO.SearchOption.TopDirectoryOnly);
+                if (coverFiles.Count() == 0)
+                {
+                    coverFilePath = "";
+                    return false;
+                }
+                coverFilePath = coverFiles.FirstOrDefault();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(logTag + ex.Message);
+                coverFilePath = "";
+                return false;
+            }
+        }
 
         /// <summary>
         /// 删除曲目及其所有谱面和文件（回收站）

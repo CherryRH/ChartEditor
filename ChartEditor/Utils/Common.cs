@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ChartEditor.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -21,6 +22,8 @@ namespace ChartEditor.Utils
         public static double YMax = 600;
         public static double XMin = -800;
         public static double YMin = -600;
+
+        public static string DefaultMusicCover = "pack://application:,,,/Resources/Textures/音乐.png";
 
         /// <summary>
         /// 轨道编辑面板默认列数
@@ -53,6 +56,7 @@ namespace ChartEditor.Utils
         /// </summary>
         public static string ChartMusicConfigFileName = "music_config.json";
         public static string ChartFileName = "chart.json";
+        public static string ChartMusicFileName = "music.ogg";
 
         /// <summary>
         /// 获取应用所在文件夹路径
@@ -128,6 +132,15 @@ namespace ChartEditor.Utils
         public static string GetFFmpegPath()
         {
             return Path.Combine(GetResourcesFolderPath(), "ffmpeg/bin/ffmpeg.exe");
+        }
+
+        /// <summary>
+        /// 生成谱面编辑窗口标题
+        /// </summary>
+        public static string GenerateChartWindowTitle(ChartInfo chartInfo)
+        {
+            if (chartInfo == null) return "谱面好像丢了呢~";
+            else return chartInfo.Name + " - " + chartInfo.ChartMusic.Title;
         }
     }
 

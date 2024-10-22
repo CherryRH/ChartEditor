@@ -73,9 +73,9 @@ namespace ChartEditor.Utils.Drawers
         public static int StrokeThickness = 1;
         public static int HighLightStrokeThickness = 3;
         public static int Radius = 5;
-        public static double PreviewerOpacity = 0.2;
-        public static double HeaderOpacity = 0.5;
-        public static double TrackOpacity = 0.7;
+        public static double PreviewerOpacity = 0.4;
+        public static double HeaderOpacity = 0.6;
+        public static double TrackOpacity = 0.8;
 
         public NoteDrawer(TrackEditBoard trackEditBoard)
         {

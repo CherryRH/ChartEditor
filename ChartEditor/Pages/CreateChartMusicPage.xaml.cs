@@ -51,25 +51,16 @@ namespace ChartEditor.Pages
         /// </summary>
         private async void SelectCoverButton_Click(object sender, RoutedEventArgs e)
         {
-            try
+            BitmapImage bitmap = ImageUtil.SelectImage(out string imageFileName);
+            if (bitmap != null)
             {
-                OpenFileDialog openFileDialog = new OpenFileDialog();
-                openFileDialog.Filter = "图片文件 (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg";
-                if (openFileDialog.ShowDialog() == true)
-                {
-                    BitmapImage bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(openFileDialog.FileName);
-                    bitmap.EndInit();
-                    bitmap.Freeze();
-                    MusicCover.Source = bitmap;
-                    Console.WriteLine("已选择封面图片文件");
-                    this.Model.CoverPath = openFileDialog.FileName;
-                }
+                // 读取成功
+                MusicCover.Source = bitmap;
+                this.Model.CoverPath = imageFileName;
             }
-            catch (Exception ex)
+            else if (string.IsNullOrWhiteSpace(imageFileName))
             {
-                Console.WriteLine(ex.ToString());
+                // 读取失败
                 var result = await DialogHost.Show(new WarnDialog("图片读取失败，请换一张图片哦~"), "CreateChartMusicDialog");
             }
         }

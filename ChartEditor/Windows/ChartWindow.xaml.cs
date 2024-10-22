@@ -1,6 +1,7 @@
 ﻿using ChartEditor.Models;
 using ChartEditor.Pages;
 using ChartEditor.UserControls.Boards;
+using ChartEditor.Utils;
 using ChartEditor.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -32,7 +33,7 @@ namespace ChartEditor.Windows
         public ChartWindow(ChartInfo chartInfo, MainWindowModel mainWindowModel, ChartListModel chartListModel)
         {
             InitializeComponent();
-            this.Title = chartInfo.Name + " - " + chartInfo.ChartMusic.Title;
+            this.Title = Common.GenerateChartWindowTitle(chartInfo);
             this.MainWindowModel = mainWindowModel;
             this.ChartListModel = chartListModel;
             ChartEditPage chartEditPage = new ChartEditPage(chartInfo, mainWindowModel, chartListModel, this);

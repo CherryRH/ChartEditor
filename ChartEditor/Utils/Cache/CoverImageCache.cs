@@ -29,10 +29,14 @@ namespace ChartEditor.Utils.Cache
         }
 
         /// <summary>
-        /// 从缓存中获取图片，如果缓存中不存在则加载图片
+        /// 从缓存中获取图片，如果缓存中不存在则加载图片。路径为空时返回默认封面
         /// </summary>
         public BitmapImage GetImage(string imagePath)
         {
+            if (string.IsNullOrWhiteSpace(imagePath))
+            {
+                return ImageUtil.LoadImage(Common.DefaultMusicCover);
+            }
             if (imageCache.ContainsKey(imagePath))
             {
                 return imageCache[imagePath];

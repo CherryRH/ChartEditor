@@ -1,5 +1,6 @@
 ﻿using ChartEditor.Models;
 using ChartEditor.Utils;
+using ChartEditor.Utils.Cache;
 using ChartEditor.Windows;
 using MaterialDesignThemes.Wpf;
 using System;
@@ -9,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace ChartEditor.ViewModels
@@ -27,10 +29,18 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public ChartInfo ChartInfo { get; }
 
+        public BitmapImage Cover
+        {
+            get
+            {
+                return CoverImageCache.Instance.GetImage(this.ChartInfo.ChartMusic.CoverPath);
+            }
+        }
+
         /// <summary>
         /// 轨道，包含所有音符
         /// </summary>
-        private List<Track> tracks;
+        private List<Track> tracks = new List<Track>();
         public List<Track> Tracks { get { return tracks; } }
 
         private int columnNum = Common.ColumnNum;
@@ -55,17 +65,23 @@ namespace ChartEditor.ViewModels
         public double RowWidth { get { return rowWidth; } set { rowWidth = value; OnPropertyChanged(nameof(RowWidth)); } }
 
         /// <summary>
+        /// 谱面实际Bpm（后续改为Bpm表）
+        /// </summary>
+        private double bpm;
+        public double Bpm { get { return bpm; } set { bpm = value; } }
+
+        /// <summary>
         /// 总拍数
         /// </summary>
         public int BeatNum
         {
-            get { return (int)Math.Ceiling(this.ChartInfo.ChartMusic.Duration / 60 * this.ChartInfo.ChartMusic.Bpm) + 1; }
+            get { return (int)Math.Ceiling(this.ChartInfo.ChartMusic.Duration / 60 * this.Bpm) + 1; }
         }
 
         /// <summary>
         /// 一拍的时长（四分音符）
         /// </summary>
-        public double BeatTime { get { return 60 / (this.ChartInfo.ChartMusic.Bpm * this.speed); } }
+        public double BeatTime { get { return 60 / (this.Bpm * this.speed); } }
 
         /// <summary>
         /// 轨道所有列的总尺寸
@@ -184,8 +200,8 @@ namespace ChartEditor.ViewModels
         {
             this.ChartWindow = chartWindow;
             this.ChartInfo = chartInfo;
-            this.tracks = new List<Track>();
             this.currentTime = this.ChartInfo.Delay;
+            this.bpm = this.ChartInfo.ChartMusic.Bpm;
         }
 
         /// <summary>

@@ -45,25 +45,16 @@ namespace ChartEditor.UserControls.Dialogs
 
         private async void SelectCoverButton_Click(object sender, RoutedEventArgs e)
         {
-            try
+            BitmapImage bitmap = ImageUtil.SelectImage(out string imageFileName);
+            if (bitmap != null)
             {
-                OpenFileDialog openFileDialog = new OpenFileDialog();
-                openFileDialog.Filter = "图片文件 (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg";
-                if (openFileDialog.ShowDialog() == true)
-                {
-                    BitmapImage bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(openFileDialog.FileName);
-                    bitmap.EndInit();
-                    bitmap.Freeze();
-                    MusicCover.Source = bitmap;
-                    Console.WriteLine("已选择封面图片文件");
-                    this.Model.CoverPath = openFileDialog.FileName;
-                }
+                // 读取成功
+                MusicCover.Source = bitmap;
+                this.Model.CoverPath = imageFileName;
             }
-            catch (Exception ex)
+            else if (string.IsNullOrWhiteSpace(imageFileName))
             {
-                Console.WriteLine(ex.ToString());
+                // 读取失败
                 var result = await DialogHost.Show(new WarnDialog("图片读取失败，请换一张图片哦~"), "ChartMusicEditDialog");
             }
         }
@@ -108,9 +99,13 @@ namespace ChartEditor.UserControls.Dialogs
             // 保存封面
             if (this.ChartMusic.CoverPath != this.Model.CoverPath)
             {
-                ImageUtil.ConvertToPng(this.Model.CoverPath, this.ChartMusic.CoverPath);
                 // 重置缓存
                 CoverImageCache.Instance.RemoveImage(this.ChartMusic.CoverPath);
+                // 删除旧封面
+                File.Delete(this.ChartMusic.CoverPath);
+                // 生成新封面文件路径
+                this.ChartMusic.CoverPath = ImageUtil.GenerateMusicCoverPath(this.ChartMusic.FolderPath);
+                ImageUtil.ConvertToPng(this.Model.CoverPath, this.ChartMusic.CoverPath);
             }
             
             DialogHost.CloseDialogCommand.Execute(true, this);
