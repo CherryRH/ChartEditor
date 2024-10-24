@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 
@@ -44,6 +45,8 @@ namespace ChartEditor.Utils.Drawers
         public int PreviewerIndex { get { return previewerIndex; } }
         // 是否显示预览图形
         private bool ifShowPreviewer = true;
+        // 是否正在显示预览图形
+        private bool ifPreviewerShowing = false;
 
         /// <summary>
         /// 头部图形TrackHead，HoldHead
@@ -62,20 +65,23 @@ namespace ChartEditor.Utils.Drawers
         private int lastHoldNoteHeaderColumnIndex = 0;
 
         /// <summary>
-        /// 当前鼠标所处位置高光的图形
-        /// </summary>
-        private Rectangle highlightItem = null;
-
-        /// <summary>
         /// 矩形参数
         /// </summary>
-        public static double MinHeight = 10;
+        public static double MinHeight = 12;
         public static int StrokeThickness = 1;
         public static int HighLightStrokeThickness = 3;
+        public static int PickedStrokeThickness = 3;
         public static int Radius = 5;
         public static double PreviewerOpacity = 0.4;
         public static double HeaderOpacity = 0.6;
         public static double TrackOpacity = 0.8;
+
+        // 图形ZIndex
+        public static int TrackZIndex = 0;
+        public static int HoldNoteZIndex = 10;
+        public static int NoteZIndex = 20;
+        public static int HeaderZIndex = 50;
+        public static int PreviewerZIndex = 100;
 
         public NoteDrawer(TrackEditBoard trackEditBoard)
         {
@@ -147,51 +153,13 @@ namespace ChartEditor.Utils.Drawers
         }
 
         /// <summary>
-        /// 根据Canvas坐标搜索一个图形并高光
-        /// </summary>
-        public void MakeItemHighLight(Point? point)
-        {
-            Rectangle searchItem = null;
-            // 搜索图形
-            foreach(var track in this.ChartEditModel.Tracks)
-            {
-                Rect trackRect = new Rect(Canvas.GetLeft(track.Rectangle), Canvas.GetTop(track.Rectangle), track.Rectangle.Width, track.Rectangle.Height);
-                if (trackRect.Contains(point.Value))
-                {
-                    Console.WriteLine("ddd");
-                    searchItem = track.Rectangle;
-                    // 搜索Note
-                    foreach (var note in track.Notes)
-                    {
-                        Rect noteRect = new Rect(Canvas.GetLeft(note.Rectangle), Canvas.GetTop(note.Rectangle), note.Rectangle.Width, note.Rectangle.Height);
-                        if (noteRect.Contains(point.Value))
-                        {
-                            searchItem = note.Rectangle;
-                            // 搜索到最顶层的非Hold则退出
-                            if (note.Type != NoteType.Hold) break;
-                        }
-                    }
-                    break;
-                }
-            }
-            if (searchItem == null || this.highlightItem == searchItem)
-            {
-                
-                return;
-            }
-            // 恢复上一个图形
-            if (this.highlightItem != null) this.highlightItem.StrokeThickness = StrokeThickness;
-            this.highlightItem = searchItem;
-            this.highlightItem.StrokeThickness = HighLightStrokeThickness;
-        }
-
-        /// <summary>
         /// 新建一个Track
         /// </summary>
         public void CreateTrackItem(Track track)
         {
             Rectangle newTrack = new Rectangle
             {
+                Tag = "Track",
                 Width = this.ChartEditModel.ColumnWidth,
                 Height = MinHeight + (track.EndTime.GetEquivalentBeat() - track.StartTime.GetEquivalentBeat()) * this.ChartEditModel.RowWidth,
                 Stroke = ColorProvider.TrackBorderBrush,
@@ -201,6 +169,9 @@ namespace ChartEditor.Utils.Drawers
                 RadiusY = Radius,
                 Opacity = TrackOpacity
             };
+            // 将矩形的上下文绑定在track上
+            newTrack.DataContext = track;
+
             track.Rectangle = newTrack;
             this.trackCanvas.Children.Add(newTrack);
             Canvas.SetLeft(newTrack, track.ColumnIndex * this.ChartEditModel.ColumnWidth);
@@ -221,10 +192,13 @@ namespace ChartEditor.Utils.Drawers
                 RadiusX = Radius,
                 RadiusY = Radius
             };
+            // 将矩形的上下文绑定在note上
+            newNote.DataContext = note;
             switch (note.Type)
             {
                 case NoteType.Tap:
                     {
+                        newNote.Tag = "Tap";
                         newNote.Height = MinHeight;
                         newNote.Stroke = ColorProvider.TapNoteBorderBrush;
                         newNote.Fill = ColorProvider.TapNoteBrush;
@@ -232,13 +206,15 @@ namespace ChartEditor.Utils.Drawers
                     }
                 case NoteType.Catch:
                     {
-                        newNote.Height = MinHeight * 2 / 3;
+                        newNote.Tag = "Catch";
+                        newNote.Height = MinHeight;
                         newNote.Stroke = ColorProvider.CatchNoteBorderBrush;
                         newNote.Fill = ColorProvider.CatchNoteBrush;
                         break;
                     }
                 case NoteType.Hold:
                     {
+                        newNote.Tag = "Hold";
                         newNote.Height = MinHeight + (((HoldNote)note).EndTime.GetEquivalentBeat() - note.Time.GetEquivalentBeat()) * this.ChartEditModel.RowWidth;
                         newNote.Stroke = ColorProvider.HoldNoteBorderBrush;
                         newNote.Fill = ColorProvider.HoldNoteGradientBrush;
@@ -246,6 +222,7 @@ namespace ChartEditor.Utils.Drawers
                     }
                 case NoteType.Flick:
                     {
+                        newNote.Tag = "Flick";
                         newNote.Height = MinHeight;
                         newNote.Stroke = ColorProvider.FlickNoteBorderBrush;
                         newNote.Fill = ColorProvider.FlickNoteGradientBrush;
@@ -259,12 +236,21 @@ namespace ChartEditor.Utils.Drawers
             // HoldNote在其他Note下层
             if (note.Type == NoteType.Hold)
             {
-                Canvas.SetZIndex(newNote, 1);
+                Canvas.SetZIndex(newNote, HoldNoteZIndex);
             }
             else
             {
-                Canvas.SetZIndex(newNote, 2);
+                Canvas.SetZIndex(newNote, NoteZIndex);
             }
+        }
+
+        /// <summary>
+        /// 移除一个音符图形
+        /// </summary>
+        public void RemoveNote(Note note)
+        {
+            if (note == null) return;
+            this.trackCanvas.Children.Remove(note.Rectangle);
         }
 
         /// <summary>
@@ -276,7 +262,7 @@ namespace ChartEditor.Utils.Drawers
             // 判断位置是否相同
             BeatTime newBeatTime = this.ChartEditModel.GetBeatTimeFromPoint(point, this.trackCanvas.ActualHeight);
             int columnIndex = this.ChartEditModel.GetColumnIndexFromPoint(point);
-            if (this.lastPreviewBeatTime.IsEqualTo(newBeatTime) && this.lastPreviewColumnIndex == columnIndex)
+            if (this.lastPreviewBeatTime.IsEqualTo(newBeatTime) && this.lastPreviewColumnIndex == columnIndex && this.ifPreviewerShowing)
             {
                 return;
             }
@@ -288,7 +274,8 @@ namespace ChartEditor.Utils.Drawers
             Canvas.SetLeft(this.previewers[this.previewerIndex], columnIndex * this.ChartEditModel.ColumnWidth + (this.previewerIndex == 0 ? 0 : Common.ColumnGap * this.ChartEditModel.ColumnWidth));
             Canvas.SetBottom(this.previewers[this.previewerIndex], newBeatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
             // 确保在最顶层
-            Canvas.SetZIndex(this.previewers[this.previewerIndex], 100);
+            Canvas.SetZIndex(this.previewers[this.previewerIndex], PreviewerZIndex);
+            this.ifPreviewerShowing = true;
         }
 
         public void ShowPreviewer()
@@ -299,7 +286,8 @@ namespace ChartEditor.Utils.Drawers
         public void HidePreviewer()
         {
             this.ifShowPreviewer = false;
-            if (this.previewerIndex != -1) this.trackCanvas.Children.Remove(this.previewers[this.previewerIndex]); ;
+            if (this.previewerIndex != -1) this.trackCanvas.Children.Remove(this.previewers[this.previewerIndex]);
+            this.ifPreviewerShowing = false;
         }
 
         /// <summary>
@@ -316,7 +304,7 @@ namespace ChartEditor.Utils.Drawers
             Canvas.SetLeft(this.trackHeader, columnIndex * this.ChartEditModel.ColumnWidth);
             Canvas.SetBottom(this.trackHeader, beatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
             // 在次顶层
-            Canvas.SetZIndex(this.trackHeader, 99);
+            Canvas.SetZIndex(this.trackHeader, HeaderZIndex);
         }
 
         /// <summary>
@@ -341,7 +329,7 @@ namespace ChartEditor.Utils.Drawers
             Canvas.SetLeft(this.holdNoteHeader, columnIndex * this.ChartEditModel.ColumnWidth + Common.ColumnGap * this.ChartEditModel.ColumnWidth);
             Canvas.SetBottom(this.holdNoteHeader, beatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
             // 在次顶层
-            Canvas.SetZIndex(this.trackHeader, 99);
+            Canvas.SetZIndex(this.trackHeader, HeaderZIndex);
         }
 
         /// <summary>
@@ -379,6 +367,82 @@ namespace ChartEditor.Utils.Drawers
         }
 
         /// <summary>
+        /// 让一个矩形高光
+        /// </summary>
+        public void RectHighLight(Rectangle rectangle)
+        {
+            if (rectangle == null) return;
+            rectangle.StrokeThickness = HighLightStrokeThickness;
+            // 设置虚线
+            rectangle.StrokeDashArray = new DoubleCollection() { 2, 2, 6, 2 };
+            StartHighLightDashOffsetAnimation(rectangle);
+            // 略微突出ZIndex
+            if (rectangle.DataContext is Track)
+            {
+                Canvas.SetZIndex(rectangle, TrackZIndex + 1);
+            }
+            else if (rectangle.DataContext is Note note)
+            {
+                Canvas.SetZIndex(rectangle, (note.Type == NoteType.Hold ? HoldNoteZIndex : NoteZIndex) + 1);
+            }
+        }
+
+        /// <summary>
+        /// 启动虚线旋转动画
+        /// </summary>
+        private void StartHighLightDashOffsetAnimation(Rectangle rectangle)
+        {
+            DoubleAnimation dashOffsetAnimation = new DoubleAnimation
+            {
+                From = 12,
+                To = 0,
+                Duration = new Duration(TimeSpan.FromSeconds(1.5)),
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            rectangle.BeginAnimation(Shape.StrokeDashOffsetProperty, dashOffsetAnimation);
+        }
+
+        /// <summary>
+        /// 让一个矩形被选中
+        /// </summary>
+        public void RectPicked(Rectangle rectangle)
+        {
+            if (rectangle == null) return;
+            rectangle.StrokeDashArray = null;
+            rectangle.StrokeThickness = PickedStrokeThickness;
+            // 略微突出ZIndex
+            if (rectangle.DataContext is Track)
+            {
+                Canvas.SetZIndex(rectangle, TrackZIndex + 2);
+            }
+            else if (rectangle.DataContext is Note note)
+            {
+                Canvas.SetZIndex(rectangle, (note.Type == NoteType.Hold ? HoldNoteZIndex : NoteZIndex) + 2);
+            }
+        }
+
+        /// <summary>
+        /// 让一个矩形恢复普通状态
+        /// </summary>
+        public void ClearRectState(Rectangle rectangle)
+        {
+            if (rectangle == null) return;
+            rectangle.StrokeThickness = StrokeThickness;
+            rectangle.StrokeDashArray = null;
+            // 停止虚线动画
+            rectangle.BeginAnimation(Shape.StrokeDashOffsetProperty, null);
+            // 恢复ZIndex
+            if (rectangle.DataContext is Track)
+            {
+                Canvas.SetZIndex(rectangle, TrackZIndex);
+            }
+            else if (rectangle.DataContext is Note note)
+            {
+                Canvas.SetZIndex(rectangle, note.Type == NoteType.Hold ? HoldNoteZIndex : NoteZIndex);
+            }
+        }
+
+        /// <summary>
         /// 初始化预览图形
         /// </summary>
         private void InitPreviewNotes()
@@ -388,6 +452,7 @@ namespace ChartEditor.Utils.Drawers
             this.previewers.Add(new Rectangle
             {
                 Name = "TrackPreviewer",
+                Tag = "Previewer",
                 Width = Common.ColumnWidth,
                 Height = MinHeight,
                 Stroke = ColorProvider.TrackBorderBrush,
@@ -400,6 +465,7 @@ namespace ChartEditor.Utils.Drawers
             this.previewers.Add(new Rectangle
             {
                 Name = "TapNotePreviewer",
+                Tag = "Previewer",
                 Width = width,
                 Height = MinHeight,
                 Stroke = ColorProvider.TapNoteBorderBrush,
@@ -412,6 +478,7 @@ namespace ChartEditor.Utils.Drawers
             this.previewers.Add(new Rectangle
             {
                 Name = "FlickNotePreviewer",
+                Tag = "Previewer",
                 Width = width,
                 Height = MinHeight,
                 Stroke = ColorProvider.FlickNoteBorderBrush,
@@ -424,6 +491,7 @@ namespace ChartEditor.Utils.Drawers
             this.previewers.Add(new Rectangle
             {
                 Name = "HoldNotePreviewer",
+                Tag = "Previewer",
                 Width = width,
                 Height = MinHeight,
                 Stroke = ColorProvider.HoldNoteBorderBrush,
@@ -436,8 +504,9 @@ namespace ChartEditor.Utils.Drawers
             this.previewers.Add(new Rectangle
             {
                 Name = "CatchNotePreviewer",
+                Tag = "Previewer",
                 Width = width,
-                Height = MinHeight * 2 / 3,
+                Height = MinHeight,
                 Stroke = ColorProvider.CatchNoteBorderBrush,
                 StrokeThickness = StrokeThickness,
                 Fill = ColorProvider.CatchNoteBrush,
@@ -449,6 +518,7 @@ namespace ChartEditor.Utils.Drawers
             this.trackHeader = new Rectangle
             {
                 Name = "TrackHeader",
+                Tag = "Header",
                 Width = Common.ColumnWidth,
                 Height = MinHeight,
                 Stroke = ColorProvider.TrackBorderBrush,
@@ -461,6 +531,7 @@ namespace ChartEditor.Utils.Drawers
             this.holdNoteHeader = new Rectangle
             {
                 Name = "HoldNoteHeader",
+                Tag = "Header",
                 Width = width,
                 Height = MinHeight,
                 Stroke = ColorProvider.HoldNoteBorderBrush,

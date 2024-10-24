@@ -35,6 +35,11 @@ namespace ChartEditor.Utils
         public static SolidColorBrush CatchNoteBorderBrush = Brushes.Orange;
 
         /// <summary>
+        /// 列标签填充颜色
+        /// </summary>
+        public static SolidColorBrush ColumnLabelBrush = Brushes.Purple;
+
+        /// <summary>
         /// Track渐变颜色
         /// </summary>
         public static LinearGradientBrush TrackGradientBrush

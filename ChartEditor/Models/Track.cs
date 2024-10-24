@@ -27,7 +27,7 @@ namespace ChartEditor.Models
         /// <summary>
         /// 包含的音符
         /// </summary>
-        private List<Note> notes;
+        private List<Note> notes = new List<Note>();
         public List<Note> Notes { get { return notes; } set { notes = value; } }
 
         /// <summary>
@@ -60,6 +60,12 @@ namespace ChartEditor.Models
         private Rectangle rectangle = null;
         public Rectangle Rectangle { get { return rectangle; } set { rectangle = value; } }
 
+        /// <summary>
+        /// 是否被选中
+        /// </summary>
+        private bool isPicked = false;
+        public bool IsPicked { get { return isPicked; } set { isPicked = value; } }
+
         public Track() { }
 
         public Track(BeatTime startTime, BeatTime endTime, int columnIndex)
@@ -67,7 +73,6 @@ namespace ChartEditor.Models
             this.startTime = startTime;
             this.endTime = endTime;
             this.columnIndex = columnIndex;
-            this.notes = new List<Note>();
             // 初始化关键点序列，并添加起始点（起始点必须存在，不允许删除）
             this.positionKeyPoints = new List<PositionKeyPoint>();
             this.positionKeyPoints.Add(new PositionKeyPoint(0, 0, this.startTime));
@@ -157,6 +162,14 @@ namespace ChartEditor.Models
             HoldNote holdNote = new HoldNote(startTime, endTime, this);
             this.Notes.Add(holdNote);
             return holdNote;
+        }
+
+        /// <summary>
+        /// 删除一个Note
+        /// </summary>
+        public void DeleteNote(Note note)
+        {
+            this.notes.Remove(note);
         }
     }
 }

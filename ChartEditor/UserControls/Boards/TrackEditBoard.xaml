@@ -28,6 +28,7 @@
                                 Foreground="Purple"
                                 FontSize="16"
                                 FontWeight="Bold"
+                                ToolTip="当前时间"
                                 Text="{Binding CurrentTimeStr}"/>
                             <TextBlock
                                 VerticalAlignment="Bottom"
@@ -35,6 +36,7 @@
                                 Foreground="DarkCyan"
                                 FontSize="12"
                                 FontWeight="Bold"
+                                ToolTip="当前拍数"
                                 Text="{Binding CurrentBeatStr}"/>
                         </Grid>
 
@@ -44,20 +46,58 @@
                             SelectionChanged="NoteSelectBox_SelectionChanged"
                             HorizontalAlignment="Center"
                             Style="{StaticResource MaterialDesignToolToggleListBox}">
-                            <ListBoxItem x:Name="TrackSelectBox" FontWeight="Bold" FontSize="16">Track</ListBoxItem>
-                            <ListBoxItem x:Name="TapNoteSelectBox" FontWeight="Bold" FontSize="16">Tap</ListBoxItem>
-                            <ListBoxItem x:Name="FlickNoteSelectBox" FontWeight="Bold" FontSize="16">Flick</ListBoxItem>
-                            <ListBoxItem x:Name="HoldNoteSelectBox" FontWeight="Bold" FontSize="16">Hold</ListBoxItem>
-                            <ListBoxItem x:Name="CatchNoteSelectBox" FontWeight="Bold" FontSize="16">Catch</ListBoxItem>
+                            <ListBoxItem x:Name="TrackSelectBox">
+                                <StackPanel>
+                                    <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="16" Text="Track"/>
+                                    <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="12" Text="{Binding TrackNum}"/>
+                                </StackPanel>
+                            </ListBoxItem>
+                            <ListBoxItem x:Name="TapNoteSelectBox" FontWeight="Bold" FontSize="16">
+                                <StackPanel>
+                                    <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="16" Text="Tap"/>
+                                    <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="12" Text="{Binding TapNoteNum}"/>
+                                </StackPanel>
+                            </ListBoxItem>
+                            <ListBoxItem x:Name="FlickNoteSelectBox" FontWeight="Bold" FontSize="16">
+                                <StackPanel>
+                                    <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="16" Text="Flick"/>
+                                    <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="12" Text="{Binding FlickNoteNum}"/>
+                                </StackPanel>
+                            </ListBoxItem>
+                            <ListBoxItem x:Name="HoldNoteSelectBox" FontWeight="Bold" FontSize="16">
+                                <StackPanel>
+                                    <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="16" Text="Hold"/>
+                                    <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="12" Text="{Binding HoldNoteNum}"/>
+                                </StackPanel>
+                            </ListBoxItem>
+                            <ListBoxItem x:Name="CatchNoteSelectBox" FontWeight="Bold" FontSize="16">
+                                <StackPanel>
+                                    <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="16" Text="Catch"/>
+                                    <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="12" Text="{Binding CatchNoteNum}"/>
+                                </StackPanel>
+                            </ListBoxItem>
                         </ListBox>
-                        <TextBlock
-                            VerticalAlignment="Center"
-                            HorizontalAlignment="Right"
-                            Foreground="Purple"
-                            FontSize="16"
-                            FontWeight="Bold"
-                            Margin="10"
-                            Text="{Binding MusicTimeString}"/>
+
+                        <Grid
+                            Margin="5"
+                            HorizontalAlignment="Right">
+                            <TextBlock
+                                VerticalAlignment="Top"
+                                HorizontalAlignment="Right"
+                                Foreground="Purple"
+                                FontSize="16"
+                                FontWeight="Bold"
+                                ToolTip="总时长"
+                                Text="{Binding MusicTimeString}"/>
+                            <TextBlock
+                                VerticalAlignment="Bottom"
+                                HorizontalAlignment="Right"
+                                Foreground="OrangeRed"
+                                FontSize="12"
+                                FontWeight="Bold"
+                                ToolTip="总物量"
+                                Text="{Binding NoteNum}"/>
+                        </Grid>
                     </Grid>
                 </materialDesign:Card>
 
@@ -66,7 +106,7 @@
                         <ColumnDefinition Width="50"/>
                         <ColumnDefinition Width="50"/>
                         <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition Width="40"/>
                     </Grid.ColumnDefinitions>
 
                     <Grid Grid.Column="1">
@@ -106,7 +146,8 @@
                             KeyUp="TrackCanvasViewer_KeyUp"
                             PreviewMouseDown="TrackCanvasViewer_PreviewMouseDown"
                             PreviewMouseMove="TrackCanvasViewer_PreviewMouseMove"
-                            PreviewMouseUp="TrackCanvasViewer_PreviewMouseUp">
+                            PreviewMouseUp="TrackCanvasViewer_PreviewMouseUp"
+                            MouseEnter="TrackCanvasViewer_MouseEnter">
                             <Canvas
                                 x:Name="TrackCanvasFloor"
                                 Margin="1, 0, 0, 0"
@@ -132,6 +173,8 @@
                                 VerticalAlignment="Top">
                                 <Button
                                     x:Name="ReplayButton"
+                                    Width="40"
+                                    Height="40"
                                     ToolTip="重新播放"
                                     Click="ReplayButton_Click"
                                     Style="{StaticResource MaterialDesignIconButton}">
@@ -139,7 +182,9 @@
                                 </Button>
                                 <ToggleButton
                                     x:Name="PlayButton"
-                                    ToolTip="播放"
+                                    Width="40"
+                                    Height="40"
+                                    ToolTip="播放/Space"
                                     Checked="PlayButton_Checked"
                                     Unchecked="PlayButton_Unchecked"
                                     Style="{StaticResource MaterialDesignIconButton}">
@@ -147,6 +192,8 @@
                                 </ToggleButton>
                                 <Button
                                     x:Name="PlaySpeedButton"
+                                    Width="40"
+                                    Height="40"
                                     ToolTip="播放速度"
                                     Click="PlaySpeedButton_Click"
                                     Style="{StaticResource MaterialDesignIconButton}">
@@ -161,14 +208,27 @@
                                 <Separator/>
                                 <ToggleButton
                                     x:Name="PickerButton"
-                                    ToolTip="选择"
+                                    Width="40"
+                                    Height="40"
+                                    ToolTip="选择/Shift"
                                     Checked="PickerButton_Checked"
                                     Unchecked="PickerButton_Unchecked"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="CursorPointer"/>
                                 </ToggleButton>
                                 <Button
+                                    x:Name="DeleteButton"
+                                    Width="40"
+                                    Height="40"
+                                    ToolTip="删除选中的音符/Ctrl+D/Delete"
+                                    Click="DeleteButton_Click"
+                                    Style="{StaticResource MaterialDesignIconButton}">
+                                    <materialDesign:PackIcon Kind="Delete"/>
+                                </Button>
+                                <Button
                                     x:Name="SizeButton"
+                                    Width="40"
+                                    Height="40"
                                     ToolTip="网格尺寸"
                                     Click="SizeButton_Click"
                                     Style="{StaticResource MaterialDesignIconButton}">
@@ -176,6 +236,8 @@
                                 </Button>
                                 <Button
                                     x:Name="DivideButton"
+                                    Width="40"
+                                    Height="40"
                                     ToolTip="分割"
                                     Click="DivideButton_Click"
                                     Style="{StaticResource MaterialDesignIconButton}">
@@ -183,6 +245,8 @@
                                 </Button>
                                 <Button
                                     x:Name="BpmManagerButton"
+                                    Width="40"
+                                    Height="40"
                                     ToolTip="Bpm列表"
                                     Click="BpmManagerButton_Click"
                                     Style="{StaticResource MaterialDesignIconButton}">
@@ -190,6 +254,8 @@
                                 </Button>
                                 <Button
                                     x:Name="VolumeButton"
+                                    Width="40"
+                                    Height="40"
                                     ToolTip="音量"
                                     Click="VolumeButton_Click"
                                     Style="{StaticResource MaterialDesignIconButton}">
@@ -197,6 +263,8 @@
                                 </Button>
                                 <Button
                                     x:Name="InfomationButton"
+                                    Width="40"
+                                    Height="40"
                                     ToolTip="谱面信息"
                                     Click="InfomationButton_Click"
                                     Style="{StaticResource MaterialDesignIconButton}">
@@ -204,13 +272,17 @@
                                 </Button>
                                 <Button
                                     x:Name="SaveButton"
-                                    ToolTip="保存"
+                                    Width="40"
+                                    Height="40"
+                                    ToolTip="保存/Ctrl+S"
                                     Click="SaveButton_Click"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="ContentSave"/>
                                 </Button>
                                 <Button
                                     x:Name="ExportButton"
+                                    Width="40"
+                                    Height="40"
                                     ToolTip="导出"
                                     Click="ExportButton_Click"
                                     Style="{StaticResource MaterialDesignIconButton}">

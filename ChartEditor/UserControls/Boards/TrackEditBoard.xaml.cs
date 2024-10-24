@@ -24,9 +24,6 @@ namespace ChartEditor.UserControls.Boards
 
         public MainWindowModel MainWindowModel { get; set; }
 
-        // 是否处于初始化中
-        private bool isInitializing = true;
-
         private TrackEditBoardController TrackEditBoardController;
 
         /// <summary>
@@ -101,7 +98,6 @@ namespace ChartEditor.UserControls.Boards
                 this.Model.PropertyChanged += Model_PropertyChanged;
                 // 添加UI同步绘制
                 CompositionTarget.Rendering += CompositionTarget_Rendering;
-                this.isInitializing = false;
             }
         }
 
@@ -268,9 +264,17 @@ namespace ChartEditor.UserControls.Boards
         {
             if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
             {
-                this.TrackEditBoardController.SetShift(true);
+                this.TrackEditBoardController.SwitchShift();
+                if (this.TrackEditBoardController.ShiftState)
+                {
+                    PickerButton.RaiseEvent(new RoutedEventArgs(ToggleButton.CheckedEvent));
+                }
+                else
+                {
+                    PickerButton.RaiseEvent(new RoutedEventArgs(ToggleButton.UncheckedEvent));
+                }
             }
-            if (e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl)
+            else if (e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl)
             {
                 this.TrackEditBoardController.SetCtrl(true);
             }
@@ -278,10 +282,6 @@ namespace ChartEditor.UserControls.Boards
 
         private void TrackCanvasViewer_PreviewKeyUp(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
-            {
-                this.TrackEditBoardController.SetShift(false);
-            }
             if (e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl)
             {
                 this.TrackEditBoardController.SetCtrl(false);
@@ -378,10 +378,12 @@ namespace ChartEditor.UserControls.Boards
             // 同步滚动条
             if (TrackCanvasViewer.VerticalOffset != verticalOffset) TrackCanvasViewer.ScrollToVerticalOffset(verticalOffset);
             if (TimeLineCanvasViewer.VerticalOffset != verticalOffset) TimeLineCanvasViewer.ScrollToVerticalOffset(verticalOffset);
-            // 更新当前时间信息
-            if (!this.isInitializing)
+            
+            if (this.IsLoaded)
             {
+                // 更新当前时间信息
                 this.Model.UpdateCurrentBeatTime(TrackCanvasViewer.VerticalOffset, TrackCanvasViewer.ExtentHeight, TrackCanvasViewer.ActualHeight);
+                this.TrackEditBoardController.OnScrollChanged();
             }
         }
 
@@ -389,16 +391,26 @@ namespace ChartEditor.UserControls.Boards
         {
             if (e.Key == Key.Space)
             {
-                if (this.TrackEditBoardController.IsPlaying)
+                PlayButton.IsChecked = !this.TrackEditBoardController.IsPlaying;
+            }
+            else if (e.Key == Key.D)
+            {
+                if (this.TrackEditBoardController.IsCtrlDown)
                 {
-                    PlayButton.IsChecked = false;
-                }
-                else
-                {
-                    PlayButton.IsChecked = true;
+                    DeleteButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 }
             }
-            
+            else if (e.Key == Key.Delete)
+            {
+                DeleteButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            }
+            else if (e.Key == Key.S)
+            {
+                if (this.TrackEditBoardController.IsCtrlDown)
+                {
+                    SaveButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                }
+            }
         }
 
         private void TrackCanvasViewer_KeyUp(object sender, KeyEventArgs e)
@@ -454,6 +466,16 @@ namespace ChartEditor.UserControls.Boards
         private void TimeLineCanvasViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
             this.SetScrollViewerVerticalOffset(e.VerticalOffset);
+        }
+
+        private void DeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.TrackEditBoardController.DeletePickedNotes();
+        }
+
+        private void TrackCanvasViewer_MouseEnter(object sender, MouseEventArgs e)
+        {
+            TrackCanvasViewer.Focus();
         }
     }
 }

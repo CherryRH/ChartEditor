@@ -33,17 +33,17 @@ namespace ChartEditor.Utils
         /// <summary>
         /// 每一列的宽度
         /// </summary>
-        public static double ColumnWidth = 60;
+        public static double ColumnWidth = 80;
 
         /// <summary>
         /// 列之间间隔的宽度占比
         /// </summary>
-        public static double ColumnGap = 1.0 / 12.0;
+        public static double ColumnGap = 1.0 / 6.0;
 
         /// <summary>
         /// 每一行的宽度（一拍为一行）
         /// </summary>
-        public static double RowWidth = 160;
+        public static double RowWidth = 200;
 
         /// <summary>
         /// 判定线所处位置比例

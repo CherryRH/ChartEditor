@@ -43,8 +43,48 @@ namespace ChartEditor.ViewModels
         private List<Track> tracks = new List<Track>();
         public List<Track> Tracks { get { return tracks; } }
 
+        // 选中的Track（只允许选择一个）
+        private Track pickedTrack = null;
+        public Track PickedTrack { get { return pickedTrack; } set { pickedTrack = value; } }
+        // 选中的Note（允许选择多个）
+        private List<Note> pickedNotes = new List<Note>();
+        public List<Note> PickedNotes
+        {
+            get { return pickedNotes; }
+            set
+            {
+                pickedNotes = value;
+                // 通知属性面板更新
+
+            }
+        }
+
         private int columnNum = Common.ColumnNum;
         public int ColumnNum { get { return columnNum; } }
+        /// <summary>
+        /// 对元素进行实时统计
+        /// </summary>
+        private int trackNum = 0;
+        public int TrackNum { get { return trackNum; } set { trackNum = value; OnPropertyChanged("TrackNum"); } }
+
+        private int tapNoteNum = 0;
+        public int TapNoteNum { get { return tapNoteNum; } set { tapNoteNum = value; OnPropertyChanged("TapNoteNum"); OnPropertyChanged("NoteNum"); } }
+
+        private int flickNoteNum = 0;
+        public int FlickNoteNum { get { return flickNoteNum; } set { flickNoteNum = value; OnPropertyChanged("FlickNoteNum"); OnPropertyChanged("NoteNum"); } }
+
+        private int holdNoteNum = 0;
+        public int HoldNoteNum { get { return holdNoteNum; } set { holdNoteNum = value; OnPropertyChanged("HoldNoteNum"); OnPropertyChanged("NoteNum"); } }
+
+        private int catchNoteNum = 0;
+        public int CatchNoteNum { get { return catchNoteNum; } set { catchNoteNum = value; OnPropertyChanged("CatchNoteNum"); OnPropertyChanged("NoteNum"); } }
+        public int NoteNum
+        {
+            get
+            {
+                return TapNoteNum + FlickNoteNum + HoldNoteNum + CatchNoteNum;
+            }
+        }
 
         /// <summary>
         /// 每一列的宽度
@@ -235,22 +275,30 @@ namespace ChartEditor.ViewModels
             // 可以添加轨道
             Track track = new Track(start, end, endColumnIndex);
             this.tracks.Add(track);
+            this.TrackNum++;
             return track;
         }
 
         /// <summary>
-        /// 添加TapNote/FLickNote/CatchNote
+        /// 添加TapNote/FlickNote/CatchNote
         /// </summary>
         public Note AddNote(BeatTime beatTime, int columnIndex, NoteType noteType)
         {
             // Note必须要添加到一个Track中
-            foreach (var item in tracks)
+            foreach (Track track in tracks)
             {
-                if (item.IsInTrack(beatTime, columnIndex))
+                if (track.IsInTrack(beatTime, columnIndex))
                 {
-                    Note newNote = item.AddNote(beatTime, noteType);
+                    Note newNote = track.AddNote(beatTime, noteType);
                     if (newNote != null)
                     {
+                        // 添加成功
+                        switch (noteType)
+                        {
+                            case NoteType.Tap: this.TapNoteNum++; break;
+                            case NoteType.Flick: this.FlickNoteNum++; break;
+                            case NoteType.Catch: this.CatchNoteNum++; break;
+                        }
                         return newNote;
                     }
                     break;
@@ -291,12 +339,31 @@ namespace ChartEditor.ViewModels
                     HoldNote newHoldNote = item.AddHoldNoteFooter(startTime, endTime);
                     if (newHoldNote != null)
                     {
+                        // 添加成功
+                        this.HoldNoteNum++;
                         return newHoldNote;
                     }
                     break;
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// 删除Note
+        /// </summary>
+        public void DeleteNote(Note note)
+        {
+            if (note == null) return;
+            // 更新统计数据
+            switch (note.Type)
+            {
+                case NoteType.Tap: this.TapNoteNum--; break;
+                case NoteType.Hold: this.HoldNoteNum--; break;
+                case NoteType.Flick: this.FlickNoteNum--; break;
+                case NoteType.Catch: this.CatchNoteNum--; break;
+            }
+            note.Track.DeleteNote(note);
         }
 
         /// <summary>

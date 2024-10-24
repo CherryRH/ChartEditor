@@ -35,6 +35,12 @@ namespace ChartEditor.Models
         private Rectangle rectangle = null;
         public Rectangle Rectangle { get { return rectangle; } set { rectangle = value; } }
 
+        /// <summary>
+        /// 是否被选中
+        /// </summary>
+        private bool isPicked = false;
+        public bool IsPicked { get { return isPicked; } set { isPicked = value; } }
+
         public Note() { }
 
         public Note(BeatTime time, NoteType type, Track track)
