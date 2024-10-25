@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls;
+using System.Windows;
 using System.Windows.Shapes;
 
 namespace ChartEditor.Models
@@ -48,6 +50,15 @@ namespace ChartEditor.Models
             this.time = time;
             this.type = type;
             this.Track = track;
+        }
+
+        /// <summary>
+        /// 获取音符的矩形
+        /// </summary>
+        public Rect GetRect()
+        {
+            if (this.rectangle == null) return Rect.Empty;
+            return new Rect(Canvas.GetLeft(this.rectangle), Canvas.GetBottom(this.rectangle), this.rectangle.Width, this.rectangle.Height);
         }
     }
 

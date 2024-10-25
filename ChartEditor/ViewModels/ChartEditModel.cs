@@ -95,7 +95,7 @@ namespace ChartEditor.ViewModels
         /// <summary>
         /// 列间隔
         /// </summary>
-        private double columnGap = Common.ColumnGap;
+        private double columnGap = Common.NotePadding;
         public double ColumnGap { get { return columnGap; } set { columnGap = value; } }
 
         /// <summary>
@@ -218,11 +218,6 @@ namespace ChartEditor.ViewModels
         /// </summary>
         private int noteSelectedIndex = -1;
         public int NoteSelectedIndex { get { return noteSelectedIndex; } set { noteSelectedIndex = value; } }
-
-        /// <summary>
-        /// 鼠标选中的元素
-        /// </summary>
-        public List<Rectangle> SelectedElements {  get; set; }
 
         /// <summary>
         /// 音乐音量

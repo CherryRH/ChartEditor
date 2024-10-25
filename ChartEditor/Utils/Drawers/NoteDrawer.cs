@@ -67,21 +67,24 @@ namespace ChartEditor.Utils.Drawers
         /// <summary>
         /// 矩形参数
         /// </summary>
-        public static double MinHeight = 12;
-        public static int StrokeThickness = 1;
-        public static int HighLightStrokeThickness = 3;
-        public static int PickedStrokeThickness = 3;
-        public static int Radius = 5;
-        public static double PreviewerOpacity = 0.4;
-        public static double HeaderOpacity = 0.6;
-        public static double TrackOpacity = 0.8;
+        private static double MinHeight = 12;
+        private static int StrokeThickness = 1;
+        private static int HighLightStrokeThickness = 3;
+        private static int PickedStrokeThickness = 3;
+        private static int Radius = 5;
+        private static double PreviewerOpacity = 0.4;
+        private static double HeaderOpacity = 0.6;
+        private static double TrackOpacity = 0.8;
 
         // 图形ZIndex
-        public static int TrackZIndex = 0;
-        public static int HoldNoteZIndex = 10;
-        public static int NoteZIndex = 20;
-        public static int HeaderZIndex = 50;
-        public static int PreviewerZIndex = 100;
+        private static int TrackZIndex = 0;
+        private static int HoldNoteZIndex = 10;
+        private static int NoteZIndex = 20;
+        private static int HeaderZIndex = 50;
+        private static int PreviewerZIndex = 100;
+
+        // 动画
+        private static DoubleAnimation RectangleStrokeAnimation = AnimationProvider.GetRepeatDoubleAnimation(12, 0, 1.5);
 
         public NoteDrawer(TrackEditBoard trackEditBoard)
         {
@@ -98,26 +101,28 @@ namespace ChartEditor.Utils.Drawers
         /// </summary>
         public void RedrawWhenColumnWidthChanged()
         {
+            double trackPadding = Common.TrackPadding * this.ChartEditModel.ColumnWidth;
+            double notePadding = Common.NotePadding * this.ChartEditModel.ColumnWidth;
             // 重绘Header
             if (this.trackCanvas.Children.Contains(this.trackHeader))
             {
-                this.trackHeader.Width = this.ChartEditModel.ColumnWidth;
-                Canvas.SetLeft(this.trackHeader, this.lastTrackHeaderColumnIndex * this.ChartEditModel.ColumnWidth);
+                this.trackHeader.Width = this.ChartEditModel.ColumnWidth - 2 * trackPadding;
+                Canvas.SetLeft(this.trackHeader, this.lastTrackHeaderColumnIndex * this.ChartEditModel.ColumnWidth + trackPadding);
             }
             if (this.trackCanvas.Children.Contains(this.holdNoteHeader))
             {
-                this.holdNoteHeader.Width = this.ChartEditModel.ColumnWidth - 2 * Common.ColumnGap * this.ChartEditModel.ColumnWidth;
-                Canvas.SetLeft(this.holdNoteHeader, this.lastHoldNoteHeaderColumnIndex * this.ChartEditModel.ColumnWidth + Common.ColumnGap * this.ChartEditModel.ColumnWidth);
+                this.holdNoteHeader.Width = this.ChartEditModel.ColumnWidth - 2 * notePadding;
+                Canvas.SetLeft(this.holdNoteHeader, this.lastHoldNoteHeaderColumnIndex * this.ChartEditModel.ColumnWidth + notePadding);
             }
             // 重绘所有Track和Note
-            foreach (var item in this.ChartEditModel.Tracks)
+            foreach (Track track in this.ChartEditModel.Tracks)
             {
-                item.Rectangle.Width = this.ChartEditModel.ColumnWidth;
-                Canvas.SetLeft(item.Rectangle, item.ColumnIndex * this.ChartEditModel.ColumnWidth);
-                foreach(var note in item.Notes)
+                track.Rectangle.Width = this.ChartEditModel.ColumnWidth - 2 * trackPadding;
+                Canvas.SetLeft(track.Rectangle, track.ColumnIndex * this.ChartEditModel.ColumnWidth + trackPadding);
+                foreach(Note note in track.Notes)
                 {
-                    note.Rectangle.Width = this.ChartEditModel.ColumnWidth - 2 * Common.ColumnGap * this.ChartEditModel.ColumnWidth;
-                    Canvas.SetLeft(note.Rectangle, note.Track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.ColumnGap * this.ChartEditModel.ColumnWidth);
+                    note.Rectangle.Width = this.ChartEditModel.ColumnWidth - 2 * notePadding;
+                    Canvas.SetLeft(note.Rectangle, note.Track.ColumnIndex * this.ChartEditModel.ColumnWidth + notePadding);
                 }
             }
         }
@@ -160,7 +165,7 @@ namespace ChartEditor.Utils.Drawers
             Rectangle newTrack = new Rectangle
             {
                 Tag = "Track",
-                Width = this.ChartEditModel.ColumnWidth,
+                Width = this.ChartEditModel.ColumnWidth - 2 * Common.TrackPadding * this.ChartEditModel.ColumnWidth,
                 Height = MinHeight + (track.EndTime.GetEquivalentBeat() - track.StartTime.GetEquivalentBeat()) * this.ChartEditModel.RowWidth,
                 Stroke = ColorProvider.TrackBorderBrush,
                 StrokeThickness = StrokeThickness,
@@ -174,7 +179,7 @@ namespace ChartEditor.Utils.Drawers
 
             track.Rectangle = newTrack;
             this.trackCanvas.Children.Add(newTrack);
-            Canvas.SetLeft(newTrack, track.ColumnIndex * this.ChartEditModel.ColumnWidth);
+            Canvas.SetLeft(newTrack, track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.TrackPadding * this.ChartEditModel.ColumnWidth);
             Canvas.SetBottom(newTrack, track.StartTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
             // 保持在最底层
             Canvas.SetZIndex(newTrack, 0);
@@ -187,7 +192,7 @@ namespace ChartEditor.Utils.Drawers
         {
             Rectangle newNote = new Rectangle
             {
-                Width = this.ChartEditModel.ColumnWidth - 2 * Common.ColumnGap * this.ChartEditModel.ColumnWidth,
+                Width = this.ChartEditModel.ColumnWidth - 2 * Common.NotePadding * this.ChartEditModel.ColumnWidth,
                 StrokeThickness = StrokeThickness,
                 RadiusX = Radius,
                 RadiusY = Radius
@@ -231,7 +236,7 @@ namespace ChartEditor.Utils.Drawers
             }
             note.Rectangle = newNote;
             this.trackCanvas.Children.Add(newNote);
-            Canvas.SetLeft(newNote, note.Track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.ColumnGap * this.ChartEditModel.ColumnWidth);
+            Canvas.SetLeft(newNote, note.Track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.NotePadding * this.ChartEditModel.ColumnWidth);
             Canvas.SetBottom(newNote, note.Time.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
             // HoldNote在其他Note下层
             if (note.Type == NoteType.Hold)
@@ -270,8 +275,8 @@ namespace ChartEditor.Utils.Drawers
             this.lastPreviewColumnIndex = columnIndex;
             if (!this.trackCanvas.Children.Contains(this.previewers[this.previewerIndex])) this.trackCanvas.Children.Add(this.previewers[this.previewerIndex]);
             // 重置宽度和位置
-            this.previewers[this.previewerIndex].Width = this.ChartEditModel.ColumnWidth - (this.previewerIndex == 0 ? 0 : 2 * Common.ColumnGap * this.ChartEditModel.ColumnWidth);
-            Canvas.SetLeft(this.previewers[this.previewerIndex], columnIndex * this.ChartEditModel.ColumnWidth + (this.previewerIndex == 0 ? 0 : Common.ColumnGap * this.ChartEditModel.ColumnWidth));
+            this.previewers[this.previewerIndex].Width = this.ChartEditModel.ColumnWidth - (this.previewerIndex == 0 ? Common.TrackPadding : Common.NotePadding) * 2 * this.ChartEditModel.ColumnWidth;
+            Canvas.SetLeft(this.previewers[this.previewerIndex], columnIndex * this.ChartEditModel.ColumnWidth + (this.previewerIndex == 0 ? Common.TrackPadding : Common.NotePadding) * this.ChartEditModel.ColumnWidth);
             Canvas.SetBottom(this.previewers[this.previewerIndex], newBeatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
             // 确保在最顶层
             Canvas.SetZIndex(this.previewers[this.previewerIndex], PreviewerZIndex);
@@ -299,9 +304,9 @@ namespace ChartEditor.Utils.Drawers
             // 重置宽度和位置
             this.lastTrackHeaderBeatTime = beatTime;
             this.lastTrackHeaderColumnIndex = columnIndex;
-            this.trackHeader.Width = this.ChartEditModel.ColumnWidth;
+            this.trackHeader.Width = this.ChartEditModel.ColumnWidth - 2 * Common.TrackPadding * this.ChartEditModel.ColumnWidth;
             this.trackCanvas.Children.Add(this.trackHeader);
-            Canvas.SetLeft(this.trackHeader, columnIndex * this.ChartEditModel.ColumnWidth);
+            Canvas.SetLeft(this.trackHeader, columnIndex * this.ChartEditModel.ColumnWidth + Common.TrackPadding * this.ChartEditModel.ColumnWidth);
             Canvas.SetBottom(this.trackHeader, beatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
             // 在次顶层
             Canvas.SetZIndex(this.trackHeader, HeaderZIndex);
@@ -324,9 +329,9 @@ namespace ChartEditor.Utils.Drawers
             // 重置宽度和位置
             this.lastHoldNoteHeaderBeatTime = beatTime;
             this.lastHoldNoteHeaderColumnIndex = columnIndex;
-            this.holdNoteHeader.Width = this.ChartEditModel.ColumnWidth - 2 * Common.ColumnGap * this.ChartEditModel.ColumnWidth;
+            this.holdNoteHeader.Width = this.ChartEditModel.ColumnWidth - 2 * Common.NotePadding * this.ChartEditModel.ColumnWidth;
             this.trackCanvas.Children.Add(this.holdNoteHeader);
-            Canvas.SetLeft(this.holdNoteHeader, columnIndex * this.ChartEditModel.ColumnWidth + Common.ColumnGap * this.ChartEditModel.ColumnWidth);
+            Canvas.SetLeft(this.holdNoteHeader, columnIndex * this.ChartEditModel.ColumnWidth + Common.NotePadding * this.ChartEditModel.ColumnWidth);
             Canvas.SetBottom(this.holdNoteHeader, beatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
             // 在次顶层
             Canvas.SetZIndex(this.trackHeader, HeaderZIndex);
@@ -353,6 +358,7 @@ namespace ChartEditor.Utils.Drawers
             if (id < 0 || id >= this.previewers.Count || this.previewerIndex == id) return;
             if (this.previewerIndex != -1) this.trackCanvas.Children.Remove(this.previewers[this.previewerIndex]);
             this.previewerIndex = id;
+            this.ifPreviewerShowing = false;
         }
 
         /// <summary>
@@ -375,7 +381,8 @@ namespace ChartEditor.Utils.Drawers
             rectangle.StrokeThickness = HighLightStrokeThickness;
             // 设置虚线
             rectangle.StrokeDashArray = new DoubleCollection() { 2, 2, 6, 2 };
-            StartHighLightDashOffsetAnimation(rectangle);
+            // 启动虚线旋转动画
+            rectangle.BeginAnimation(Shape.StrokeDashOffsetProperty, RectangleStrokeAnimation);
             // 略微突出ZIndex
             if (rectangle.DataContext is Track)
             {
@@ -385,21 +392,6 @@ namespace ChartEditor.Utils.Drawers
             {
                 Canvas.SetZIndex(rectangle, (note.Type == NoteType.Hold ? HoldNoteZIndex : NoteZIndex) + 1);
             }
-        }
-
-        /// <summary>
-        /// 启动虚线旋转动画
-        /// </summary>
-        private void StartHighLightDashOffsetAnimation(Rectangle rectangle)
-        {
-            DoubleAnimation dashOffsetAnimation = new DoubleAnimation
-            {
-                From = 12,
-                To = 0,
-                Duration = new Duration(TimeSpan.FromSeconds(1.5)),
-                RepeatBehavior = RepeatBehavior.Forever
-            };
-            rectangle.BeginAnimation(Shape.StrokeDashOffsetProperty, dashOffsetAnimation);
         }
 
         /// <summary>
@@ -447,13 +439,14 @@ namespace ChartEditor.Utils.Drawers
         /// </summary>
         private void InitPreviewNotes()
         {
-            double width = (1.0 - 2 * Common.ColumnGap) * Common.ColumnWidth;
+            double noteWidth = (1.0 - 2 * Common.NotePadding) * Common.ColumnWidth;
+            double trackWidth = (1.0 - 2 * Common.TrackPadding) * Common.ColumnWidth;
             // 5种预览图形
             this.previewers.Add(new Rectangle
             {
                 Name = "TrackPreviewer",
                 Tag = "Previewer",
-                Width = Common.ColumnWidth,
+                Width = trackWidth,
                 Height = MinHeight,
                 Stroke = ColorProvider.TrackBorderBrush,
                 StrokeThickness = StrokeThickness,
@@ -466,7 +459,7 @@ namespace ChartEditor.Utils.Drawers
             {
                 Name = "TapNotePreviewer",
                 Tag = "Previewer",
-                Width = width,
+                Width = noteWidth,
                 Height = MinHeight,
                 Stroke = ColorProvider.TapNoteBorderBrush,
                 StrokeThickness = StrokeThickness,
@@ -479,7 +472,7 @@ namespace ChartEditor.Utils.Drawers
             {
                 Name = "FlickNotePreviewer",
                 Tag = "Previewer",
-                Width = width,
+                Width = noteWidth,
                 Height = MinHeight,
                 Stroke = ColorProvider.FlickNoteBorderBrush,
                 StrokeThickness = StrokeThickness,
@@ -492,7 +485,7 @@ namespace ChartEditor.Utils.Drawers
             {
                 Name = "HoldNotePreviewer",
                 Tag = "Previewer",
-                Width = width,
+                Width = noteWidth,
                 Height = MinHeight,
                 Stroke = ColorProvider.HoldNoteBorderBrush,
                 StrokeThickness = StrokeThickness,
@@ -505,7 +498,7 @@ namespace ChartEditor.Utils.Drawers
             {
                 Name = "CatchNotePreviewer",
                 Tag = "Previewer",
-                Width = width,
+                Width = noteWidth,
                 Height = MinHeight,
                 Stroke = ColorProvider.CatchNoteBorderBrush,
                 StrokeThickness = StrokeThickness,
@@ -519,7 +512,7 @@ namespace ChartEditor.Utils.Drawers
             {
                 Name = "TrackHeader",
                 Tag = "Header",
-                Width = Common.ColumnWidth,
+                Width = trackWidth,
                 Height = MinHeight,
                 Stroke = ColorProvider.TrackBorderBrush,
                 StrokeThickness = StrokeThickness,
@@ -532,7 +525,7 @@ namespace ChartEditor.Utils.Drawers
             {
                 Name = "HoldNoteHeader",
                 Tag = "Header",
-                Width = width,
+                Width = noteWidth,
                 Height = MinHeight,
                 Stroke = ColorProvider.HoldNoteBorderBrush,
                 StrokeThickness = StrokeThickness,

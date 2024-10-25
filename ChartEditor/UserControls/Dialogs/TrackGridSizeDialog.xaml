@@ -20,10 +20,8 @@
                 HorizontalAlignment="Left"/>
 
             <Slider
-                Maximum="500"
-                Minimum="60"
+                x:Name="RowWidthSlider"
                 Style="{StaticResource MaterialDesign3.MaterialDesignDiscreteSlider}"
-                TickFrequency="20"
                 Value="{Binding RowWidth}"/>
 
             <TextBlock
@@ -34,10 +32,8 @@
                 HorizontalAlignment="Left"/>
 
             <Slider
-                Maximum="150"
-                Minimum="20"
+                x:Name="ColumnWidthSlider"
                 Style="{StaticResource MaterialDesign3.MaterialDesignDiscreteSlider}"
-                TickFrequency="10"
                 Value="{Binding ColumnWidth}"/>
 
             <Grid

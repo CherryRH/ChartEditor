@@ -12,6 +12,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Shapes;
 
 namespace ChartEditor.UserControls.Boards
 {
@@ -207,46 +208,53 @@ namespace ChartEditor.UserControls.Boards
             }
         }
 
+        private void TrackCanvasViewer_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            Point? canvasPoint = e.GetPosition(TrackCanvas);
+            Point? viewerPoint = e.GetPosition(TrackCanvasViewer);
+            bool isOverScrollBar = this.IsPointOverScrollBar(viewerPoint);
+            if (this.IsPointInTrackGrid(canvasPoint) && !this.TrackEditBoardController.IsCtrlDown)
+            {
+                this.TrackEditBoardController.OnMouseDownInTrackCanvas(canvasPoint, e.ButtonState);
+            }
+            else if (!isOverScrollBar)
+            {
+                this.TrackEditBoardController.OnMouseDownInTrackCanvasViewer(viewerPoint, e.ButtonState);
+            }
+            if (!isOverScrollBar)
+            {
+                this.TrackEditBoardController.OnMouseDownInTrackCanvasFloor(canvasPoint, e.ButtonState);
+            }
+        }
+
         private void TrackCanvasViewer_PreviewMouseMove(object sender, MouseEventArgs e)
         {
             Point? canvasPoint = e.GetPosition(TrackCanvas);
+            Point? viewerPoint = e.GetPosition(TrackCanvasViewer);
             if (this.IsPointInTrackGrid(canvasPoint) && !this.TrackEditBoardController.IsCtrlDown)
             {
                 this.TrackEditBoardController.OnMouseMoveInTrackCanvas(canvasPoint);
             }
             else
             {
-                Point? point = e.GetPosition(TrackCanvasViewer);
-                this.TrackEditBoardController.OnMouseMoveInTrackCanvasViewer(point);
+                this.TrackEditBoardController.OnMouseMoveInTrackCanvasViewer(viewerPoint);
             }
-        }
-
-        private void TrackCanvasViewer_PreviewMouseDown(object sender, MouseButtonEventArgs e)
-        {
-            Point? canvasPoint = e.GetPosition(TrackCanvas);
-            if (this.IsPointInTrackGrid(canvasPoint) && !this.TrackEditBoardController.IsCtrlDown)
-            {
-                this.TrackEditBoardController.OnMouseDownInTrackCanvas(canvasPoint, e.ButtonState);
-            }
-            else
-            {
-                Point? point = e.GetPosition(TrackCanvasViewer);
-                this.TrackEditBoardController.OnMouseDownInTrackCanvasViewer(point, e.ButtonState);
-            }
+            this.TrackEditBoardController.OnMouseMoveInTrackCanvasFloor(canvasPoint);
         }
 
         private void TrackCanvasViewer_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
-            Point? point = e.GetPosition(TrackCanvasViewer);
-            this.TrackEditBoardController.OnMouseUpInTrackCanvasViewer(point);
+            Point? canvasPoint = e.GetPosition(TrackCanvas);
+            Point? viewerPoint = e.GetPosition(TrackCanvasViewer);
+            this.TrackEditBoardController.OnMouseUpInTrackCanvasViewer(viewerPoint);
+            this.TrackEditBoardController.OnMouseUpInTrackCanvasFloor(canvasPoint);
         }
 
         private void PickerButton_Checked(object sender, RoutedEventArgs e)
         {
             this.TrackEditBoardController.SetIsPicking(true);
             Mouse.OverrideCursor = Cursors.Hand;
-            PickerButton.Background = Brushes.LightGray;
-            TrackCanvasViewer.Focus();
+            PickerButton.Background = Brushes.MediumPurple;
         }
 
         private void PickerButton_Unchecked(object sender, RoutedEventArgs e)
@@ -254,25 +262,13 @@ namespace ChartEditor.UserControls.Boards
             this.TrackEditBoardController.SetIsPicking(false);
             Mouse.OverrideCursor = null;
             PickerButton.Background = Brushes.White;
-            TrackCanvasViewer.Focus();
         }
 
-        /// <summary>
-        /// 实现TrackCanvasViewer中按键相关逻辑
-        /// </summary>
-        private void TrackCanvasViewer_PreviewKeyDown(object sender, KeyEventArgs e)
+        private void TrackEditCard_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
             {
-                this.TrackEditBoardController.SwitchShift();
-                if (this.TrackEditBoardController.ShiftState)
-                {
-                    PickerButton.RaiseEvent(new RoutedEventArgs(ToggleButton.CheckedEvent));
-                }
-                else
-                {
-                    PickerButton.RaiseEvent(new RoutedEventArgs(ToggleButton.UncheckedEvent));
-                }
+                PickerButton.IsChecked = !PickerButton.IsChecked;
             }
             else if (e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl)
             {
@@ -280,7 +276,7 @@ namespace ChartEditor.UserControls.Boards
             }
         }
 
-        private void TrackCanvasViewer_PreviewKeyUp(object sender, KeyEventArgs e)
+        private void TrackEditCard_PreviewKeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl)
             {
@@ -387,11 +383,11 @@ namespace ChartEditor.UserControls.Boards
             }
         }
 
-        private void TrackCanvasViewer_KeyDown(object sender, KeyEventArgs e)
+        private void TrackEditCard_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Space)
             {
-                PlayButton.IsChecked = !this.TrackEditBoardController.IsPlaying;
+                PlayButton.IsChecked = !PlayButton.IsChecked;
             }
             else if (e.Key == Key.D)
             {
@@ -411,9 +407,29 @@ namespace ChartEditor.UserControls.Boards
                     SaveButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 }
             }
+            else if (e.Key == Key.D1)
+            {
+                NoteSelectBox.SelectedIndex = 0;
+            }
+            else if (e.Key == Key.D2)
+            {
+                NoteSelectBox.SelectedIndex = 1;
+            }
+            else if (e.Key == Key.D3)
+            {
+                NoteSelectBox.SelectedIndex = 2;
+            }
+            else if (e.Key == Key.D4)
+            {
+                NoteSelectBox.SelectedIndex = 3;
+            }
+            else if (e.Key == Key.D5)
+            {
+                NoteSelectBox.SelectedIndex = 4;
+            }
         }
 
-        private void TrackCanvasViewer_KeyUp(object sender, KeyEventArgs e)
+        private void TrackEditCard_KeyUp(object sender, KeyEventArgs e)
         {
 
         }
@@ -473,9 +489,38 @@ namespace ChartEditor.UserControls.Boards
             this.TrackEditBoardController.DeletePickedNotes();
         }
 
-        private void TrackCanvasViewer_MouseEnter(object sender, MouseEventArgs e)
+        private void TrackEditCard_MouseEnter(object sender, MouseEventArgs e)
         {
-            TrackCanvasViewer.Focus();
+            if (!TrackCanvasViewer.IsFocused)
+            {
+                TrackCanvasViewer.Focus();
+            }
+        }
+
+        private void CopyButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void PasteButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        /// <summary>
+        /// 检测鼠标是否在某个轨道或音符内
+        /// </summary>
+        public bool IsMouseInTrackOrNote(Point? point)
+        {
+            IInputElement hitElement = TrackCanvas.InputHitTest(point.Value);
+            if (hitElement is Rectangle rectangle)
+            {
+                if (rectangle.DataContext is Models.Track || rectangle.DataContext is Note)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

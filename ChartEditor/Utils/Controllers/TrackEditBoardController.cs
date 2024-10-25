@@ -42,11 +42,15 @@ namespace ChartEditor.Utils.Controllers
 
         private ColumnLabelDrawer columnLabelDrawer;
 
+        private SelectBoxDrawer selectBoxDrawer;
+
         private bool isSizeChanging = false;
         // 当前高光的Track
         private HashSet<Track> highLightTracks = new HashSet<Track>();
         // 当前高光的Note
         private HashSet<Note> highLightNotes = new HashSet<Note>();
+        // 多选框选中的Note
+        private HashSet<Note> selectBoxPickedNotes = new HashSet<Note>();
 
         /// <summary>
         /// 音乐播放
@@ -70,6 +74,9 @@ namespace ChartEditor.Utils.Controllers
 
         private bool isScrollViewerDragging = false;
         public bool IsScrollViewerDragging { get { return isScrollViewerDragging; } }
+
+        private bool isSelectBoxDragging = false;
+        public bool IsSelectBoxDragging { get { return isSelectBoxDragging; } }
         // 选择状态
         private bool isPicking = false;
         public bool IsPicking { get { return isPicking; } }
@@ -79,7 +86,6 @@ namespace ChartEditor.Utils.Controllers
 
         // 键盘状态
         public bool IsShiftDown { get; private set; } = false;
-        public bool ShiftState { get; private set; } = false;
         public bool IsCtrlDown { get; private set; } = false;
         public bool IsAltDown { get; private set; } = false;
 
@@ -133,6 +139,9 @@ namespace ChartEditor.Utils.Controllers
                 this.noteDrawer = new NoteDrawer(this.TrackEditBoard);
                 // 初始化列标签绘制器
                 this.columnLabelDrawer = new ColumnLabelDrawer(this.TrackEditBoard);
+                // 初始化多选框绘制器
+                this.selectBoxDrawer = new SelectBoxDrawer(this.TrackEditBoard);
+
                 Console.WriteLine(logTag + "加载完成");
                 return true;
             }
@@ -205,24 +214,24 @@ namespace ChartEditor.Utils.Controllers
             }
             else
             {
+                if (this.IsCtrlDown)
+                {
+
+                }
+                else
+                {
+                    // 清除选中的音符
+                    this.ClearAllPickedNotes();
+                }
                 if (!this.isPicking)
                 {
                     // 选择状态时禁用拖动效果
-                    if (mouseButtonState == MouseButtonState.Pressed && !this.TrackEditBoard.IsPointOverScrollBar(mousePosition))
+                    if (mouseButtonState == MouseButtonState.Pressed)
                     {
                         this.DragMousePosition = mousePosition;
                         this.isScrollViewerDragging = true;
                         this.TrackCanvasViewer.CaptureMouse();
                     }
-                }
-                if (this.IsCtrlDown)
-                {
-                    
-                }
-                else
-                {
-                    // 清除选中的音符
-                    this.ClearPickedNotes();
                 }
             }
         }
@@ -276,9 +285,83 @@ namespace ChartEditor.Utils.Controllers
                 else
                 {
                     // 清除选中的音符
-                    this.ClearPickedNotes();
+                    this.ClearAllPickedNotes();
                 }
             }
+        }
+
+        public void OnMouseDownInTrackCanvasFloor(Point? mousePosition, MouseButtonState mouseButtonState)
+        {
+            if (this.isPlaying) return;
+            if (this.isPicking)
+            {
+                // 进入复选框状态
+                if (mouseButtonState == MouseButtonState.Pressed)
+                {
+                    this.selectBoxDrawer.SetSelectedBoxAt(mousePosition);
+                    this.isSelectBoxDragging = true;
+                }
+            }
+        }
+
+        public void OnMouseMoveInTrackCanvasFloor(Point? mousePosition)
+        {
+            if (this.isPlaying) return;
+            if (this.isPicking)
+            {
+                if (this.isSelectBoxDragging)
+                {
+                    this.selectBoxDrawer.DragSelectBoxTo(mousePosition);
+                    Rect selectBoxRect = this.selectBoxDrawer.GetRect();
+                    // 检查已选中的音符是否还在多选框内
+                    this.selectBoxPickedNotes.RemoveWhere(note =>
+                    {
+                        Rect noteRect = note.GetRect();
+                        if (!selectBoxRect.IntersectsWith(noteRect))
+                        {
+                            note.IsPicked = false;
+                            this.noteDrawer.ClearRectState(note.Rectangle);
+                            return true;
+                        }
+                        return false;
+                    });
+                    // 搜索与多选框相交的音符
+                    foreach (Track track in this.ChartEditModel.Tracks)
+                    {
+                        Rect trackRect = track.GetRect();
+                        
+                        if (selectBoxRect.IntersectsWith(trackRect))
+                        {
+                            foreach (Note note in track.Notes)
+                            {
+                                if (this.selectBoxPickedNotes.Contains(note) || this.ChartEditModel.PickedNotes.Contains(note)) continue;
+                                Rect noteRect = note.GetRect();
+                                if (selectBoxRect.IntersectsWith(noteRect))
+                                {
+                                    note.IsPicked = true;
+                                    this.selectBoxPickedNotes.Add(note);
+                                    this.noteDrawer.RectPicked(note.Rectangle);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public void OnMouseUpInTrackCanvasFloor(Point? mousePosition)
+        {
+            if (this.isPlaying) return;
+            if (this.isSelectBoxDragging)
+            {
+                this.selectBoxDrawer.HideSelectBox();
+                this.isSelectBoxDragging = false;
+            }
+            foreach (Note note in this.selectBoxPickedNotes)
+            {
+                this.ChartEditModel.PickedNotes.Add(note);
+            }
+            this.selectBoxPickedNotes.Clear();
         }
 
         /// <summary>
@@ -376,12 +459,17 @@ namespace ChartEditor.Utils.Controllers
                     this.isHoldNotePutting = false;
                     this.noteDrawer.HideHoldNoteHeader();
                 }
+                
+                this.ForceTriggerTrackOrNoteMouseEnter();
             }
             else
             {
                 this.noteDrawer.ShowPreviewer();
                 // 清除所有高光
                 this.ClearAllRectHighLight();
+                // 隐藏多选框
+                this.selectBoxDrawer.HideSelectBox();
+                this.isSelectBoxDragging = false;
             }
         }
 
@@ -401,22 +489,6 @@ namespace ChartEditor.Utils.Controllers
             else
             {
                 this.noteDrawer.ShowPreviewer();
-            }
-        }
-
-        /// <summary>
-        /// 切换Shift状态，Shift用于切换放置模式和选择模式
-        /// </summary>
-        public void SwitchShift()
-        {
-            this.ShiftState = !this.ShiftState;
-            if (this.ShiftState)
-            {
-                
-            }
-            else
-            {
-                
             }
         }
 
@@ -658,7 +730,7 @@ namespace ChartEditor.Utils.Controllers
                         {
                             if (!this.IsCtrlDown)
                             {
-                                this.ClearPickedNotes();
+                                this.ClearAllPickedNotes();
                             }
                             // 添加此音符
                             note.IsPicked = true;
@@ -675,7 +747,7 @@ namespace ChartEditor.Utils.Controllers
         /// <summary>
         /// 清除所有选中的音符
         /// </summary>
-        public void ClearPickedNotes()
+        public void ClearAllPickedNotes()
         {
             foreach (Note it in this.ChartEditModel.PickedNotes)
             {
@@ -788,6 +860,26 @@ namespace ChartEditor.Utils.Controllers
             }
         }
 
+        /// <summary>
+        /// 强制触发鼠标在某个轨道或音符内的事件
+        /// </summary>
+        private void ForceTriggerTrackOrNoteMouseEnter()
+        {
+            Point mousePosition = Mouse.GetPosition(TrackCanvas);
+            IInputElement hitElement = TrackCanvas.InputHitTest(mousePosition);
+            if (hitElement is Rectangle rectangle)
+            {
+                if (rectangle.DataContext is Track track)
+                {
+                    this.TrackRectangle_MouseEnter(rectangle, null);
+                }
+                else if (rectangle.DataContext is Note note)
+                {
+                    this.NoteRectangle_MouseEnter(rectangle, null);
+                }
+            }
+        }
+        
         /// <summary>
         /// 清除所有矩形的高光状态
         /// </summary>

@@ -1,4 +1,5 @@
-﻿using ChartEditor.ViewModels;
+﻿using ChartEditor.Utils;
+using ChartEditor.ViewModels;
 using MaterialDesignThemes.Wpf;
 using System;
 using System.Collections.Generic;
@@ -29,6 +30,13 @@ namespace ChartEditor.UserControls.Dialogs
             InitializeComponent();
             this.chartEditModel = chartEditModel;
             this.DataContext = chartEditModel;
+            
+            ColumnWidthSlider.Minimum = Common.ColumnWidthMin;
+            ColumnWidthSlider.Maximum = Common.ColumnWidthMax;
+            ColumnWidthSlider.TickFrequency = Common.ColumnWidthTick;
+            RowWidthSlider.Minimum = Common.RowWidthMin;
+            RowWidthSlider.Maximum = Common.RowWidthMax;
+            RowWidthSlider.TickFrequency = Common.RowWidthTick;
         }
 
         public void CloseButton_Click(object sender, RoutedEventArgs e)

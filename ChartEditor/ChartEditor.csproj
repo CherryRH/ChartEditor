@@ -217,6 +217,7 @@
     <Compile Include="UserControls\Items\ChartMusicItem.xaml.cs">
       <DependentUpon>ChartMusicItem.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Utils\AnimationProvider.cs" />
     <Compile Include="Utils\Cache\CoverImageCache.cs" />
     <Compile Include="Utils\ChartMusicUtil.cs" />
     <Compile Include="Utils\ChartUtils\ChartUtilV1.cs" />
@@ -225,6 +226,7 @@
     <Compile Include="Utils\Controllers\TrackEditBoardController.cs" />
     <Compile Include="Utils\Drawers\ColumnLabelDrawer.cs" />
     <Compile Include="Utils\Drawers\NoteDrawer.cs" />
+    <Compile Include="Utils\Drawers\SelectBoxDrawer.cs" />
     <Compile Include="Utils\Drawers\TimeLineDrawer.cs" />
     <Compile Include="Utils\Drawers\TrackGridDrawer.cs" />
     <Compile Include="Utils\ImageUtil.cs" />

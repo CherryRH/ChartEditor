@@ -10,7 +10,13 @@
     <materialDesign:DialogHost
         Identifier="TrackEditDialog"
         CloseOnClickAway="True">
-        <materialDesign:Card>
+        <materialDesign:Card
+            x:Name="TrackEditCard"
+            PreviewKeyDown="TrackEditCard_PreviewKeyDown"
+            PreviewKeyUp="TrackEditCard_PreviewKeyUp"
+            KeyDown="TrackEditCard_KeyDown"
+            KeyUp="TrackEditCard_KeyUp"
+            MouseEnter="TrackEditCard_MouseEnter">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="50"/>
@@ -140,14 +146,9 @@
                             VerticalScrollBarVisibility="Visible"
                             SizeChanged="TrackCanvasViewer_SizeChanged"
                             ScrollChanged="TrackCanvasViewer_ScrollChanged"
-                            PreviewKeyDown="TrackCanvasViewer_PreviewKeyDown"
-                            PreviewKeyUp="TrackCanvasViewer_PreviewKeyUp"
-                            KeyDown="TrackCanvasViewer_KeyDown"
-                            KeyUp="TrackCanvasViewer_KeyUp"
                             PreviewMouseDown="TrackCanvasViewer_PreviewMouseDown"
                             PreviewMouseMove="TrackCanvasViewer_PreviewMouseMove"
-                            PreviewMouseUp="TrackCanvasViewer_PreviewMouseUp"
-                            MouseEnter="TrackCanvasViewer_MouseEnter">
+                            PreviewMouseUp="TrackCanvasViewer_PreviewMouseUp">
                             <Canvas
                                 x:Name="TrackCanvasFloor"
                                 Margin="1, 0, 0, 0"
@@ -177,6 +178,7 @@
                                     Height="40"
                                     ToolTip="重新播放"
                                     Click="ReplayButton_Click"
+                                    Foreground="CornflowerBlue"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="Replay"/>
                                 </Button>
@@ -187,6 +189,7 @@
                                     ToolTip="播放/Space"
                                     Checked="PlayButton_Checked"
                                     Unchecked="PlayButton_Unchecked"
+                                    Foreground="CornflowerBlue"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon x:Name="PlayIcon" Kind="Play"/>
                                 </ToggleButton>
@@ -196,6 +199,7 @@
                                     Height="40"
                                     ToolTip="播放速度"
                                     Click="PlaySpeedButton_Click"
+                                    Foreground="CornflowerBlue"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="PlaySpeed"/>
                                 </Button>
@@ -213,6 +217,7 @@
                                     ToolTip="选择/Shift"
                                     Checked="PickerButton_Checked"
                                     Unchecked="PickerButton_Unchecked"
+                                    Foreground="Orchid"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="CursorPointer"/>
                                 </ToggleButton>
@@ -222,9 +227,43 @@
                                     Height="40"
                                     ToolTip="删除选中的音符/Ctrl+D/Delete"
                                     Click="DeleteButton_Click"
+                                    Foreground="Orchid"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="Delete"/>
                                 </Button>
+                                <Button
+                                    x:Name="CutTrackButton"
+                                    Width="40"
+                                    Height="40"
+                                    ToolTip="切断选中的轨道"
+                                    Click="DeleteButton_Click"
+                                    Foreground="Orchid"
+                                    Style="{StaticResource MaterialDesignIconButton}">
+                                    <materialDesign:PackIcon Kind="Scissors"/>
+                                </Button>
+                                <Button
+                                    x:Name="CopyButton"
+                                    Width="40"
+                                    Height="40"
+                                    ToolTip="复制选中的音符/Ctrl+C"
+                                    Click="CopyButton_Click"
+                                    Foreground="Orchid"
+                                    Style="{StaticResource MaterialDesignIconButton}">
+                                    <materialDesign:PackIcon Kind="ContentCopy"/>
+                                </Button>
+                                <Button
+                                    x:Name="PasteButton"
+                                    Width="40"
+                                    Height="40"
+                                    ToolTip="粘贴已复制的音符并自动创建轨道/Ctrl+V"
+                                    Click="PasteButton_Click"
+                                    Foreground="Orchid"
+                                    Style="{StaticResource MaterialDesignIconButton}">
+                                    <materialDesign:PackIcon Kind="ContentPaste"/>
+                                </Button>
+                                
+                                <Separator/>
+                                
                                 <Button
                                     x:Name="SizeButton"
                                     Width="40"
@@ -270,12 +309,16 @@
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="InfoBox"/>
                                 </Button>
+
+                                <Separator/>
+                                
                                 <Button
                                     x:Name="SaveButton"
                                     Width="40"
                                     Height="40"
                                     ToolTip="保存/Ctrl+S"
                                     Click="SaveButton_Click"
+                                    Foreground="Brown"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="ContentSave"/>
                                 </Button>
@@ -285,6 +328,7 @@
                                     Height="40"
                                     ToolTip="导出"
                                     Click="ExportButton_Click"
+                                    Foreground="Brown"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="Export"/>
                                 </Button>

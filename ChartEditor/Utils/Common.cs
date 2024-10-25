@@ -34,16 +34,27 @@ namespace ChartEditor.Utils
         /// 每一列的宽度
         /// </summary>
         public static double ColumnWidth = 80;
+        public static double ColumnWidthTick = 10;
+        public static double ColumnWidthMin = 20;
+        public static double ColumnWidthMax = 150;
 
         /// <summary>
-        /// 列之间间隔的宽度占比
+        /// 轨道的边缘占比
         /// </summary>
-        public static double ColumnGap = 1.0 / 6.0;
+        public static double TrackPadding = 0.1;
+
+        /// <summary>
+        /// 音符的边缘占比
+        /// </summary>
+        public static double NotePadding = 0.2;
 
         /// <summary>
         /// 每一行的宽度（一拍为一行）
         /// </summary>
         public static double RowWidth = 200;
+        public static double RowWidthTick = 20;
+        public static double RowWidthMin = 20;
+        public static double RowWidthMax = 400;
 
         /// <summary>
         /// 判定线所处位置比例
