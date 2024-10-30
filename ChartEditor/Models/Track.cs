@@ -95,6 +95,28 @@ namespace ChartEditor.Models
         }
 
         /// <summary>
+        /// 获取鼠标位置的拉伸状态。0-不能拉伸；1-可以拉伸起始点；2-可以拉伸结束点
+        /// </summary>
+        public int GetStretchState(Point? point, Canvas trackCanvas)
+        {
+            if (!point.HasValue || trackCanvas == null || this.rectangle == null) return 0;
+            double pointY = trackCanvas.Height - point.Value.Y;
+            double pointX = point.Value.X;
+            if (pointX < Canvas.GetLeft(this.rectangle) || pointX > Canvas.GetLeft(this.rectangle) + this.rectangle.Width)
+            {
+                return 0;
+            }
+            double startY = Canvas.GetBottom(this.rectangle);
+            double endY = Canvas.GetBottom(this.rectangle) + this.rectangle.Height;
+            double endDelta = pointY - endY;
+            double startDelta = startY - pointY;
+            double testY = 10.0;
+            if (endDelta <= testY && endDelta > 0) return 2;
+            if (startDelta <= testY && startDelta > 0) return 1;
+            return 0;
+        }
+
+        /// <summary>
         /// 尝试添加非Hold的Note
         /// </summary>
         public Note AddNote(BeatTime beatTime, NoteType noteType)
@@ -181,6 +203,14 @@ namespace ChartEditor.Models
         {
             if (this.rectangle == null) return Rect.Empty;
             return new Rect(Canvas.GetLeft(this.rectangle), Canvas.GetBottom(this.rectangle), this.rectangle.Width, this.rectangle.Height);
+        }
+
+        /// <summary>
+        /// 是否为首尾相等的轨道
+        /// </summary>
+        public bool IsMiniTrack()
+        {
+            return this.startTime.IsEqualTo(this.endTime);
         }
     }
 }

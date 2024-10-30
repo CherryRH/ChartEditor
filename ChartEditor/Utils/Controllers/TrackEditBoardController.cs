@@ -51,6 +51,12 @@ namespace ChartEditor.Utils.Controllers
         private HashSet<Note> highLightNotes = new HashSet<Note>();
         // 多选框选中的Note
         private HashSet<Note> selectBoxPickedNotes = new HashSet<Note>();
+        // 正在拉伸的Track
+        private Track stretchingTrack = null;
+        // 正在拉伸的HoldNote
+        private HoldNote stretchingHoldNote = null;
+        // 是否在拉伸结束点
+        private bool isStretchingEndPoint = true;
 
         /// <summary>
         /// 音乐播放
@@ -69,20 +75,17 @@ namespace ChartEditor.Utils.Controllers
         /// <summary>
         /// 鼠标控制
         /// </summary>
-        public Point? DragMousePosition { get; private set; }
-        public Point? CanvasMousePosition { get; private set; }
+        public Point? DragMousePosition { get; private set; } = new Point?();
+        public Point? CanvasMousePosition { get; private set; } = new Point?();
 
         private bool isScrollViewerDragging = false;
-        public bool IsScrollViewerDragging { get { return isScrollViewerDragging; } }
 
         private bool isSelectBoxDragging = false;
-        public bool IsSelectBoxDragging { get { return isSelectBoxDragging; } }
+
         // 选择状态
         private bool isPicking = false;
-        public bool IsPicking { get { return isPicking; } }
         // 删除状态
         private bool isDeleting = false;
-        public bool IsDeleting { get { return isDeleting; } }
 
         // 键盘状态
         public bool IsShiftDown { get; private set; } = false;
@@ -251,6 +254,51 @@ namespace ChartEditor.Utils.Controllers
                     this.TrackCanvasViewer.ReleaseMouseCapture();
                 }
             }
+            else
+            {
+                
+            }
+        }
+
+        /// <summary>
+        /// 当鼠标在TrackCanvasViewer上方移动时
+        /// </summary>
+        public void OnMouseMoveOverTrackCanvasViewer(Point? mousePoint)
+        {
+            if (this.isPlaying) return;
+            if (this.isPicking)
+            {
+                if (this.isSelectBoxDragging || this.stretchingTrack != null || this.stretchingHoldNote != null)
+                {
+                    double testWidth = this.TrackCanvasViewer.ActualWidth / 20;
+                    double testHeight = this.TrackCanvasViewer.ActualHeight / 20;
+                    double maxSpeedY = 1;
+                    double maxSpeedX = 0.5;
+                    double pointY = mousePoint.Value.Y;
+                    double pointX = mousePoint.Value.X;
+                    // 当鼠标靠近边界时，向对应方向滚动
+                    if (pointY <= testHeight)
+                    {
+                        double speed = Math.Min(maxSpeedY, (testHeight - pointY) * maxSpeedY / testHeight);
+                        this.TrackCanvasViewer.ScrollToVerticalOffset(Math.Max(0, this.TrackCanvasViewer.VerticalOffset - speed));
+                    }
+                    else if (pointY >= this.TrackCanvasViewer.ActualHeight - testHeight)
+                    {
+                        double speed = Math.Min(maxSpeedY, (pointY - this.TrackCanvasViewer.ActualHeight + testHeight) * maxSpeedY / testHeight);
+                        this.TrackCanvasViewer.ScrollToVerticalOffset(Math.Min(this.TrackCanvasViewer.ScrollableHeight, this.TrackCanvasViewer.VerticalOffset + speed));
+                    }
+                    if (pointX <= testWidth)
+                    {
+                        double speed = Math.Min(maxSpeedX, (testWidth - pointX) * maxSpeedX / testWidth);
+                        this.TrackCanvasViewer.ScrollToHorizontalOffset(Math.Max(0, this.TrackCanvasViewer.HorizontalOffset - speed));
+                    }
+                    else if (pointX >= this.TrackCanvasViewer.ActualWidth - testWidth)
+                    {
+                        double speed = Math.Min(maxSpeedX, (pointX - this.TrackCanvasViewer.ActualWidth + testWidth) * maxSpeedX / testWidth);
+                        this.TrackCanvasViewer.ScrollToHorizontalOffset(Math.Min(this.TrackCanvasViewer.ScrollableWidth, this.TrackCanvasViewer.HorizontalOffset + speed));
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -260,6 +308,10 @@ namespace ChartEditor.Utils.Controllers
         {
             if (this.isPlaying) return;
             this.CanvasMousePosition = mousePosition;
+            if (this.isPicking)
+            {
+                
+            }
         }
 
         /// <summary>
@@ -274,10 +326,18 @@ namespace ChartEditor.Utils.Controllers
             }
             else
             {
-                BeatTime beatTime = this.ChartEditModel.GetBeatTimeFromPoint(mousePosition, this.TrackEditBoard.TrackCanvas.ActualHeight);
-                int columnIndex = this.ChartEditModel.GetColumnIndexFromPoint(mousePosition);
-                // 放置事件
-                this.TryPutTrackOrNote(beatTime, columnIndex);
+                if (this.isPicking)
+                {
+                    
+                }
+                else
+                {
+                    BeatTime beatTime = this.ChartEditModel.GetBeatTimeFromPoint(mousePosition, this.TrackEditBoard.TrackCanvas.ActualHeight);
+                    int columnIndex = this.ChartEditModel.GetColumnIndexFromPoint(mousePosition);
+                    // 放置事件
+                    this.TryPutTrackOrNote(beatTime, columnIndex);
+                }
+                
                 if (this.IsCtrlDown)
                 {
                     
@@ -296,10 +356,35 @@ namespace ChartEditor.Utils.Controllers
             if (this.isPicking)
             {
                 // 进入复选框状态
-                if (mouseButtonState == MouseButtonState.Pressed)
+                if (mouseButtonState == MouseButtonState.Pressed && Mouse.OverrideCursor != Cursors.SizeNS)
                 {
                     this.selectBoxDrawer.SetSelectedBoxAt(mousePosition);
                     this.isSelectBoxDragging = true;
+                }
+                if (this.stretchingTrack == null && this.stretchingHoldNote == null)
+                {
+                    // 检测鼠标是否在被选中轨道的两端
+                    if (this.ChartEditModel.PickedTrack != null)
+                    {
+                        switch (this.ChartEditModel.PickedTrack.GetStretchState(mousePosition, this.TrackCanvas))
+                        {
+                            case 0: break;
+                            case 1:
+                                {
+                                    this.stretchingTrack = this.ChartEditModel.PickedTrack;
+                                    this.isStretchingEndPoint = false;
+                                    this.TrackCanvas.CaptureMouse();
+                                    break;
+                                }
+                            case 2:
+                                {
+                                    this.stretchingTrack = this.ChartEditModel.PickedTrack;
+                                    this.isStretchingEndPoint = true;
+                                    this.TrackCanvas.CaptureMouse();
+                                    break;
+                                }
+                        }
+                    }
                 }
             }
         }
@@ -346,22 +431,69 @@ namespace ChartEditor.Utils.Controllers
                         }
                     }
                 }
+                else
+                {
+                    if (this.stretchingTrack == null && this.stretchingHoldNote == null)
+                    {
+                        // 检测鼠标是否在被选中轨道的两端
+                        if (this.ChartEditModel.PickedTrack != null)
+                        {
+                            switch (this.ChartEditModel.PickedTrack.GetStretchState(mousePosition, this.TrackCanvas))
+                            {
+                                case 0: Mouse.OverrideCursor = Cursors.Hand; break;
+                                case 1: Mouse.OverrideCursor = Cursors.SizeNS; break;
+                                case 2: Mouse.OverrideCursor = Cursors.SizeNS; break;
+                            }
+                        }
+                    }
+                    else if (this.stretchingTrack != null)
+                    {
+                        BeatTime beatTime = this.ChartEditModel.GetBeatTimeFromPoint(mousePosition, this.TrackCanvas.Height);
+                        if (this.isStretchingEndPoint && !beatTime.IsEqualTo(this.stretchingTrack.EndTime))
+                        {
+                            bool result = this.ChartEditModel.TryChangeTrackEndTime(this.stretchingTrack, beatTime);
+                            if (result)
+                            {
+                                this.stretchingTrack.EndTime = beatTime;
+                                this.noteDrawer.RedrawTrackWhenTimeChanged(this.stretchingTrack);
+                            }
+                        }
+                        else if (!this.isStretchingEndPoint && !beatTime.IsEqualTo(this.stretchingTrack.StartTime))
+                        {
+                            bool result = this.ChartEditModel.TryChangeTrackStartTime(this.stretchingTrack, beatTime);
+                            if (result)
+                            {
+                                this.stretchingTrack.StartTime = beatTime;
+                                this.noteDrawer.RedrawTrackWhenTimeChanged(this.stretchingTrack);
+                            }
+                        }
+                    }
+                }
             }
         }
 
         public void OnMouseUpInTrackCanvasFloor(Point? mousePosition)
         {
             if (this.isPlaying) return;
-            if (this.isSelectBoxDragging)
+            if (this.isPicking)
             {
-                this.selectBoxDrawer.HideSelectBox();
-                this.isSelectBoxDragging = false;
+                if (this.isSelectBoxDragging)
+                {
+                    foreach (Note note in this.selectBoxPickedNotes)
+                    {
+                        this.ChartEditModel.PickedNotes.Add(note);
+                    }
+                    this.selectBoxPickedNotes.Clear();
+                    this.selectBoxDrawer.HideSelectBox();
+                    this.isSelectBoxDragging = false;
+                }
+                if (this.stretchingTrack != null)
+                {
+                    this.stretchingTrack = null;
+                    Mouse.OverrideCursor = Cursors.Hand;
+                    this.TrackCanvas.ReleaseMouseCapture();
+                }
             }
-            foreach (Note note in this.selectBoxPickedNotes)
-            {
-                this.ChartEditModel.PickedNotes.Add(note);
-            }
-            this.selectBoxPickedNotes.Clear();
         }
 
         /// <summary>
@@ -459,7 +591,7 @@ namespace ChartEditor.Utils.Controllers
                     this.isHoldNotePutting = false;
                     this.noteDrawer.HideHoldNoteHeader();
                 }
-                
+
                 this.ForceTriggerTrackOrNoteMouseEnter();
             }
             else
@@ -470,6 +602,9 @@ namespace ChartEditor.Utils.Controllers
                 // 隐藏多选框
                 this.selectBoxDrawer.HideSelectBox();
                 this.isSelectBoxDragging = false;
+                // 清除拉伸状态
+                this.stretchingTrack = null;
+                this.stretchingHoldNote = null;
             }
         }
 
@@ -529,6 +664,7 @@ namespace ChartEditor.Utils.Controllers
                 this.musicStartDateTime = DateTime.Now;
                 this.musicStartTime = this.ChartEditModel.CurrentTime;
                 isPlaying = true;
+
                 this.noteDrawer.HidePreviewer();
             }
             catch (Exception ex)
@@ -558,7 +694,19 @@ namespace ChartEditor.Utils.Controllers
                 this.musicStartDateTime = DateTime.Now;
                 this.musicStartTime = this.ChartEditModel.CurrentTime;
                 this.isPlaying = true;
-                this.noteDrawer.HidePreviewer();
+                // 清除状态
+                if (this.isPicking)
+                {
+                    this.isSelectBoxDragging = false;
+                    this.selectBoxDrawer.HideSelectBox();
+                    this.stretchingTrack = null;
+                    this.stretchingHoldNote = null;
+                    Mouse.OverrideCursor = Cursors.Hand;
+                }
+                else
+                {
+                    this.noteDrawer.HidePreviewer();
+                }
             }
             catch (Exception ex)
             {
@@ -575,6 +723,7 @@ namespace ChartEditor.Utils.Controllers
 
             this.TrackEditBoard.PlayIcon.Kind = PackIconKind.Play;
             this.isPlaying = false;
+
             this.noteDrawer.ShowPreviewer();
         }
 
@@ -583,7 +732,6 @@ namespace ChartEditor.Utils.Controllers
         /// </summary>
         private void TryPutTrackOrNote(BeatTime beatTime, int columnIndex)
         {
-            if (this.isPicking || this.isPlaying) return;
             switch (this.TrackEditBoard.Model.NoteSelectedIndex)
             {
                 case 0:
@@ -603,7 +751,7 @@ namespace ChartEditor.Utils.Controllers
                                 // 设置点击事件
                                 newTrack.Rectangle.MouseDown += TrackRectangle_MouseDown;
                             }
-                            else
+                            else if (this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
                             {
                                 this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
                             }
@@ -619,7 +767,7 @@ namespace ChartEditor.Utils.Controllers
                                 this.trackHeaderPutColumnIndex = columnIndex;
                                 this.noteDrawer.ShowTrackHeaderAt(beatTime, columnIndex);
                             }
-                            else
+                            else if (this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
                             {
                                 this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
                             }
@@ -637,7 +785,7 @@ namespace ChartEditor.Utils.Controllers
                             newTapNote.Rectangle.MouseLeave += NoteRectangle_MouseLeave;
                             newTapNote.Rectangle.MouseDown += NoteRectangle_MouseDown;
                         }
-                        else
+                        else if (this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
                         {
                             this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
                         }
@@ -654,7 +802,7 @@ namespace ChartEditor.Utils.Controllers
                             newFlickNote.Rectangle.MouseLeave += NoteRectangle_MouseLeave;
                             newFlickNote.Rectangle.MouseDown += NoteRectangle_MouseDown;
                         }
-                        else
+                        else if (this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
                         {
                             this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
                         }
@@ -674,7 +822,7 @@ namespace ChartEditor.Utils.Controllers
                                 newHoldNote.Rectangle.MouseLeave += NoteRectangle_MouseLeave;
                                 newHoldNote.Rectangle.MouseDown += NoteRectangle_MouseDown;
                             }
-                            else
+                            else if (this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
                             {
                                 this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
                             }
@@ -690,7 +838,7 @@ namespace ChartEditor.Utils.Controllers
                                 this.holdNoteHeaderPutColumnIndex = columnIndex;
                                 this.noteDrawer.ShowHoldNoteHeaderAt(beatTime, columnIndex);
                             }
-                            else
+                            else if (this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
                             {
                                 this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
                             }
@@ -708,7 +856,7 @@ namespace ChartEditor.Utils.Controllers
                             newCatchNote.Rectangle.MouseLeave += NoteRectangle_MouseLeave;
                             newCatchNote.Rectangle.MouseDown += NoteRectangle_MouseDown;
                         }
-                        else
+                        else if (this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
                         {
                             this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
                         }

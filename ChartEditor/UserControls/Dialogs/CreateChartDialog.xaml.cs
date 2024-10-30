@@ -46,6 +46,8 @@ namespace ChartEditor.UserControls.Dialogs
 
             // 将谱师名设置为默认用户名
             this.Model.Author = this.MainWindowModel.Settings.Username;
+            // 列数设为默认值
+            this.Model.ColumnNum = Common.ColumnNum.ToString();
         }
 
         /// <summary>
@@ -73,8 +75,13 @@ namespace ChartEditor.UserControls.Dialogs
                 await DialogHost.Show(new WarnDialog("谱师名不能为空哦~"), "CreateChartDialog");
                 return;
             }
+            if (!int.TryParse(this.Model.ColumnNum, out int parsedColumnNum) || parsedColumnNum < 1)
+            {
+                await DialogHost.Show(new WarnDialog("列数应为一个正整数"), "CreateChartDialog");
+                return;
+            }
 
-            DialogHost.CloseDialogCommand.Execute(new ChartInfo(this.ChartListModel.ChartMusic, this.Model.Name, this.Model.Author), this);
+            DialogHost.CloseDialogCommand.Execute(new ChartInfo(this.ChartListModel.ChartMusic, this.Model.Name, this.Model.Author, parsedColumnNum), this);
         }
 
         /// <summary>

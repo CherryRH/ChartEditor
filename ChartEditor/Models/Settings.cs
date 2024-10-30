@@ -27,19 +27,25 @@ namespace ChartEditor.Models
         /// <summary>
         /// 谱师名
         /// </summary>
-        private string username;
+        private string username = "User";
         public string Username { get { return username; } set { username = value; } }
 
-        private AutoSaveType autoSaveType;
+        /// <summary>
+        /// 自动保存间隔
+        /// </summary>
+        private AutoSaveType autoSaveType = AutoSaveType.OneMinute;
         public AutoSaveType AutoSaveType { get { return autoSaveType; } set { autoSaveType = value; } }
+
+        /// <summary>
+        /// 放置轨道或音符时的警告
+        /// </summary>
+        private bool trackOrNotePutWarnEnabled = true;
+        public bool TrackOrNotePutWarnEnabled { get { return trackOrNotePutWarnEnabled; } set { trackOrNotePutWarnEnabled = value; } }
 
         public string AppPath { get; set; }
 
         public Settings()
         {
-            // 初始化数据
-            this.username = "User";
-            this.autoSaveType = AutoSaveType.OneMinute;
             // 获取版本号
             this.appVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             // 读取本地设置
@@ -58,7 +64,8 @@ namespace ChartEditor.Models
             {
                 ["AppVersion"] = this.appVersion,
                 ["Username"] = this.username,
-                ["AutoSaveType"] = this.autoSaveType.ToString()
+                ["AutoSaveType"] = this.autoSaveType.ToString(),
+                ["TrackOrNotePutWarnEnabled"] = this.trackOrNotePutWarnEnabled
             };
 
             return jObject.ToString(Formatting.Indented);
@@ -81,7 +88,6 @@ namespace ChartEditor.Models
             {
                 Console.WriteLine(logTag + ex.ToString());
             }
-
         }
 
         /// <summary>
@@ -111,6 +117,15 @@ namespace ChartEditor.Models
                             this.autoSaveType = AutoSaveType.OneMinute;
                         }
 
+                        string trackOrNotePutWarnEnabledString = jObject.Value<string>("TrackOrNotePutWarnEnabled") ?? string.Empty;
+                        if (bool.TryParse(trackOrNotePutWarnEnabledString, out bool parsedBool))
+                        {
+                            this.trackOrNotePutWarnEnabled = parsedBool;
+                        }
+                        else
+                        {
+                            this.trackOrNotePutWarnEnabled = true;
+                        }
                         Console.WriteLine(logTag + "设置已读取");
                     }
                 }

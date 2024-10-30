@@ -46,7 +46,11 @@ namespace ChartEditor.Utils.Drawers
         // 是否显示预览图形
         private bool ifShowPreviewer = true;
         // 是否正在显示预览图形
-        private bool ifPreviewerShowing = false;
+        private bool isPreviewerShowing = false;
+        // 是否正在显示trackHeader
+        private bool isTrackHeaderShowing = false;
+        // 是否正在显示holdNoteHeader
+        private bool isHoldNoteHeaderShowing = false;
 
         /// <summary>
         /// 头部图形TrackHead，HoldHead
@@ -78,8 +82,9 @@ namespace ChartEditor.Utils.Drawers
 
         // 图形ZIndex
         private static int TrackZIndex = 0;
-        private static int HoldNoteZIndex = 10;
-        private static int NoteZIndex = 20;
+        private static int MiniTrackZIndex = 10;
+        private static int HoldNoteZIndex = 20;
+        private static int NoteZIndex = 30;
         private static int HeaderZIndex = 50;
         private static int PreviewerZIndex = 100;
 
@@ -104,12 +109,12 @@ namespace ChartEditor.Utils.Drawers
             double trackPadding = Common.TrackPadding * this.ChartEditModel.ColumnWidth;
             double notePadding = Common.NotePadding * this.ChartEditModel.ColumnWidth;
             // 重绘Header
-            if (this.trackCanvas.Children.Contains(this.trackHeader))
+            if (this.isTrackHeaderShowing)
             {
                 this.trackHeader.Width = this.ChartEditModel.ColumnWidth - 2 * trackPadding;
                 Canvas.SetLeft(this.trackHeader, this.lastTrackHeaderColumnIndex * this.ChartEditModel.ColumnWidth + trackPadding);
             }
-            if (this.trackCanvas.Children.Contains(this.holdNoteHeader))
+            if (this.isHoldNoteHeaderShowing)
             {
                 this.holdNoteHeader.Width = this.ChartEditModel.ColumnWidth - 2 * notePadding;
                 Canvas.SetLeft(this.holdNoteHeader, this.lastHoldNoteHeaderColumnIndex * this.ChartEditModel.ColumnWidth + notePadding);
@@ -133,11 +138,11 @@ namespace ChartEditor.Utils.Drawers
         public void RedrawWhenRowWidthChanged()
         {
             // 重绘Header
-            if (this.trackCanvas.Children.Contains(this.trackHeader))
+            if (this.isTrackHeaderShowing)
             {
                 Canvas.SetBottom(this.trackHeader, this.lastTrackHeaderBeatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
             }
-            if (this.trackCanvas.Children.Contains(this.holdNoteHeader))
+            if (this.isHoldNoteHeaderShowing)
             {
                 Canvas.SetBottom(this.holdNoteHeader, this.lastHoldNoteHeaderBeatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
             }
@@ -182,7 +187,19 @@ namespace ChartEditor.Utils.Drawers
             Canvas.SetLeft(newTrack, track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.TrackPadding * this.ChartEditModel.ColumnWidth);
             Canvas.SetBottom(newTrack, track.StartTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
             // 保持在最底层
-            Canvas.SetZIndex(newTrack, 0);
+            if (track.IsMiniTrack()) Canvas.SetZIndex(newTrack, MiniTrackZIndex);
+            else Canvas.SetZIndex(newTrack, TrackZIndex);
+        }
+
+        /// <summary>
+        /// 当时间改变时重绘Track
+        /// </summary>
+        public void RedrawTrackWhenTimeChanged(Track track)
+        {
+            track.Rectangle.Height = MinHeight + (track.EndTime.GetEquivalentBeat() - track.StartTime.GetEquivalentBeat()) * this.ChartEditModel.RowWidth;
+            track.Rectangle.Width = this.ChartEditModel.ColumnWidth - 2 * Common.TrackPadding * this.ChartEditModel.ColumnWidth;
+            Canvas.SetLeft(track.Rectangle, track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.TrackPadding * this.ChartEditModel.ColumnWidth);
+            Canvas.SetBottom(track.Rectangle, track.StartTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
         }
 
         /// <summary>
@@ -267,7 +284,7 @@ namespace ChartEditor.Utils.Drawers
             // 判断位置是否相同
             BeatTime newBeatTime = this.ChartEditModel.GetBeatTimeFromPoint(point, this.trackCanvas.ActualHeight);
             int columnIndex = this.ChartEditModel.GetColumnIndexFromPoint(point);
-            if (this.lastPreviewBeatTime.IsEqualTo(newBeatTime) && this.lastPreviewColumnIndex == columnIndex && this.ifPreviewerShowing)
+            if (this.lastPreviewBeatTime.IsEqualTo(newBeatTime) && this.lastPreviewColumnIndex == columnIndex && this.isPreviewerShowing)
             {
                 return;
             }
@@ -280,7 +297,7 @@ namespace ChartEditor.Utils.Drawers
             Canvas.SetBottom(this.previewers[this.previewerIndex], newBeatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
             // 确保在最顶层
             Canvas.SetZIndex(this.previewers[this.previewerIndex], PreviewerZIndex);
-            this.ifPreviewerShowing = true;
+            this.isPreviewerShowing = true;
         }
 
         public void ShowPreviewer()
@@ -292,7 +309,7 @@ namespace ChartEditor.Utils.Drawers
         {
             this.ifShowPreviewer = false;
             if (this.previewerIndex != -1) this.trackCanvas.Children.Remove(this.previewers[this.previewerIndex]);
-            this.ifPreviewerShowing = false;
+            this.isPreviewerShowing = false;
         }
 
         /// <summary>
@@ -301,6 +318,7 @@ namespace ChartEditor.Utils.Drawers
         public void ShowTrackHeaderAt(BeatTime beatTime, int columnIndex)
         {
             if (columnIndex < 0 || columnIndex >= this.ChartEditModel.ColumnNum) return;
+            this.isTrackHeaderShowing = true;
             // 重置宽度和位置
             this.lastTrackHeaderBeatTime = beatTime;
             this.lastTrackHeaderColumnIndex = columnIndex;
@@ -317,6 +335,7 @@ namespace ChartEditor.Utils.Drawers
         /// </summary>
         public void HideTrackHeader()
         {
+            this.isTrackHeaderShowing = false;
             this.trackCanvas.Children.Remove(this.trackHeader);
         }
 
@@ -326,6 +345,7 @@ namespace ChartEditor.Utils.Drawers
         public void ShowHoldNoteHeaderAt(BeatTime beatTime, int columnIndex)
         {
             if (columnIndex < 0 || columnIndex >= this.ChartEditModel.ColumnNum) return;
+            this.isHoldNoteHeaderShowing = true;
             // 重置宽度和位置
             this.lastHoldNoteHeaderBeatTime = beatTime;
             this.lastHoldNoteHeaderColumnIndex = columnIndex;
@@ -342,6 +362,7 @@ namespace ChartEditor.Utils.Drawers
         /// </summary>
         public void HideHoldNoteHeader()
         {
+            this.isHoldNoteHeaderShowing = false;
             this.trackCanvas.Children.Remove(this.holdNoteHeader);
         }
 
@@ -358,7 +379,7 @@ namespace ChartEditor.Utils.Drawers
             if (id < 0 || id >= this.previewers.Count || this.previewerIndex == id) return;
             if (this.previewerIndex != -1) this.trackCanvas.Children.Remove(this.previewers[this.previewerIndex]);
             this.previewerIndex = id;
-            this.ifPreviewerShowing = false;
+            this.isPreviewerShowing = false;
         }
 
         /// <summary>
@@ -384,9 +405,10 @@ namespace ChartEditor.Utils.Drawers
             // 启动虚线旋转动画
             rectangle.BeginAnimation(Shape.StrokeDashOffsetProperty, RectangleStrokeAnimation);
             // 略微突出ZIndex
-            if (rectangle.DataContext is Track)
+            if (rectangle.DataContext is Track track)
             {
-                Canvas.SetZIndex(rectangle, TrackZIndex + 1);
+                if (track.IsMiniTrack()) Canvas.SetZIndex(rectangle, MiniTrackZIndex + 1);
+                else Canvas.SetZIndex(rectangle, TrackZIndex + 1);
             }
             else if (rectangle.DataContext is Note note)
             {
@@ -403,9 +425,10 @@ namespace ChartEditor.Utils.Drawers
             rectangle.StrokeDashArray = null;
             rectangle.StrokeThickness = PickedStrokeThickness;
             // 略微突出ZIndex
-            if (rectangle.DataContext is Track)
+            if (rectangle.DataContext is Track track)
             {
-                Canvas.SetZIndex(rectangle, TrackZIndex + 2);
+                if (track.IsMiniTrack()) Canvas.SetZIndex(rectangle, MiniTrackZIndex + 2);
+                else Canvas.SetZIndex(rectangle, TrackZIndex + 2);
             }
             else if (rectangle.DataContext is Note note)
             {
@@ -424,9 +447,10 @@ namespace ChartEditor.Utils.Drawers
             // 停止虚线动画
             rectangle.BeginAnimation(Shape.StrokeDashOffsetProperty, null);
             // 恢复ZIndex
-            if (rectangle.DataContext is Track)
+            if (rectangle.DataContext is Track track)
             {
-                Canvas.SetZIndex(rectangle, TrackZIndex);
+                if (track.IsMiniTrack()) Canvas.SetZIndex(rectangle, MiniTrackZIndex);
+                else Canvas.SetZIndex(rectangle, TrackZIndex);
             }
             else if (rectangle.DataContext is Note note)
             {

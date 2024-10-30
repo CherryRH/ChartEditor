@@ -57,6 +57,7 @@ namespace ChartEditor.Pages
                 case AutoSaveType.FiveMinutes: AutoSaveSelectBox.SelectedIndex = 2; break;
                 case AutoSaveType.TenMinutes: AutoSaveSelectBox.SelectedIndex = 3; break;
             }
+            TrackOrNotePutWarnEnabledToggleButton.IsChecked = this.Settings.TrackOrNotePutWarnEnabled;
         }
 
         private void AutoSaveSelectBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -68,6 +69,16 @@ namespace ChartEditor.Pages
                 case 2: this.Settings.AutoSaveType = AutoSaveType.FiveMinutes; break;
                 case 3: this.Settings.AutoSaveType = AutoSaveType.TenMinutes; break;
             }
+        }
+
+        private void ToggleButton_Checked(object sender, RoutedEventArgs e)
+        {
+            this.Settings.TrackOrNotePutWarnEnabled = true;
+        }
+
+        private void ToggleButton_Unchecked(object sender, RoutedEventArgs e)
+        {
+            this.Settings.TrackOrNotePutWarnEnabled = false;
         }
     }
 }

@@ -25,6 +25,8 @@ namespace ChartEditor.UserControls.Boards
 
         public MainWindowModel MainWindowModel { get; set; }
 
+        public Settings Settings { get { return MainWindowModel.Settings; } }
+
         private TrackEditBoardController TrackEditBoardController;
 
         /// <summary>
@@ -231,6 +233,7 @@ namespace ChartEditor.UserControls.Boards
         {
             Point? canvasPoint = e.GetPosition(TrackCanvas);
             Point? viewerPoint = e.GetPosition(TrackCanvasViewer);
+            this.TrackEditBoardController.OnMouseMoveOverTrackCanvasViewer(viewerPoint);
             if (this.IsPointInTrackGrid(canvasPoint) && !this.TrackEditBoardController.IsCtrlDown)
             {
                 this.TrackEditBoardController.OnMouseMoveInTrackCanvas(canvasPoint);

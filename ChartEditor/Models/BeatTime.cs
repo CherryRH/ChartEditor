@@ -109,7 +109,11 @@ namespace ChartEditor.Models
         /// </summary>
         public bool IsLaterThan(BeatTime other)
         {
-            return this.GetEquivalentBeat() > other.GetEquivalentBeat();
+            if (this.beat == other.beat)
+            {
+                return this.divideIndex * other.divide > other.divideIndex * this.divide;
+            }
+            else return this.beat > other.beat;
         }
 
         /// <summary>
@@ -117,7 +121,11 @@ namespace ChartEditor.Models
         /// </summary>
         public bool IsEarlierThan(BeatTime other)
         {
-            return this.GetEquivalentBeat() < other.GetEquivalentBeat();
+            if (this.beat == other.beat)
+            {
+                return this.divideIndex * other.divide < other.divideIndex * this.divide;
+            }
+            else return this.beat < other.beat;
         }
     }
 }

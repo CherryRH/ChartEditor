@@ -56,6 +56,12 @@ namespace ChartEditor.Models
         public DateTime UpdatedAt { get { return updatedAt; } set { updatedAt = value; } }
 
         /// <summary>
+        /// 列数
+        /// </summary>
+        private int columnNum;
+        public int ColumnNum { get { return columnNum; } set { columnNum = value; } }
+
+        /// <summary>
         /// 物量
         /// </summary>
         private int volume;
@@ -84,7 +90,7 @@ namespace ChartEditor.Models
 
         }
 
-        public ChartInfo(ChartMusic chartMusic, string name, string author) 
+        public ChartInfo(ChartMusic chartMusic, string name, string author, int columnNum)
         {
             this.chartMusic = chartMusic;
             this.name = name;
@@ -95,6 +101,7 @@ namespace ChartEditor.Models
             this.volume = 0;
             this.delay = 0;
             this.preview = 0;
+            this.columnNum = columnNum;
             this.folderPath = ChartUtilV1.GenerateNewChartFolderPath(chartMusic.FolderPath, this.createdAt);
         }
 
@@ -110,6 +117,7 @@ namespace ChartEditor.Models
                 ["Author"] = this.author,
                 ["CreatedAt"] = this.createdAt,
                 ["UpdatedAt"] = this.updatedAt,
+                ["ColumnNum"] = this.columnNum,
                 ["Volume"] = this.volume,
                 ["Delay"] = this.delay,
                 ["Preview"] = this.preview
@@ -132,7 +140,8 @@ namespace ChartEditor.Models
                 this.author = jObject.Value<string>("Author") ?? string.Empty;
                 this.createdAt = jObject.Value<DateTime?>("CreatedAt") ?? DateTime.MinValue;
                 this.updatedAt = jObject.Value<DateTime?>("UpdatedAt") ?? DateTime.MinValue;
-                this.volume = jObject.Value<int?>("Volume") ?? 100;
+                this.columnNum = jObject.Value<int?>("ColumnNum") ?? Common.ColumnNum;
+                this.volume = jObject.Value<int?>("Volume") ?? 0;
                 this.delay = jObject.Value<double?>("Delay") ?? 0.0;
                 this.preview = jObject.Value<double?>("Preview") ?? 0.0;
             }

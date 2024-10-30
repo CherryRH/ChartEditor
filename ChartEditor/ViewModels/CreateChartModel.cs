@@ -19,6 +19,11 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public string Author { set; get; }
 
+        /// <summary>
+        /// 谱面列数
+        /// </summary>
+        public string ColumnNum { set; get; }
+
         public CreateChartModel() { }
 
         public event PropertyChangedEventHandler PropertyChanged;

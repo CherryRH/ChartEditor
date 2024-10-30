@@ -59,8 +59,7 @@ namespace ChartEditor.ViewModels
             }
         }
 
-        private int columnNum = Common.ColumnNum;
-        public int ColumnNum { get { return columnNum; } }
+        public int ColumnNum { get { return this.ChartInfo.ColumnNum; } }
         /// <summary>
         /// 对元素进行实时统计
         /// </summary>
@@ -91,12 +90,6 @@ namespace ChartEditor.ViewModels
         /// </summary>
         private double columnWidth = Common.ColumnWidth;
         public double ColumnWidth { get { return columnWidth; } set { columnWidth = value; OnPropertyChanged(nameof(ColumnWidth)); } }
-
-        /// <summary>
-        /// 列间隔
-        /// </summary>
-        private double columnGap = Common.NotePadding;
-        public double ColumnGap { get { return columnGap; } set { columnGap = value; } }
 
         /// <summary>
         /// 每一行的宽度（一拍为一行）
@@ -244,9 +237,10 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public bool AddTrackHeader(BeatTime start, int columnIndex)
         {
-            foreach (var item in tracks)
+            foreach (Track track in tracks)
             {
-                if (columnIndex == item.ColumnIndex && (start.IsEqualTo(item.StartTime) || start.IsLaterThan(item.StartTime)) && start.IsEarlierThan(item.EndTime))
+                if (columnIndex != track.ColumnIndex) continue;
+                if (!start.IsEarlierThan(track.StartTime) && !start.IsLaterThan(track.EndTime))
                 {
                     return false;
                 }
@@ -260,9 +254,10 @@ namespace ChartEditor.ViewModels
         public Track AddTrackFooter(BeatTime start, int startColumnIndex, BeatTime end, int endColumnIndex)
         {
             if (startColumnIndex != endColumnIndex || end.IsEarlierThan(start)) return null;
-            foreach (var item in tracks)
+            foreach (Track item in tracks)
             {
-                if (endColumnIndex == item.ColumnIndex && end.IsLaterThan(item.StartTime) && start.IsEarlierThan(item.StartTime))
+                if (endColumnIndex != item.ColumnIndex) continue;
+                if (!end.IsEarlierThan(item.StartTime) && start.IsEarlierThan(item.StartTime))
                 {
                     return null;
                 }
@@ -362,6 +357,49 @@ namespace ChartEditor.ViewModels
         }
 
         /// <summary>
+        /// 尝试改变Track的起始时间
+        /// </summary>
+        public bool TryChangeTrackStartTime(Track track, BeatTime beatTime)
+        {
+            if (beatTime.IsLaterThan(track.EndTime)) return false;
+            foreach (Note note in track.Notes)
+            {
+                if (beatTime.IsLaterThan(note.Time)) return false;
+            }
+            foreach (Track item in this.tracks)
+            {
+                if (track.ColumnIndex != item.ColumnIndex || item == track) continue;
+                if (item.EndTime.IsEarlierThan(track.StartTime) && !beatTime.IsLaterThan(item.EndTime)) return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// 尝试改变Track的结束时间
+        /// </summary>
+        public bool TryChangeTrackEndTime(Track track, BeatTime beatTime)
+        {
+            if (beatTime.IsEarlierThan(track.StartTime)) return false;
+            foreach (Note note in track.Notes)
+            {
+                if (note is HoldNote holdNote)
+                {
+                    if (beatTime.IsEarlierThan(holdNote.EndTime)) return false;
+                }
+                else
+                {
+                    if (beatTime.IsEarlierThan(note.Time)) return false;
+                }
+            }
+            foreach (Track item in this.tracks)
+            {
+                if (track.ColumnIndex != item.ColumnIndex || item == track) continue;
+                if (item.StartTime.IsLaterThan(track.EndTime) && !beatTime.IsEarlierThan(item.StartTime)) return false;
+            }
+            return true;
+        }
+
+        /// <summary>
         /// 计算Canvas坐标的列序号
         /// </summary>
         public int GetColumnIndexFromPoint(Point? point)
@@ -375,7 +413,10 @@ namespace ChartEditor.ViewModels
         public BeatTime GetBeatTimeFromPoint(Point? point, double canvasHeight)
         {
             BeatTime newBeatTime = new BeatTime(this.divide);
-            newBeatTime.UpdateFromJudgeLineOffset(canvasHeight - point.Value.Y, this.rowWidth);
+            double judgeLineOffset = canvasHeight - point.Value.Y;
+            if (judgeLineOffset < 0) judgeLineOffset = 0;
+            if (judgeLineOffset > canvasHeight) judgeLineOffset = canvasHeight;
+            newBeatTime.UpdateFromJudgeLineOffset(judgeLineOffset, this.rowWidth);
             return newBeatTime;
         }
 

@@ -82,6 +82,20 @@
                         <ListBoxItem Content="10分钟" FontSize="16"/>
                     </ListBox>
 
+                    <TextBlock
+                        Margin="50, 20, 50, 0"
+                        Text="放置轨道或音符时显示警告"/>
+                    <ToggleButton
+                        x:Name="TrackOrNotePutWarnEnabledToggleButton"
+                        Margin="50, 10, 50, 20"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Left"
+                        Checked="ToggleButton_Checked"
+                        Unchecked="ToggleButton_Unchecked"
+                        Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                        ToolTip="MaterialDesignSwitchToggleButton"
+                        />
+
                     <TextBox
                         Text="{Binding Settings.AppPath}" 
                         VerticalAlignment="Center"

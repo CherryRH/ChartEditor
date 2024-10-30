@@ -232,16 +232,6 @@
                                     <materialDesign:PackIcon Kind="Delete"/>
                                 </Button>
                                 <Button
-                                    x:Name="CutTrackButton"
-                                    Width="40"
-                                    Height="40"
-                                    ToolTip="切断选中的轨道"
-                                    Click="DeleteButton_Click"
-                                    Foreground="Orchid"
-                                    Style="{StaticResource MaterialDesignIconButton}">
-                                    <materialDesign:PackIcon Kind="Scissors"/>
-                                </Button>
-                                <Button
                                     x:Name="CopyButton"
                                     Width="40"
                                     Height="40"
