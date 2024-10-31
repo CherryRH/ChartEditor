@@ -215,17 +215,17 @@ namespace ChartEditor.UserControls.Boards
             Point? canvasPoint = e.GetPosition(TrackCanvas);
             Point? viewerPoint = e.GetPosition(TrackCanvasViewer);
             bool isOverScrollBar = this.IsPointOverScrollBar(viewerPoint);
+            if (!isOverScrollBar)
+            {
+                this.TrackEditBoardController.OnMouseDownOverTrackCanvasFloor(canvasPoint, e.LeftButton);
+            }
             if (this.IsPointInTrackGrid(canvasPoint) && !this.TrackEditBoardController.IsCtrlDown)
             {
-                this.TrackEditBoardController.OnMouseDownInTrackCanvas(canvasPoint, e.ButtonState);
+                this.TrackEditBoardController.OnMouseDownInTrackCanvas(canvasPoint, e.LeftButton);
             }
             else if (!isOverScrollBar)
             {
-                this.TrackEditBoardController.OnMouseDownInTrackCanvasViewer(viewerPoint, e.ButtonState);
-            }
-            if (!isOverScrollBar)
-            {
-                this.TrackEditBoardController.OnMouseDownInTrackCanvasFloor(canvasPoint, e.ButtonState);
+                this.TrackEditBoardController.OnMouseDownInTrackCanvasViewer(viewerPoint, e.LeftButton);
             }
         }
 
@@ -234,6 +234,7 @@ namespace ChartEditor.UserControls.Boards
             Point? canvasPoint = e.GetPosition(TrackCanvas);
             Point? viewerPoint = e.GetPosition(TrackCanvasViewer);
             this.TrackEditBoardController.OnMouseMoveOverTrackCanvasViewer(viewerPoint);
+            this.TrackEditBoardController.OnMouseMoveOverTrackCanvasFloor(canvasPoint);
             if (this.IsPointInTrackGrid(canvasPoint) && !this.TrackEditBoardController.IsCtrlDown)
             {
                 this.TrackEditBoardController.OnMouseMoveInTrackCanvas(canvasPoint);
@@ -242,7 +243,6 @@ namespace ChartEditor.UserControls.Boards
             {
                 this.TrackEditBoardController.OnMouseMoveInTrackCanvasViewer(viewerPoint);
             }
-            this.TrackEditBoardController.OnMouseMoveInTrackCanvasFloor(canvasPoint);
         }
 
         private void TrackCanvasViewer_PreviewMouseUp(object sender, MouseButtonEventArgs e)
@@ -250,7 +250,7 @@ namespace ChartEditor.UserControls.Boards
             Point? canvasPoint = e.GetPosition(TrackCanvas);
             Point? viewerPoint = e.GetPosition(TrackCanvasViewer);
             this.TrackEditBoardController.OnMouseUpInTrackCanvasViewer(viewerPoint);
-            this.TrackEditBoardController.OnMouseUpInTrackCanvasFloor(canvasPoint);
+            this.TrackEditBoardController.OnMouseUpOverTrackCanvasFloor(canvasPoint);
         }
 
         private void PickerButton_Checked(object sender, RoutedEventArgs e)
@@ -442,16 +442,6 @@ namespace ChartEditor.UserControls.Boards
             this.TrackEditBoardController.OnNoteSelectionChanged();
         }
 
-        private void TrackCanvas_MouseMove(object sender, MouseEventArgs e)
-        {
-            
-        }
-
-        private void TrackCanvas_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            
-        }
-
         /// <summary>
         /// 设置UI的颜色
         /// </summary>
@@ -467,7 +457,7 @@ namespace ChartEditor.UserControls.Boards
         private void TimeLineCanvasViewer_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             Point? point = e.GetPosition(TimeLineCanvasViewer);
-            this.TrackEditBoardController.OnMouseDownInTimeLineCanvasViewer(point, e.ButtonState);
+            this.TrackEditBoardController.OnMouseDownInTimeLineCanvasViewer(point, e.LeftButton);
         }
 
         private void TimeLineCanvasViewer_PreviewMouseMove(object sender, MouseEventArgs e)

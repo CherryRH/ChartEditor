@@ -14,6 +14,9 @@ namespace ChartEditor.Models
     /// </summary>
     public class Note
     {
+        private int id;
+        public int Id { get { return id; } }
+
         /// <summary>
         /// 音符的时间
         /// </summary>
@@ -45,8 +48,9 @@ namespace ChartEditor.Models
 
         public Note() { }
 
-        public Note(BeatTime time, NoteType type, Track track)
+        public Note(BeatTime time, NoteType type, Track track, int id)
         {
+            this.id = id;
             this.time = time;
             this.type = type;
             this.Track = track;
@@ -67,8 +71,8 @@ namespace ChartEditor.Models
     /// </summary>
     public class TapNote : Note
     {
-        public TapNote(BeatTime time, Track track)
-            : base(time, NoteType.Tap, track)
+        public TapNote(BeatTime time, Track track, int id)
+            : base(time, NoteType.Tap, track, id)
         {
 
         }
@@ -79,8 +83,8 @@ namespace ChartEditor.Models
     /// </summary>
     public class CatchNote : Note
     {
-        public CatchNote(BeatTime time, Track track)
-            : base(time, NoteType.Catch, track)
+        public CatchNote(BeatTime time, Track track, int id)
+            : base(time, NoteType.Catch, track, id)
         {
 
         }
@@ -88,8 +92,8 @@ namespace ChartEditor.Models
 
     public class FlickNote : Note
     {
-        public FlickNote(BeatTime time, Track track)
-            : base(time, NoteType.Flick, track)
+        public FlickNote(BeatTime time, Track track, int id)
+            : base(time, NoteType.Flick, track, id)
         {
             
         }
@@ -103,10 +107,32 @@ namespace ChartEditor.Models
         private BeatTime endTime;
         public BeatTime EndTime { get { return endTime; } set { endTime = value; } }
 
-        public HoldNote(BeatTime time, BeatTime endTime, Track track)
-            : base(time, NoteType.Hold, track)
+        public HoldNote(BeatTime time, BeatTime endTime, Track track, int id)
+            : base(time, NoteType.Hold, track, id)
         {
             this.endTime = endTime;
+        }
+
+        /// <summary>
+        /// 获取鼠标位置的拉伸状态。0-不能拉伸；1-可以拉伸起始点；2-可以拉伸结束点
+        /// </summary>
+        public int GetStretchState(Point? point, Canvas trackCanvas)
+        {
+            if (!point.HasValue || trackCanvas == null || this.Rectangle == null) return 0;
+            double pointY = trackCanvas.Height - point.Value.Y;
+            double pointX = point.Value.X;
+            if (pointX < Canvas.GetLeft(this.Rectangle) || pointX > Canvas.GetLeft(this.Rectangle) + this.Rectangle.Width)
+            {
+                return 0;
+            }
+            double startY = Canvas.GetBottom(this.Rectangle);
+            double endY = Canvas.GetBottom(this.Rectangle) + this.Rectangle.Height;
+            double endDelta = pointY - endY;
+            double startDelta = startY - pointY;
+            double testY = 10.0;
+            if (endDelta <= testY && endDelta > -testY) return 2;
+            if (startDelta <= testY && startDelta > -testY) return 1;
+            return 0;
         }
     }
 

@@ -203,6 +203,17 @@ namespace ChartEditor.Utils.Drawers
         }
 
         /// <summary>
+        /// 当时间改变时重绘HoldNote
+        /// </summary>
+        public void RedrawHoldNoteWhenTimeChanged(HoldNote holdNote)
+        {
+            holdNote.Rectangle.Height = MinHeight + (holdNote.EndTime.GetEquivalentBeat() - holdNote.Time.GetEquivalentBeat()) * this.ChartEditModel.RowWidth;
+            holdNote.Rectangle.Width = this.ChartEditModel.ColumnWidth - 2 * Common.NotePadding * this.ChartEditModel.ColumnWidth;
+            Canvas.SetLeft(holdNote.Rectangle, holdNote.Track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.NotePadding * this.ChartEditModel.ColumnWidth);
+            Canvas.SetBottom(holdNote.Rectangle, holdNote.Time.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
+        }
+
+        /// <summary>
         /// 新建一个Note
         /// </summary>
         public void CreateNoteItem(Note note)

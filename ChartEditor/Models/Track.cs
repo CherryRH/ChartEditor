@@ -14,6 +14,9 @@ namespace ChartEditor.Models
     /// </summary>
     public class Track
     {
+        private int id;
+        public int Id { get { return id; } }
+
         /// <summary>
         /// 开始时间
         /// </summary>
@@ -70,8 +73,9 @@ namespace ChartEditor.Models
 
         public Track() { }
 
-        public Track(BeatTime startTime, BeatTime endTime, int columnIndex)
+        public Track(BeatTime startTime, BeatTime endTime, int columnIndex, int id)
         {
+            this.id = id;
             this.startTime = startTime;
             this.endTime = endTime;
             this.columnIndex = columnIndex;
@@ -110,16 +114,16 @@ namespace ChartEditor.Models
             double endY = Canvas.GetBottom(this.rectangle) + this.rectangle.Height;
             double endDelta = pointY - endY;
             double startDelta = startY - pointY;
-            double testY = 10.0;
-            if (endDelta <= testY && endDelta > 0) return 2;
-            if (startDelta <= testY && startDelta > 0) return 1;
+            double testY = 6.0;
+            if (endDelta <= testY && endDelta > -testY) return 2;
+            if (startDelta <= testY && startDelta > -testY) return 1;
             return 0;
         }
 
         /// <summary>
         /// 尝试添加非Hold的Note
         /// </summary>
-        public Note AddNote(BeatTime beatTime, NoteType noteType)
+        public Note AddNote(BeatTime beatTime, NoteType noteType, int id)
         {
             // 不能与其他非Hold的Note重叠
             foreach(Note note in this.notes)
@@ -131,19 +135,19 @@ namespace ChartEditor.Models
             {
                 case NoteType.Tap:
                     {
-                        TapNote tapNote = new TapNote(beatTime, this);
+                        TapNote tapNote = new TapNote(beatTime, this, id);
                         this.Notes.Add(tapNote);
                         return tapNote;
                     }
                 case NoteType.Flick:
                     {
-                        FlickNote flickNote = new FlickNote(beatTime, this);
+                        FlickNote flickNote = new FlickNote(beatTime, this, id);
                         this.Notes.Add(flickNote);
                         return flickNote;
                     }
                 case NoteType.Catch:
                     {
-                        CatchNote catchNote = new CatchNote(beatTime, this);
+                        CatchNote catchNote = new CatchNote(beatTime, this, id);
                         this.Notes.Add(catchNote);
                         return catchNote;
                     }
@@ -172,7 +176,7 @@ namespace ChartEditor.Models
         /// <summary>
         /// 尝试添加HoldNote
         /// </summary>
-        public HoldNote AddHoldNoteFooter(BeatTime startTime , BeatTime endTime)
+        public HoldNote AddHoldNoteFooter(BeatTime startTime , BeatTime endTime, int id)
         {
             // 不能与其他HoldNote重叠
             foreach (var note in this.Notes)
@@ -183,7 +187,7 @@ namespace ChartEditor.Models
                 }
             }
             // 可以添加HoldNote
-            HoldNote holdNote = new HoldNote(startTime, endTime, this);
+            HoldNote holdNote = new HoldNote(startTime, endTime, this, id);
             this.Notes.Add(holdNote);
             return holdNote;
         }

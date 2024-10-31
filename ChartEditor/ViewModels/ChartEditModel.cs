@@ -85,6 +85,15 @@ namespace ChartEditor.ViewModels
             }
         }
 
+        // 当前轨道id
+        private int currentTrackId = 0;
+        public int CurrentTrackId { get { return currentTrackId; } }
+        public int GetNextTrackId() => currentTrackId++;
+        // 当前音符id
+        private int currentNoteId = 0;
+        public int CurrentNoteId { get { return currentNoteId; } }
+        public int GetNextNoteId() => currentNoteId++;
+
         /// <summary>
         /// 每一列的宽度
         /// </summary>
@@ -263,7 +272,7 @@ namespace ChartEditor.ViewModels
                 }
             }
             // 可以添加轨道
-            Track track = new Track(start, end, endColumnIndex);
+            Track track = new Track(start, end, endColumnIndex, this.GetNextTrackId());
             this.tracks.Add(track);
             this.TrackNum++;
             return track;
@@ -279,7 +288,7 @@ namespace ChartEditor.ViewModels
             {
                 if (track.IsInTrack(beatTime, columnIndex))
                 {
-                    Note newNote = track.AddNote(beatTime, noteType);
+                    Note newNote = track.AddNote(beatTime, noteType, this.GetNextNoteId());
                     if (newNote != null)
                     {
                         // 添加成功
@@ -326,7 +335,7 @@ namespace ChartEditor.ViewModels
             {
                 if (item.IsInTrack(endTime, endColumnIndex))
                 {
-                    HoldNote newHoldNote = item.AddHoldNoteFooter(startTime, endTime);
+                    HoldNote newHoldNote = item.AddHoldNoteFooter(startTime, endTime, this.GetNextNoteId());
                     if (newHoldNote != null)
                     {
                         // 添加成功
@@ -400,6 +409,40 @@ namespace ChartEditor.ViewModels
         }
 
         /// <summary>
+        /// 尝试改变HoldNote的起始时间
+        /// </summary>
+        public bool TryChangeHoldNoteStartTime(HoldNote holdNote, BeatTime beatTime)
+        {
+            if (!beatTime.IsEarlierThan(holdNote.EndTime) || beatTime.IsEarlierThan(holdNote.Track.StartTime)) return false;
+            foreach (Note note in holdNote.Track.Notes)
+            {
+                if (holdNote == note) continue;
+                if (note is HoldNote item)
+                {
+                    if (beatTime.IsEarlierThan(item.EndTime) && !holdNote.Time.IsEarlierThan(item.EndTime)) return false;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// 尝试改变HoldNote的结束时间
+        /// </summary>
+        public bool TryChangeHoldNoteEndTime(HoldNote holdNote, BeatTime beatTime)
+        {
+            if (!beatTime.IsLaterThan(holdNote.Time) || beatTime.IsLaterThan(holdNote.Track.EndTime)) return false;
+            foreach (Note note in holdNote.Track.Notes)
+            {
+                if (holdNote == note) continue;
+                if (note is HoldNote item)
+                {
+                    if (beatTime.IsLaterThan(item.Time) && !holdNote.EndTime.IsLaterThan(item.Time)) return false;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
         /// 计算Canvas坐标的列序号
         /// </summary>
         public int GetColumnIndexFromPoint(Point? point)
@@ -415,7 +458,7 @@ namespace ChartEditor.ViewModels
             BeatTime newBeatTime = new BeatTime(this.divide);
             double judgeLineOffset = canvasHeight - point.Value.Y;
             if (judgeLineOffset < 0) judgeLineOffset = 0;
-            if (judgeLineOffset > canvasHeight) judgeLineOffset = canvasHeight;
+            if (judgeLineOffset >= canvasHeight) judgeLineOffset = canvasHeight - 0.1;
             newBeatTime.UpdateFromJudgeLineOffset(judgeLineOffset, this.rowWidth);
             return newBeatTime;
         }

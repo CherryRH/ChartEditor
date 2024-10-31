@@ -155,8 +155,6 @@
                                 HorizontalAlignment="Left">
                                 <Canvas
                                     x:Name="TrackCanvas"
-                                    MouseMove="TrackCanvas_MouseMove"
-                                    MouseDown="TrackCanvas_MouseDown"
                                     HorizontalAlignment="Left"/>
                             </Canvas>
                         </ScrollViewer>
@@ -235,7 +233,7 @@
                                     x:Name="CopyButton"
                                     Width="40"
                                     Height="40"
-                                    ToolTip="复制选中的音符/Ctrl+C"
+                                    ToolTip="复制选中的轨道/Ctrl+C"
                                     Click="CopyButton_Click"
                                     Foreground="Orchid"
                                     Style="{StaticResource MaterialDesignIconButton}">
@@ -245,7 +243,7 @@
                                     x:Name="PasteButton"
                                     Width="40"
                                     Height="40"
-                                    ToolTip="粘贴已复制的音符并自动创建轨道/Ctrl+V"
+                                    ToolTip="粘贴已复制的轨道/Ctrl+V"
                                     Click="PasteButton_Click"
                                     Foreground="Orchid"
                                     Style="{StaticResource MaterialDesignIconButton}">
