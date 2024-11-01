@@ -105,6 +105,7 @@ namespace ChartEditor.ViewModels
         /// </summary>
         private double rowWidth = Common.RowWidth;
         public double RowWidth { get { return rowWidth; } set { rowWidth = value; OnPropertyChanged(nameof(RowWidth)); } }
+        public double DivideWidth { get { return rowWidth / divide; } }
 
         /// <summary>
         /// 谱面实际Bpm（后续改为Bpm表）
@@ -380,6 +381,7 @@ namespace ChartEditor.ViewModels
                 if (track.ColumnIndex != item.ColumnIndex || item == track) continue;
                 if (item.EndTime.IsEarlierThan(track.StartTime) && !beatTime.IsLaterThan(item.EndTime)) return false;
             }
+            track.StartTime = beatTime;
             return true;
         }
 
@@ -405,6 +407,7 @@ namespace ChartEditor.ViewModels
                 if (track.ColumnIndex != item.ColumnIndex || item == track) continue;
                 if (item.StartTime.IsLaterThan(track.EndTime) && !beatTime.IsEarlierThan(item.StartTime)) return false;
             }
+            track.EndTime = beatTime;
             return true;
         }
 
@@ -422,6 +425,7 @@ namespace ChartEditor.ViewModels
                     if (beatTime.IsEarlierThan(item.EndTime) && !holdNote.Time.IsEarlierThan(item.EndTime)) return false;
                 }
             }
+            holdNote.Time = beatTime;
             return true;
         }
 
@@ -439,6 +443,16 @@ namespace ChartEditor.ViewModels
                     if (beatTime.IsLaterThan(item.Time) && !holdNote.EndTime.IsLaterThan(item.Time)) return false;
                 }
             }
+            holdNote.EndTime = beatTime;
+            return true;
+        }
+
+        /// <summary>
+        /// 尝试移动选中的Note
+        /// </summary>
+        public bool TryMovePickedNote(BeatTime beatTime, int columnIndex)
+        {
+
             return true;
         }
 

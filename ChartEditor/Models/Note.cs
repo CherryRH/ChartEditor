@@ -64,6 +64,22 @@ namespace ChartEditor.Models
             if (this.rectangle == null) return Rect.Empty;
             return new Rect(Canvas.GetLeft(this.rectangle), Canvas.GetBottom(this.rectangle), this.rectangle.Width, this.rectangle.Height);
         }
+
+        /// <summary>
+        /// 一个坐标是否在矩形范围内
+        /// </summary>
+        public bool ContainsPoint(Point? point, Canvas trackCanvas)
+        {
+            if (!point.HasValue || trackCanvas == null || this.Rectangle == null) return false;
+            double pointY = trackCanvas.Height - point.Value.Y;
+            double pointX = point.Value.X;
+            if (pointX >= Canvas.GetLeft(this.Rectangle) && pointX <= Canvas.GetLeft(this.Rectangle) + this.Rectangle.Width
+                && pointY >= Canvas.GetBottom(this.Rectangle) && pointY <= Canvas.GetBottom(this.Rectangle) + this.Rectangle.Height)
+            {
+                return true;
+            }
+            return false;
+        }
     }
 
     /// <summary>
@@ -130,8 +146,8 @@ namespace ChartEditor.Models
             double endDelta = pointY - endY;
             double startDelta = startY - pointY;
             double testY = 10.0;
-            if (endDelta <= testY && endDelta > -testY) return 2;
-            if (startDelta <= testY && startDelta > -testY) return 1;
+            if (endDelta <= testY && endDelta > 0) return 2;
+            if (startDelta <= testY && startDelta > 0) return 1;
             return 0;
         }
     }

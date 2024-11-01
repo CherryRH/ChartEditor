@@ -214,6 +214,24 @@ namespace ChartEditor.Utils.Drawers
         }
 
         /// <summary>
+        /// 当位置改变时重绘Note
+        /// </summary>
+        public void RedrawNoteWhenPosChanged(Note note)
+        {
+            Canvas.SetLeft(note.Rectangle, note.Track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.NotePadding * this.ChartEditModel.ColumnWidth);
+            Canvas.SetBottom(note.Rectangle, note.Time.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
+        }
+
+        /// <summary>
+        /// 当位置改变时重绘Track
+        /// </summary>
+        public void RedrawTrackWhenPosChanged(Track track)
+        {
+            Canvas.SetLeft(track.Rectangle, track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.TrackPadding * this.ChartEditModel.ColumnWidth);
+            Canvas.SetBottom(track.Rectangle, track.StartTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
+        }
+
+        /// <summary>
         /// 新建一个Note
         /// </summary>
         public void CreateNoteItem(Note note)
