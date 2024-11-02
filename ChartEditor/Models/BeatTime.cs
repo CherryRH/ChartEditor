@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ChartEditor.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -54,7 +55,19 @@ namespace ChartEditor.Models
         {
             this.beat = beat;
             this.divide = divide;
-            this.divideIndex = divideIndex;
+            this.AddDivideIndex(divideIndex);
+        }
+
+        public void AddDivideIndex(int divideIndex)
+        {
+            this.divideIndex += divideIndex;
+            this.beat += this.divideIndex / divide;
+            this.divideIndex %= divide;
+            if (this.divideIndex < 0)
+            {
+                this.divideIndex += this.divide;
+                this.beat--;
+            }
         }
 
         /// <summary>
@@ -126,6 +139,129 @@ namespace ChartEditor.Models
                 return this.divideIndex * other.divide < other.divideIndex * this.divide;
             }
             else return this.beat < other.beat;
+        }
+
+        /// <summary>
+        /// 返回与一个拍数的差值
+        /// </summary>
+        public BeatTime Difference(BeatTime other)
+        {
+            if (other == null) return new BeatTime();
+            // 通分
+            int numerator = this.divideIndex * other.Divide - other.divideIndex * this.divide;
+            int denominator = this.divide * other.Divide;
+            // 约分
+            int gcd = MathUtil.GCD(numerator, denominator);
+            int divide = denominator / gcd;
+            int divideIndex = numerator > 0 ? (numerator / gcd) : (numerator / gcd + divide);
+            int beat = numerator > 0 ? (this.beat - other.beat) : (this.beat - other.beat - 1);
+            return new BeatTime(beat, divide, divideIndex);
+        }
+
+        /// <summary>
+        /// 返回与一个拍数的和
+        /// </summary>
+        public BeatTime Sum(BeatTime other)
+        {
+            if (other == null) return new BeatTime();
+            // 通分
+            int numerator = this.divideIndex * other.Divide + other.divideIndex * this.divide;
+            int denominator = this.divide * other.Divide;
+            // 约分
+            int gcd = MathUtil.GCD(numerator, denominator);
+            int divide = denominator / gcd;
+            int divideIndex = numerator >= denominator ? ((numerator - denominator) / gcd) : (numerator / gcd);
+            int beat = numerator >= denominator ? (this.beat + other.beat + 1) : (this.beat + other.beat);
+            return new BeatTime(beat, divide, divideIndex);
+        }
+
+        /// <summary>
+        /// 获取下一个divide的拍数
+        /// </summary>
+        public BeatTime GetNextDivideBeatTime(int divide)
+        {
+            if (this.divideIndex == 0) return new BeatTime(this.beat, divide, 1);
+            double thisNum = (double)this.divideIndex / this.divide;
+            int floor = (int)Math.Floor(thisNum * divide);
+            return new BeatTime(this.beat, divide, floor + 1);
+        }
+
+        /// <summary>
+        /// 获取到下一个divide的距离
+        /// </summary>
+        public double GetNextDivideDistance(int divide, double rowWidth)
+        {
+            double thisNum = (double)this.divideIndex / this.divide;
+            double floor = Math.Floor(thisNum * divide);
+            double nextNum = (floor + 1) / divide;
+            return rowWidth * (nextNum - thisNum);
+        }
+
+        /// <summary>
+        /// 获取divide下的上一个拍数
+        /// </summary>
+        public BeatTime GetPreDivideBeatTime(int divide)
+        {
+            if (this.divideIndex == 0) return new BeatTime(this.beat - 1, divide, divide - 1);
+            double thisNum = (double)this.divideIndex / this.divide;
+            int ceiling = (int)Math.Ceiling(thisNum * divide);
+            return new BeatTime(this.beat, divide, ceiling - 1);
+        }
+
+        /// <summary>
+        /// 获取到上一个divide的距离
+        /// </summary>
+        public double GetPreDivideDistance(int divide, double rowWidth)
+        {
+            double thisNum = (double)this.divideIndex / this.divide;
+            double ceiling = Math.Ceiling(thisNum * divide);
+            double preNum = (ceiling - 1) / divide;
+            return rowWidth * (thisNum - preNum);
+        }
+
+        /// <summary>
+        /// 根据鼠标位移更新拍数
+        /// </summary>
+        public BeatTime CreateByOffsetY(int divide, double rowWidth, double offsetY)
+        {
+            // 触发更新的阈值
+            double testRate = 0.8;
+            double offsetYAbs = Math.Abs(offsetY);
+            double divideWidth = rowWidth / divide;
+            BeatTime result = null;
+            if (offsetY > 0)
+            {
+                double preDistance = this.GetPreDivideDistance(divide, rowWidth);
+                if (offsetYAbs >= testRate * preDistance)
+                {
+                    result = this.GetPreDivideBeatTime(divide);
+                    double restOffsetY = offsetYAbs - preDistance;
+                    if (restOffsetY > 0)
+                    {
+                        int addDivideIndex = (int)Math.Floor(restOffsetY / divideWidth);
+                        if (restOffsetY % divideWidth >= testRate * divideWidth) addDivideIndex++;
+                        result.AddDivideIndex(-addDivideIndex);
+                    }
+                }
+                else return this;
+            }
+            else
+            {
+                double nextDistance = this.GetNextDivideDistance(divide, rowWidth);
+                if (offsetYAbs >= testRate * nextDistance)
+                {
+                    result = this.GetNextDivideBeatTime(divide);
+                    double restOffsetY = offsetYAbs - nextDistance;
+                    if (restOffsetY > 0)
+                    {
+                        int addDivideIndex = (int)Math.Floor(restOffsetY / divideWidth);
+                        if (restOffsetY % divideWidth >= testRate * divideWidth) addDivideIndex++;
+                        result.AddDivideIndex(addDivideIndex);
+                    }
+                }
+                else return this;
+            }
+            return result;
         }
     }
 }

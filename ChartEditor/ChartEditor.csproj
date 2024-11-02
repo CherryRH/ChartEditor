@@ -230,6 +230,7 @@
     <Compile Include="Utils\Drawers\TimeLineDrawer.cs" />
     <Compile Include="Utils\Drawers\TrackGridDrawer.cs" />
     <Compile Include="Utils\ImageUtil.cs" />
+    <Compile Include="Utils\MathUtil.cs" />
     <Compile Include="Utils\MusicUtils\MusicPlayer.cs" />
     <Compile Include="Utils\MusicUtils\MusicUtil.cs" />
     <Compile Include="ViewModels\ChartEditModel.cs" />

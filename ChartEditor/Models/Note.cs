@@ -80,6 +80,15 @@ namespace ChartEditor.Models
             }
             return false;
         }
+
+        /// <summary>
+        /// 将Note移动到指定拍数
+        /// </summary>
+        public void MoveNoteToBeatTime(BeatTime beatTime)
+        {
+            if (this.time == beatTime) return;
+            this.Time = beatTime;
+        }
     }
 
     /// <summary>
@@ -149,6 +158,16 @@ namespace ChartEditor.Models
             if (endDelta <= testY && endDelta > 0) return 2;
             if (startDelta <= testY && startDelta > 0) return 1;
             return 0;
+        }
+
+        /// <summary>
+        /// 将HoldNote移动到指定拍数
+        /// </summary>
+        public void MoveHoldNoteToBeatTime(BeatTime beatTime)
+        {
+            if (beatTime == null) return;
+            this.endTime = beatTime.Sum(this.endTime.Difference(this.Time));
+            this.Time = beatTime;
         }
     }
 

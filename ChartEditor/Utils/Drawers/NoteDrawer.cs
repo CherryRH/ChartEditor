@@ -227,6 +227,8 @@ namespace ChartEditor.Utils.Drawers
         /// </summary>
         public void RedrawTrackWhenPosChanged(Track track)
         {
+            // 重绘包含的所有Note
+            foreach (Note note in track.Notes) this.RedrawNoteWhenPosChanged(note);
             Canvas.SetLeft(track.Rectangle, track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.TrackPadding * this.ChartEditModel.ColumnWidth);
             Canvas.SetBottom(track.Rectangle, track.StartTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
         }

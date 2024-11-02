@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
@@ -450,9 +451,80 @@ namespace ChartEditor.ViewModels
         /// <summary>
         /// 尝试移动选中的Note
         /// </summary>
-        public bool TryMovePickedNote(BeatTime beatTime, int columnIndex)
+        public bool TryMovePickedNote(BeatTime startBeatTime, BeatTime beatTime)
         {
+            List<BeatTime> movedTimes = new List<BeatTime>();
+            // 拍数差值
+            BeatTime diffBeatTime = beatTime.Difference(startBeatTime);
+            foreach (Note note in this.pickedNotes)
+            {
+                // 计算新拍数
+                BeatTime newTime = note.Time.Sum(diffBeatTime);
+                movedTimes.Add(newTime);
+                // 超出Track范围
+                if (!note.Track.ContainsBeatTime(newTime)) return false;
+                // 与其他note冲突
+                if (note is HoldNote holdNote)
+                {
+                    BeatTime newEndTime = holdNote.EndTime.Sum(diffBeatTime);
+                    // HoldNote末端超出Track范围
+                    if (!note.Track.ContainsBeatTime(newEndTime)) return false;
+                    foreach (Note trackNote in note.Track.Notes)
+                    {
+                        if (this.pickedNotes.Contains(trackNote)) continue;
+                        if (trackNote is HoldNote trackHoldNote)
+                        {
+                            if (newTime.IsEarlierThan(trackHoldNote.EndTime) && !newTime.IsEarlierThan(trackHoldNote.Time)) return false;
+                            if (newEndTime.IsLaterThan(trackHoldNote.Time) && !newEndTime.IsLaterThan(trackHoldNote.EndTime)) return false;
+                            if (newTime.IsEarlierThan(trackHoldNote.Time) && newEndTime.IsLaterThan(trackHoldNote.EndTime)) return false;
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (Note trackNote in note.Track.Notes)
+                    {
+                        if (trackNote.Type == NoteType.Hold || this.pickedNotes.Contains(trackNote)) continue;
+                        if (trackNote.Time.IsEqualTo(newTime)) return false;
+                    }
+                }
+            }
+            // 更新时间
+            for (int i = 0; i < this.pickedNotes.Count; i++)
+            {
+                Note tmpNote = this.pickedNotes[i];
+                BeatTime tmpBeatTime = movedTimes[i];
+                if (tmpNote is HoldNote tmpHoldNote)
+                {
+                    tmpHoldNote.MoveHoldNoteToBeatTime(tmpBeatTime);
+                }
+                else tmpNote.MoveNoteToBeatTime(tmpBeatTime);
+            }
+            return true;
+        }
 
+        /// <summary>
+        /// 尝试移动选中的Track
+        /// </summary>
+        public bool TryMovePickedTrack (BeatTime beatTime, int columnIndex)
+        {
+            // 拍数差值
+            BeatTime diffBeatTime = beatTime.Difference(this.pickedTrack.StartTime);
+            // 不能超出网格范围
+            if (beatTime.Beat < 0) return false;
+            BeatTime movedEndTime = this.pickedTrack.EndTime.Sum(diffBeatTime);
+            if (movedEndTime.Beat >= this.BeatNum) return false;
+            // 不能与其他轨道冲突
+            foreach (Track track in this.tracks)
+            {
+                if (track == this.pickedTrack || track.ColumnIndex != columnIndex) continue;
+                if (!beatTime.IsLaterThan(track.EndTime) && !beatTime.IsEarlierThan(track.StartTime)) return false;
+                if (!movedEndTime.IsLaterThan(track.EndTime) && !movedEndTime.IsEarlierThan(track.StartTime)) return false;
+                if (beatTime.IsEarlierThan(track.StartTime) && movedEndTime.IsLaterThan(track.EndTime)) return false;
+            }
+            // 更新时间和列号
+            this.pickedTrack.MoveTrackToBeatTime(beatTime);
+            this.pickedTrack.ColumnIndex = columnIndex;
             return true;
         }
 

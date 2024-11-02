@@ -62,8 +62,10 @@ namespace ChartEditor.Utils.Controllers
         // 是否在移动选中的音符
         private bool isMovingNote = false;
         // 移动起始位置
+        private Point? movingStartPoint = null;
         private BeatTime movingStartBeatTime = null;
-        private int movingStartColumnIndex = 0;
+        private BeatTime movingCurrentBeatTime = null;
+        private int movingCurrentColumnIndex = 0;
 
         /// <summary>
         /// 音乐播放
@@ -316,30 +318,45 @@ namespace ChartEditor.Utils.Controllers
             this.CanvasMousePosition = mousePosition;
             if (this.isPicking)
             {
-                if (this.movingStartBeatTime != null)
+                if (this.stretchingTrack == null && this.stretchingHoldNote == null && this.movingStartBeatTime != null)
                 {
-                    BeatTime beatTime = this.ChartEditModel.GetBeatTimeFromPoint(mousePosition, this.TrackCanvas.Height);
-                    int columnIndex = this.ChartEditModel.GetColumnIndexFromPoint(mousePosition);
+                    double pointY = mousePosition.Value.Y;
+                    double startPointY = this.movingStartPoint.Value.Y;
+                    BeatTime mouseBeatTime = this.movingStartBeatTime.CreateByOffsetY(this.ChartEditModel.Divide, this.ChartEditModel.RowWidth, pointY - startPointY);
                     if (this.isMovingNote)
                     {
-                        if (!beatTime.IsEqualTo(this.movingStartBeatTime) || this.movingStartColumnIndex != columnIndex)
+                        if (!this.movingCurrentBeatTime.IsEqualTo(mouseBeatTime))
                         {
                             Mouse.OverrideCursor = Cursors.SizeAll;
                             this.TrackCanvas.CaptureMouse();
-                            bool result = this.ChartEditModel.TryMovePickedNote(beatTime, columnIndex);
+                            bool result = this.ChartEditModel.TryMovePickedNote(this.movingCurrentBeatTime, mouseBeatTime);
                             if (result)
                             {
-                                // 更新移动起始点位置
-                                this.movingStartColumnIndex = columnIndex;
-                                this.movingStartBeatTime = beatTime;
-                                // 移动Note位置
-
+                                this.movingCurrentBeatTime = mouseBeatTime;
+                                // 重绘Note位置
+                                foreach (Note note in this.ChartEditModel.PickedNotes)
+                                {
+                                    this.noteDrawer.RedrawNoteWhenPosChanged(note);
+                                }
                             }
                         }
                     }
                     else if (this.isMovingTrack)
                     {
-
+                        int columnIndex = this.ChartEditModel.GetColumnIndexFromPoint(mousePosition);
+                        if (!this.movingCurrentBeatTime.IsEqualTo(mouseBeatTime) || this.movingCurrentColumnIndex != columnIndex)
+                        {
+                            Mouse.OverrideCursor = Cursors.SizeAll;
+                            this.TrackCanvas.CaptureMouse();
+                            bool result = this.ChartEditModel.TryMovePickedTrack(mouseBeatTime, columnIndex);
+                            if (result)
+                            {
+                                this.movingCurrentColumnIndex = columnIndex;
+                                this.movingCurrentBeatTime = mouseBeatTime;
+                                // 移动Track位置
+                                this.noteDrawer.RedrawTrackWhenPosChanged(this.ChartEditModel.PickedTrack);
+                            }
+                        }
                     }
                 }
             }
@@ -361,7 +378,7 @@ namespace ChartEditor.Utils.Controllers
                 if (this.isPicking)
                 {
                     // 判断是否开始移动
-                    if (this.movingStartBeatTime == null)
+                    if (this.stretchingTrack == null && this.stretchingHoldNote == null && this.movingStartBeatTime == null)
                     {
                         // 是否在某个被选中的音符中
                         foreach (Note note in this.ChartEditModel.PickedNotes)
@@ -369,8 +386,10 @@ namespace ChartEditor.Utils.Controllers
                             if (note.ContainsPoint(mousePosition, this.TrackCanvas))
                             {
                                 this.isMovingNote = true;
-                                this.movingStartBeatTime = this.ChartEditModel.GetBeatTimeFromPoint(mousePosition, this.TrackCanvas.Height);
-                                this.movingStartColumnIndex = this.ChartEditModel.GetColumnIndexFromPoint(mousePosition);
+                                this.movingStartPoint = mousePosition;
+                                this.movingCurrentBeatTime = note.Time;
+                                this.movingStartBeatTime = note.Time;
+                                this.movingCurrentColumnIndex = this.ChartEditModel.GetColumnIndexFromPoint(mousePosition);
                                 break;
                             }
                         }
@@ -379,8 +398,10 @@ namespace ChartEditor.Utils.Controllers
                             if (this.ChartEditModel.PickedTrack.ContainsPoint(mousePosition, this.TrackCanvas))
                             {
                                 this.isMovingTrack = true;
-                                this.movingStartBeatTime = this.ChartEditModel.GetBeatTimeFromPoint(mousePosition, this.TrackCanvas.Height);
-                                this.movingStartColumnIndex = this.ChartEditModel.GetColumnIndexFromPoint(mousePosition);
+                                this.movingStartPoint = mousePosition;
+                                this.movingStartBeatTime = this.ChartEditModel.PickedTrack.StartTime;
+                                this.movingCurrentBeatTime = this.ChartEditModel.PickedTrack.StartTime;
+                                this.movingCurrentColumnIndex = this.ChartEditModel.GetColumnIndexFromPoint(mousePosition);
                             }
                         }
                     }
@@ -400,7 +421,7 @@ namespace ChartEditor.Utils.Controllers
                 else
                 {
                     // 清除选中的音符
-                    if (this.stretchingHoldNote == null) this.ClearAllPickedNotes();
+                    if (this.stretchingHoldNote == null && !this.isMovingNote) this.ClearAllPickedNotes();
                 }
             }
         }
@@ -594,15 +615,15 @@ namespace ChartEditor.Utils.Controllers
                 if (this.isMovingNote)
                 {
                     this.isMovingNote = false;
-                    this.movingStartBeatTime = null;
                     Mouse.OverrideCursor = Cursors.Hand;
+                    this.movingStartBeatTime = null;
                     this.TrackCanvas.ReleaseMouseCapture();
                 }
                 if (this.isMovingTrack)
                 {
                     this.isMovingTrack = false;
-                    this.movingStartBeatTime = null;
                     Mouse.OverrideCursor = Cursors.Hand;
+                    this.movingStartBeatTime = null;
                     this.TrackCanvas.ReleaseMouseCapture();
                 }
             }

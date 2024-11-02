@@ -93,6 +93,9 @@ namespace ChartEditor.Utils.Drawers
             this.TrackCanvas.ReleaseMouseCapture();
             // 停止动画
             this.selectBox.BeginAnimation(Shape.StrokeDashOffsetProperty, null);
+            this.selectBox.Width = 0;
+            this.selectBox.Height = 0;
+            Canvas.SetLeft(this.selectBox, -100);
             this.selectBox.Visibility = Visibility.Collapsed;
         }
 

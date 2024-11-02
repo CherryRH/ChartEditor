@@ -99,6 +99,16 @@ namespace ChartEditor.Models
         }
 
         /// <summary>
+        /// BeatTime是否在轨道内
+        /// </summary>
+        public bool ContainsBeatTime(BeatTime beatTime)
+        {
+            if (beatTime == null) return false;
+            if (beatTime.IsEarlierThan(this.startTime) || beatTime.IsLaterThan(this.endTime)) return false;
+            return true;
+        }
+
+        /// <summary>
         /// 获取鼠标位置的拉伸状态。0-不能拉伸；1-可以拉伸起始点；2-可以拉伸结束点
         /// </summary>
         public int GetStretchState(Point? point, Canvas trackCanvas)
@@ -231,6 +241,26 @@ namespace ChartEditor.Models
         public bool IsMiniTrack()
         {
             return this.startTime.IsEqualTo(this.endTime);
+        }
+
+        /// <summary>
+        /// 将轨道移动到某拍数（音符也跟随移动）
+        /// </summary>
+        public void MoveTrackToBeatTime(BeatTime beatTime)
+        {
+            // 拍数差值
+            BeatTime diffBeatTime = beatTime.Difference(this.StartTime);
+            this.startTime = beatTime;
+            this.endTime = this.endTime.Sum(diffBeatTime);
+            foreach (Note note in this.Notes)
+            {
+                BeatTime tmpBeatTime = note.Time.Sum(diffBeatTime);
+                if (note is HoldNote holdNote)
+                {
+                    holdNote.MoveHoldNoteToBeatTime(tmpBeatTime);
+                }
+                else note.MoveNoteToBeatTime(tmpBeatTime);
+            }
         }
     }
 }
