@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Shapes;
+using ChartEditor.Utils;
 
 namespace ChartEditor.Models
 {
@@ -30,10 +31,16 @@ namespace ChartEditor.Models
         public BeatTime EndTime { get { return endTime; } set { endTime = value; } }
 
         /// <summary>
-        /// 包含的音符
+        /// 非HoldNote列表
         /// </summary>
-        private List<Note> notes = new List<Note>();
-        public List<Note> Notes { get { return notes; } set { notes = value; } }
+        private SkipList<BeatTime, Note> noteSkipList = new SkipList<BeatTime, Note>(16, (BeatTime x, BeatTime y) => x.CompareTo(y));
+        public SkipList<BeatTime, Note> NoteSkipList { get { return noteSkipList; } }
+
+        /// <summary>
+        /// HoldNote列表
+        /// </summary>
+        private SkipList<BeatTime, HoldNote> holdNoteSkipList = new SkipList<BeatTime, HoldNote>(16, (BeatTime x, BeatTime y) => x.CompareTo(y));
+        public SkipList<BeatTime, HoldNote> HoldNoteSkipList { get { return holdNoteSkipList; } }
 
         /// <summary>
         /// 列序号
@@ -86,16 +93,6 @@ namespace ChartEditor.Models
             this.angleKeyPoints.Add(new AngleKeyPoint(0, this.startTime));
             this.opacityKeyPoints = new List<OpacityKeyPoint>();
             this.opacityKeyPoints.Add(new OpacityKeyPoint(1, this.endTime));
-        }
-
-        /// <summary>
-        /// 是否在轨道范围内
-        /// </summary>
-        public bool IsInTrack(BeatTime beatTime, int columnIndex)
-        {
-            if (beatTime == null || columnIndex != this.columnIndex) return false;
-            if (beatTime.IsEarlierThan(this.startTime) || beatTime.IsLaterThan(this.endTime)) return false;
-            return true;
         }
 
         /// <summary>
@@ -152,29 +149,25 @@ namespace ChartEditor.Models
         public Note AddNote(BeatTime beatTime, NoteType noteType, int id)
         {
             // 不能与其他非Hold的Note重叠
-            foreach(Note note in this.notes)
-            {
-                if (note.Type == NoteType.Hold) continue;
-                if (note.Time.IsEqualTo(beatTime)) return null;
-            }
+            if (this.noteSkipList.TryGetValue(beatTime, out Note value)) return null;
             switch (noteType)
             {
                 case NoteType.Tap:
                     {
                         TapNote tapNote = new TapNote(beatTime, this, id);
-                        this.Notes.Add(tapNote);
+                        this.noteSkipList.Insert(beatTime, tapNote);
                         return tapNote;
                     }
                 case NoteType.Flick:
                     {
                         FlickNote flickNote = new FlickNote(beatTime, this, id);
-                        this.Notes.Add(flickNote);
+                        this.noteSkipList.Insert(beatTime, flickNote);
                         return flickNote;
                     }
                 case NoteType.Catch:
                     {
                         CatchNote catchNote = new CatchNote(beatTime, this, id);
-                        this.Notes.Add(catchNote);
+                        this.noteSkipList.Insert(beatTime, catchNote);
                         return catchNote;
                     }
             }
@@ -189,32 +182,25 @@ namespace ChartEditor.Models
             // 不能放在轨道结尾处
             if (startTime.IsEqualTo(this.endTime)) return false;
             // 不能与其他HoldNote重叠
-            foreach(var note in this.Notes)
-            {
-                if (note.Type == NoteType.Hold && !startTime.IsEarlierThan(note.Time) && startTime.IsEarlierThan(((HoldNote)note).EndTime))
-                {
-                    return false;
-                }
-            }
+            SkipListNode<BeatTime, HoldNote> preNode = this.holdNoteSkipList.GetPreNode(startTime);
+            if (preNode != this.holdNoteSkipList.Head && startTime.IsEarlierThan(preNode.Pair.Value.EndTime)) return false;
+            SkipListNode<BeatTime, HoldNote> nextNode = preNode.Next[0];
+            if (nextNode != null && !startTime.IsEarlierThan(nextNode.Pair.Value.Time)) return false;
             return true;
         }
 
         /// <summary>
         /// 尝试添加HoldNote
         /// </summary>
-        public HoldNote AddHoldNoteFooter(BeatTime startTime , BeatTime endTime, int id)
+        public HoldNote AddHoldNoteFooter(BeatTime startTime, BeatTime endTime, int id)
         {
             // 不能与其他HoldNote重叠
-            foreach (var note in this.Notes)
-            {
-                if (note.Type == NoteType.Hold && startTime.IsEarlierThan(note.Time) && endTime.IsLaterThan(note.Time))
-                {
-                    return null;
-                }
-            }
+            SkipListNode<BeatTime, HoldNote> preNode = this.holdNoteSkipList.GetPreNode(startTime);
+            SkipListNode<BeatTime, HoldNote> nextNode = preNode.Next[0];
+            if (nextNode != null && endTime.IsLaterThan(nextNode.Pair.Value.Time)) return null;
             // 可以添加HoldNote
             HoldNote holdNote = new HoldNote(startTime, endTime, this, id);
-            this.Notes.Add(holdNote);
+            this.holdNoteSkipList.Insert(startTime, holdNote);
             return holdNote;
         }
 
@@ -223,7 +209,7 @@ namespace ChartEditor.Models
         /// </summary>
         public void DeleteNote(Note note)
         {
-            this.notes.Remove(note);
+            this.noteSkipList.Delete(note.Time);
         }
 
         /// <summary>
@@ -252,14 +238,42 @@ namespace ChartEditor.Models
             BeatTime diffBeatTime = beatTime.Difference(this.StartTime);
             this.startTime = beatTime;
             this.endTime = this.endTime.Sum(diffBeatTime);
-            foreach (Note note in this.Notes)
+            SkipListNode<BeatTime, Note> current1 = this.noteSkipList.FirstNode;
+            while (current1 != null)
             {
+                Note note = current1.Pair.Value;
                 BeatTime tmpBeatTime = note.Time.Sum(diffBeatTime);
-                if (note is HoldNote holdNote)
-                {
-                    holdNote.MoveHoldNoteToBeatTime(tmpBeatTime);
-                }
-                else note.MoveNoteToBeatTime(tmpBeatTime);
+                note.MoveNoteToBeatTime(tmpBeatTime);
+                current1 = current1.Next[0];
+            }
+            SkipListNode<BeatTime, HoldNote> current2 = this.holdNoteSkipList.FirstNode;
+            while (current2 != null)
+            {
+                HoldNote holdNote = current2.Pair.Value;
+                BeatTime tmpBeatTime = holdNote.Time.Sum(diffBeatTime);
+                holdNote.MoveHoldNoteToBeatTime(tmpBeatTime);
+                current2 = current2.Next[0];
+            }
+        }
+
+        /// <summary>
+        /// 打印所有Note列表
+        /// </summary>
+        public void PrintNoteSkipList()
+        {
+            Console.WriteLine("Tap, Flick, Catch:");
+            SkipListNode<BeatTime, Note> current1 = this.noteSkipList.FirstNode;
+            while (current1 != null)
+            {
+                Console.WriteLine(current1.Pair.Value.Track.ColumnIndex + " " + current1.Pair.Key.ToBeatString() + " " + current1.Pair.Value.Type);
+                current1 = current1.Next[0];
+            }
+            Console.WriteLine("Hold:");
+            SkipListNode<BeatTime, HoldNote> current2 = this.holdNoteSkipList.FirstNode;
+            while (current2 != null)
+            {
+                Console.WriteLine(current2.Pair.Value.Track.ColumnIndex + " " + current2.Pair.Key.ToBeatString() + " " + current2.Pair.Value.Type);
+                current2 = current2.Next[0];
             }
         }
     }

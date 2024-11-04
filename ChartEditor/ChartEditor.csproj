@@ -233,6 +233,7 @@
     <Compile Include="Utils\MathUtil.cs" />
     <Compile Include="Utils\MusicUtils\MusicPlayer.cs" />
     <Compile Include="Utils\MusicUtils\MusicUtil.cs" />
+    <Compile Include="Utils\SkipList.cs" />
     <Compile Include="ViewModels\ChartEditModel.cs" />
     <Compile Include="ViewModels\ChartInfoModel.cs" />
     <Compile Include="ViewModels\ChartItemModel.cs" />

@@ -142,6 +142,16 @@ namespace ChartEditor.Models
         }
 
         /// <summary>
+        /// 比较时间先后
+        /// </summary>
+        public int CompareTo(BeatTime y)
+        {
+            if (this.IsEarlierThan(y)) return -1;
+            else if (this.IsEqualTo(y)) return 0;
+            else return 1;
+        }
+
+        /// <summary>
         /// 返回与一个拍数的差值
         /// </summary>
         public BeatTime Difference(BeatTime other)

@@ -39,10 +39,10 @@ namespace ChartEditor.ViewModels
         }
 
         /// <summary>
-        /// 轨道，包含所有音符
+        /// 每一列的轨道
         /// </summary>
-        private List<Track> tracks = new List<Track>();
-        public List<Track> Tracks { get { return tracks; } }
+        private List<SkipList<BeatTime, Track>> trackSkipLists = new List<SkipList<BeatTime, Track>>();
+        public List<SkipList<BeatTime, Track>> TrackSkipLists { get { return trackSkipLists; } }
 
         // 选中的Track（只允许选择一个）
         private Track pickedTrack = null;
@@ -241,6 +241,10 @@ namespace ChartEditor.ViewModels
             this.ChartInfo = chartInfo;
             this.currentTime = this.ChartInfo.Delay;
             this.bpm = this.ChartInfo.ChartMusic.Bpm;
+            for (int i = 0; i < this.ColumnNum; i++)
+            {
+                this.trackSkipLists.Add(new SkipList<BeatTime, Track>(16, (BeatTime x, BeatTime y) => x.CompareTo(y)));
+            }
         }
 
         /// <summary>
@@ -248,14 +252,11 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public bool AddTrackHeader(BeatTime start, int columnIndex)
         {
-            foreach (Track track in tracks)
-            {
-                if (columnIndex != track.ColumnIndex) continue;
-                if (!start.IsEarlierThan(track.StartTime) && !start.IsLaterThan(track.EndTime))
-                {
-                    return false;
-                }
-            }
+            SkipList<BeatTime, Track> trackList = this.trackSkipLists[columnIndex];
+            SkipListNode<BeatTime, Track> preNode = trackList.GetPreNode(start);
+            if (preNode != trackList.Head && !start.IsLaterThan(preNode.Pair.Value.EndTime)) return false;
+            SkipListNode<BeatTime, Track> nextNode = preNode.Next[0];
+            if (nextNode != null && !start.IsEarlierThan(nextNode.Pair.Value.StartTime)) return false;
             return true;
         }
 
@@ -265,17 +266,13 @@ namespace ChartEditor.ViewModels
         public Track AddTrackFooter(BeatTime start, int startColumnIndex, BeatTime end, int endColumnIndex)
         {
             if (startColumnIndex != endColumnIndex || end.IsEarlierThan(start)) return null;
-            foreach (Track item in tracks)
-            {
-                if (endColumnIndex != item.ColumnIndex) continue;
-                if (!end.IsEarlierThan(item.StartTime) && start.IsEarlierThan(item.StartTime))
-                {
-                    return null;
-                }
-            }
+            SkipList<BeatTime, Track> trackList = this.trackSkipLists[startColumnIndex];
+            SkipListNode<BeatTime, Track> preNode = trackList.GetPreNode(start);
+            SkipListNode<BeatTime, Track> nextNode = preNode.Next[0];
+            if (nextNode != null && !end.IsEarlierThan(nextNode.Pair.Value.StartTime)) return null;
             // 可以添加轨道
             Track track = new Track(start, end, endColumnIndex, this.GetNextTrackId());
-            this.tracks.Add(track);
+            trackList.Insert(start, track);
             this.TrackNum++;
             return track;
         }
@@ -286,24 +283,29 @@ namespace ChartEditor.ViewModels
         public Note AddNote(BeatTime beatTime, int columnIndex, NoteType noteType)
         {
             // Note必须要添加到一个Track中
-            foreach (Track track in tracks)
+            SkipList<BeatTime, Track> trackList = this.trackSkipLists[columnIndex];
+            // 找到时间所处的track
+            Track targetTrack = null;
+            SkipListNode<BeatTime, Track> preNode = trackList.GetPreNode(beatTime);
+            if (preNode != trackList.Head && preNode.Pair.Value.ContainsBeatTime(beatTime)) targetTrack = preNode.Pair.Value;
+            else
             {
-                if (track.IsInTrack(beatTime, columnIndex))
+                SkipListNode<BeatTime, Track> nextNode = preNode.Next[0];
+                if (nextNode != null && nextNode.Pair.Value.ContainsBeatTime(beatTime)) targetTrack = nextNode.Pair.Value;
+            }
+            if (targetTrack == null) return null;
+
+            Note newNote = targetTrack.AddNote(beatTime, noteType, this.GetNextNoteId());
+            if (newNote != null)
+            {
+                // 添加成功
+                switch (noteType)
                 {
-                    Note newNote = track.AddNote(beatTime, noteType, this.GetNextNoteId());
-                    if (newNote != null)
-                    {
-                        // 添加成功
-                        switch (noteType)
-                        {
-                            case NoteType.Tap: this.TapNoteNum++; break;
-                            case NoteType.Flick: this.FlickNoteNum++; break;
-                            case NoteType.Catch: this.CatchNoteNum++; break;
-                        }
-                        return newNote;
-                    }
-                    break;
+                    case NoteType.Tap: this.TapNoteNum++; break;
+                    case NoteType.Flick: this.FlickNoteNum++; break;
+                    case NoteType.Catch: this.CatchNoteNum++; break;
                 }
+                return newNote;
             }
             return null;
         }
@@ -313,17 +315,21 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public bool AddHoldNoteHeader(BeatTime start, int columnIndex)
         {
-            foreach (var item in tracks)
+            // Note必须要添加到一个Track中
+            SkipList<BeatTime, Track> trackList = this.trackSkipLists[columnIndex];
+            // 找到时间所处的track
+            Track targetTrack = null;
+            SkipListNode<BeatTime, Track> preNode = trackList.GetPreNode(start);
+            if (preNode != trackList.Head && preNode.Pair.Value.ContainsBeatTime(start)) targetTrack = preNode.Pair.Value;
+            else
             {
-                if (item.IsInTrack(start, columnIndex))
-                {
-                    if (item.AddHoldNoteHeader(start))
-                    {
-                        return true;
-                    }
-                }
+                SkipListNode<BeatTime, Track> nextNode = preNode.Next[0];
+                if (nextNode != null && nextNode.Pair.Value.ContainsBeatTime(start)) targetTrack = nextNode.Pair.Value;
             }
-            return false;
+            if (targetTrack == null) return false;
+            if (targetTrack.EndTime.IsEqualTo(start)) return false;
+
+            return targetTrack.AddHoldNoteHeader(start);
         }
 
         /// <summary>
@@ -332,21 +338,26 @@ namespace ChartEditor.ViewModels
         public HoldNote AddHoldNoteFooter(BeatTime startTime, int startColumnIndex, BeatTime endTime, int endColumnIndex)
         {
             if (startColumnIndex != endColumnIndex || !startTime.IsEarlierThan(endTime)) return null;
-            // Note必须要添加到一个Track中
-            foreach (var item in tracks)
+            SkipList<BeatTime, Track> trackList = this.trackSkipLists[startColumnIndex];
+            // 找到时间所处的track
+            Track targetTrack = null;
+            SkipListNode<BeatTime, Track> preNode = trackList.GetPreNode(startTime);
+            if (preNode != trackList.Head && preNode.Pair.Value.ContainsBeatTime(startTime)) targetTrack = preNode.Pair.Value;
+            else
             {
-                if (item.IsInTrack(endTime, endColumnIndex))
-                {
-                    HoldNote newHoldNote = item.AddHoldNoteFooter(startTime, endTime, this.GetNextNoteId());
-                    if (newHoldNote != null)
-                    {
-                        // 添加成功
-                        this.HoldNoteNum++;
-                        return newHoldNote;
-                    }
-                    break;
-                }
+                SkipListNode<BeatTime, Track> nextNode = preNode.Next[0];
+                if (nextNode != null && nextNode.Pair.Value.ContainsBeatTime(startTime)) targetTrack = nextNode.Pair.Value;
             }
+            if (targetTrack == null) return null;
+
+            HoldNote newHoldNote = targetTrack.AddHoldNoteFooter(startTime, endTime, this.GetNextNoteId());
+            if (newHoldNote != null)
+            {
+                // 添加成功
+                this.HoldNoteNum++;
+                return newHoldNote;
+            }
+
             return null;
         }
 
@@ -372,17 +383,17 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public bool TryChangeTrackStartTime(Track track, BeatTime beatTime)
         {
-            if (beatTime.IsLaterThan(track.EndTime)) return false;
-            foreach (Note note in track.Notes)
-            {
-                if (beatTime.IsLaterThan(note.Time)) return false;
-            }
-            foreach (Track item in this.tracks)
-            {
-                if (track.ColumnIndex != item.ColumnIndex || item == track) continue;
-                if (item.EndTime.IsEarlierThan(track.StartTime) && !beatTime.IsLaterThan(item.EndTime)) return false;
-            }
-            track.StartTime = beatTime;
+            //if (beatTime.IsLaterThan(track.EndTime)) return false;
+            //foreach (Note note in track.Notes)
+            //{
+            //    if (beatTime.IsLaterThan(note.Time)) return false;
+            //}
+            //foreach (Track item in this.tracks)
+            //{
+            //    if (track.ColumnIndex != item.ColumnIndex || item == track) continue;
+            //    if (item.EndTime.IsEarlierThan(track.StartTime) && !beatTime.IsLaterThan(item.EndTime)) return false;
+            //}
+            //track.StartTime = beatTime;
             return true;
         }
 
@@ -391,24 +402,24 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public bool TryChangeTrackEndTime(Track track, BeatTime beatTime)
         {
-            if (beatTime.IsEarlierThan(track.StartTime)) return false;
-            foreach (Note note in track.Notes)
-            {
-                if (note is HoldNote holdNote)
-                {
-                    if (beatTime.IsEarlierThan(holdNote.EndTime)) return false;
-                }
-                else
-                {
-                    if (beatTime.IsEarlierThan(note.Time)) return false;
-                }
-            }
-            foreach (Track item in this.tracks)
-            {
-                if (track.ColumnIndex != item.ColumnIndex || item == track) continue;
-                if (item.StartTime.IsLaterThan(track.EndTime) && !beatTime.IsEarlierThan(item.StartTime)) return false;
-            }
-            track.EndTime = beatTime;
+            //if (beatTime.IsEarlierThan(track.StartTime)) return false;
+            //foreach (Note note in track.Notes)
+            //{
+            //    if (note is HoldNote holdNote)
+            //    {
+            //        if (beatTime.IsEarlierThan(holdNote.EndTime)) return false;
+            //    }
+            //    else
+            //    {
+            //        if (beatTime.IsEarlierThan(note.Time)) return false;
+            //    }
+            //}
+            //foreach (Track item in this.tracks)
+            //{
+            //    if (track.ColumnIndex != item.ColumnIndex || item == track) continue;
+            //    if (item.StartTime.IsLaterThan(track.EndTime) && !beatTime.IsEarlierThan(item.StartTime)) return false;
+            //}
+            //track.EndTime = beatTime;
             return true;
         }
 
@@ -417,16 +428,16 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public bool TryChangeHoldNoteStartTime(HoldNote holdNote, BeatTime beatTime)
         {
-            if (!beatTime.IsEarlierThan(holdNote.EndTime) || beatTime.IsEarlierThan(holdNote.Track.StartTime)) return false;
-            foreach (Note note in holdNote.Track.Notes)
-            {
-                if (holdNote == note) continue;
-                if (note is HoldNote item)
-                {
-                    if (beatTime.IsEarlierThan(item.EndTime) && !holdNote.Time.IsEarlierThan(item.EndTime)) return false;
-                }
-            }
-            holdNote.Time = beatTime;
+            //if (!beatTime.IsEarlierThan(holdNote.EndTime) || beatTime.IsEarlierThan(holdNote.Track.StartTime)) return false;
+            //foreach (Note note in holdNote.Track.Notes)
+            //{
+            //    if (holdNote == note) continue;
+            //    if (note is HoldNote item)
+            //    {
+            //        if (beatTime.IsEarlierThan(item.EndTime) && !holdNote.Time.IsEarlierThan(item.EndTime)) return false;
+            //    }
+            //}
+            //holdNote.Time = beatTime;
             return true;
         }
 
@@ -435,16 +446,16 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public bool TryChangeHoldNoteEndTime(HoldNote holdNote, BeatTime beatTime)
         {
-            if (!beatTime.IsLaterThan(holdNote.Time) || beatTime.IsLaterThan(holdNote.Track.EndTime)) return false;
-            foreach (Note note in holdNote.Track.Notes)
-            {
-                if (holdNote == note) continue;
-                if (note is HoldNote item)
-                {
-                    if (beatTime.IsLaterThan(item.Time) && !holdNote.EndTime.IsLaterThan(item.Time)) return false;
-                }
-            }
-            holdNote.EndTime = beatTime;
+            //if (!beatTime.IsLaterThan(holdNote.Time) || beatTime.IsLaterThan(holdNote.Track.EndTime)) return false;
+            //foreach (Note note in holdNote.Track.Notes)
+            //{
+            //    if (holdNote == note) continue;
+            //    if (note is HoldNote item)
+            //    {
+            //        if (beatTime.IsLaterThan(item.Time) && !holdNote.EndTime.IsLaterThan(item.Time)) return false;
+            //    }
+            //}
+            //holdNote.EndTime = beatTime;
             return true;
         }
 
@@ -453,53 +464,53 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public bool TryMovePickedNote(BeatTime startBeatTime, BeatTime beatTime)
         {
-            List<BeatTime> movedTimes = new List<BeatTime>();
-            // 拍数差值
-            BeatTime diffBeatTime = beatTime.Difference(startBeatTime);
-            foreach (Note note in this.pickedNotes)
-            {
-                // 计算新拍数
-                BeatTime newTime = note.Time.Sum(diffBeatTime);
-                movedTimes.Add(newTime);
-                // 超出Track范围
-                if (!note.Track.ContainsBeatTime(newTime)) return false;
-                // 与其他note冲突
-                if (note is HoldNote holdNote)
-                {
-                    BeatTime newEndTime = holdNote.EndTime.Sum(diffBeatTime);
-                    // HoldNote末端超出Track范围
-                    if (!note.Track.ContainsBeatTime(newEndTime)) return false;
-                    foreach (Note trackNote in note.Track.Notes)
-                    {
-                        if (this.pickedNotes.Contains(trackNote)) continue;
-                        if (trackNote is HoldNote trackHoldNote)
-                        {
-                            if (newTime.IsEarlierThan(trackHoldNote.EndTime) && !newTime.IsEarlierThan(trackHoldNote.Time)) return false;
-                            if (newEndTime.IsLaterThan(trackHoldNote.Time) && !newEndTime.IsLaterThan(trackHoldNote.EndTime)) return false;
-                            if (newTime.IsEarlierThan(trackHoldNote.Time) && newEndTime.IsLaterThan(trackHoldNote.EndTime)) return false;
-                        }
-                    }
-                }
-                else
-                {
-                    foreach (Note trackNote in note.Track.Notes)
-                    {
-                        if (trackNote.Type == NoteType.Hold || this.pickedNotes.Contains(trackNote)) continue;
-                        if (trackNote.Time.IsEqualTo(newTime)) return false;
-                    }
-                }
-            }
-            // 更新时间
-            for (int i = 0; i < this.pickedNotes.Count; i++)
-            {
-                Note tmpNote = this.pickedNotes[i];
-                BeatTime tmpBeatTime = movedTimes[i];
-                if (tmpNote is HoldNote tmpHoldNote)
-                {
-                    tmpHoldNote.MoveHoldNoteToBeatTime(tmpBeatTime);
-                }
-                else tmpNote.MoveNoteToBeatTime(tmpBeatTime);
-            }
+            //List<BeatTime> movedTimes = new List<BeatTime>();
+            //// 拍数差值
+            //BeatTime diffBeatTime = beatTime.Difference(startBeatTime);
+            //foreach (Note note in this.pickedNotes)
+            //{
+            //    // 计算新拍数
+            //    BeatTime newTime = note.Time.Sum(diffBeatTime);
+            //    movedTimes.Add(newTime);
+            //    // 超出Track范围
+            //    if (!note.Track.ContainsBeatTime(newTime)) return false;
+            //    // 与其他note冲突
+            //    if (note is HoldNote holdNote)
+            //    {
+            //        BeatTime newEndTime = holdNote.EndTime.Sum(diffBeatTime);
+            //        // HoldNote末端超出Track范围
+            //        if (!note.Track.ContainsBeatTime(newEndTime)) return false;
+            //        foreach (Note trackNote in note.Track.Notes)
+            //        {
+            //            if (this.pickedNotes.Contains(trackNote)) continue;
+            //            if (trackNote is HoldNote trackHoldNote)
+            //            {
+            //                if (newTime.IsEarlierThan(trackHoldNote.EndTime) && !newTime.IsEarlierThan(trackHoldNote.Time)) return false;
+            //                if (newEndTime.IsLaterThan(trackHoldNote.Time) && !newEndTime.IsLaterThan(trackHoldNote.EndTime)) return false;
+            //                if (newTime.IsEarlierThan(trackHoldNote.Time) && newEndTime.IsLaterThan(trackHoldNote.EndTime)) return false;
+            //            }
+            //        }
+            //    }
+            //    else
+            //    {
+            //        foreach (Note trackNote in note.Track.Notes)
+            //        {
+            //            if (trackNote.Type == NoteType.Hold || this.pickedNotes.Contains(trackNote)) continue;
+            //            if (trackNote.Time.IsEqualTo(newTime)) return false;
+            //        }
+            //    }
+            //}
+            //// 更新时间
+            //for (int i = 0; i < this.pickedNotes.Count; i++)
+            //{
+            //    Note tmpNote = this.pickedNotes[i];
+            //    BeatTime tmpBeatTime = movedTimes[i];
+            //    if (tmpNote is HoldNote tmpHoldNote)
+            //    {
+            //        tmpHoldNote.MoveHoldNoteToBeatTime(tmpBeatTime);
+            //    }
+            //    else tmpNote.MoveNoteToBeatTime(tmpBeatTime);
+            //}
             return true;
         }
 
@@ -508,23 +519,23 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public bool TryMovePickedTrack (BeatTime beatTime, int columnIndex)
         {
-            // 拍数差值
-            BeatTime diffBeatTime = beatTime.Difference(this.pickedTrack.StartTime);
-            // 不能超出网格范围
-            if (beatTime.Beat < 0) return false;
-            BeatTime movedEndTime = this.pickedTrack.EndTime.Sum(diffBeatTime);
-            if (movedEndTime.Beat >= this.BeatNum) return false;
-            // 不能与其他轨道冲突
-            foreach (Track track in this.tracks)
-            {
-                if (track == this.pickedTrack || track.ColumnIndex != columnIndex) continue;
-                if (!beatTime.IsLaterThan(track.EndTime) && !beatTime.IsEarlierThan(track.StartTime)) return false;
-                if (!movedEndTime.IsLaterThan(track.EndTime) && !movedEndTime.IsEarlierThan(track.StartTime)) return false;
-                if (beatTime.IsEarlierThan(track.StartTime) && movedEndTime.IsLaterThan(track.EndTime)) return false;
-            }
-            // 更新时间和列号
-            this.pickedTrack.MoveTrackToBeatTime(beatTime);
-            this.pickedTrack.ColumnIndex = columnIndex;
+            //// 拍数差值
+            //BeatTime diffBeatTime = beatTime.Difference(this.pickedTrack.StartTime);
+            //// 不能超出网格范围
+            //if (beatTime.Beat < 0) return false;
+            //BeatTime movedEndTime = this.pickedTrack.EndTime.Sum(diffBeatTime);
+            //if (movedEndTime.Beat >= this.BeatNum) return false;
+            //// 不能与其他轨道冲突
+            //foreach (Track track in this.tracks)
+            //{
+            //    if (track == this.pickedTrack || track.ColumnIndex != columnIndex) continue;
+            //    if (!beatTime.IsLaterThan(track.EndTime) && !beatTime.IsEarlierThan(track.StartTime)) return false;
+            //    if (!movedEndTime.IsLaterThan(track.EndTime) && !movedEndTime.IsEarlierThan(track.StartTime)) return false;
+            //    if (beatTime.IsEarlierThan(track.StartTime) && movedEndTime.IsLaterThan(track.EndTime)) return false;
+            //}
+            //// 更新时间和列号
+            //this.pickedTrack.MoveTrackToBeatTime(beatTime);
+            //this.pickedTrack.ColumnIndex = columnIndex;
             return true;
         }
 

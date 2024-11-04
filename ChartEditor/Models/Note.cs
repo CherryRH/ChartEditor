@@ -89,6 +89,16 @@ namespace ChartEditor.Models
             if (this.time == beatTime) return;
             this.Time = beatTime;
         }
+
+        /// <summary>
+        /// 比较两个Note的时间先后
+        /// </summary>
+        public int CompareTo(Note y)
+        {
+            if (this.Time.IsEarlierThan(y.Time)) return -1;
+            else if (this.Time.IsEqualTo(y.Time)) return 0;
+            else return 1;
+        }
     }
 
     /// <summary>

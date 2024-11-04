@@ -508,23 +508,46 @@ namespace ChartEditor.Utils.Controllers
                         return false;
                     });
                     // 搜索与多选框相交的音符
-                    foreach (Track track in this.ChartEditModel.Tracks)
+                    foreach (var trackList in this.ChartEditModel.TrackSkipLists)
                     {
-                        Rect trackRect = track.GetRect();
-                        
-                        if (selectBoxRect.IntersectsWith(trackRect))
+                        SkipListNode<BeatTime, Track> currentTrackNode = trackList.FirstNode;
+                        while (currentTrackNode != null)
                         {
-                            foreach (Note note in track.Notes)
+                            Track track = currentTrackNode.Pair.Value;
+                            Rect trackRect = track.GetRect();
+
+                            if (selectBoxRect.IntersectsWith(trackRect))
                             {
-                                if (this.selectBoxPickedNotes.Contains(note) || this.ChartEditModel.PickedNotes.Contains(note)) continue;
-                                Rect noteRect = note.GetRect();
-                                if (selectBoxRect.IntersectsWith(noteRect))
+                                SkipListNode<BeatTime, Note> currentNoteNode = track.NoteSkipList.FirstNode;
+                                while (currentNoteNode != null)
                                 {
-                                    note.IsPicked = true;
-                                    this.selectBoxPickedNotes.Add(note);
-                                    this.noteDrawer.RectPicked(note.Rectangle);
+                                    Note note = currentNoteNode.Pair.Value;
+                                    currentNoteNode = currentNoteNode.Next[0];
+                                    if (this.selectBoxPickedNotes.Contains(note) || this.ChartEditModel.PickedNotes.Contains(note)) continue;
+                                    Rect noteRect = note.GetRect();
+                                    if (selectBoxRect.IntersectsWith(noteRect))
+                                    {
+                                        note.IsPicked = true;
+                                        this.selectBoxPickedNotes.Add(note);
+                                        this.noteDrawer.RectPicked(note.Rectangle);
+                                    }
+                                }
+                                SkipListNode<BeatTime, HoldNote> currentHoldNoteNode = track.HoldNoteSkipList.FirstNode;
+                                while (currentHoldNoteNode != null)
+                                {
+                                    HoldNote holdNote = currentHoldNoteNode.Pair.Value;
+                                    currentHoldNoteNode = currentHoldNoteNode.Next[0];
+                                    if (this.selectBoxPickedNotes.Contains(holdNote) || this.ChartEditModel.PickedNotes.Contains(holdNote)) continue;
+                                    Rect noteRect = holdNote.GetRect();
+                                    if (selectBoxRect.IntersectsWith(noteRect))
+                                    {
+                                        holdNote.IsPicked = true;
+                                        this.selectBoxPickedNotes.Add(holdNote);
+                                        this.noteDrawer.RectPicked(holdNote.Rectangle);
+                                    }
                                 }
                             }
+                            currentTrackNode = currentTrackNode.Next[0];
                         }
                     }
                 }
