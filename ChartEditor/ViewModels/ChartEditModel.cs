@@ -399,12 +399,13 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public bool TryChangeTrackStartTime(Track track, BeatTime beatTime)
         {
-            if (beatTime.IsLaterThan(track.EndTime)) return false;
+            if (beatTime.IsLaterThan(track.EndTime) || beatTime.Beat < 0) return false;
             if (track.NoteSkipList.FirstNode != null && track.NoteSkipList.FirstNode.Pair.Key.IsEarlierThan(beatTime)) return false;
             if (track.HoldNoteSkipList.FirstNode != null && track.HoldNoteSkipList.FirstNode.Pair.Key.IsEarlierThan(beatTime)) return false;
             // 不能超过前一个Track的末端
-            SkipListNode<BeatTime, Track> preNode = this.trackSkipLists[track.ColumnIndex].GetPreNode(track.StartTime);
-            if (preNode != this.trackSkipLists[track.ColumnIndex].Head && !beatTime.IsLaterThan(preNode.Pair.Value.EndTime)) return false;
+            SkipList<BeatTime, Track> skipList = this.trackSkipLists[track.ColumnIndex];
+            SkipListNode<BeatTime, Track> preNode = skipList.GetPreNode(track.StartTime);
+            if (preNode != skipList.Head && !beatTime.IsLaterThan(preNode.Pair.Value.EndTime)) return false;
             track.StartTime = beatTime;
             return true;
         }
@@ -414,7 +415,7 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public bool TryChangeTrackEndTime(Track track, BeatTime beatTime)
         {
-            if (beatTime.IsEarlierThan(track.StartTime)) return false;
+            if (beatTime.IsEarlierThan(track.StartTime) || beatTime.Beat >= this.BeatNum) return false;
             if (track.NoteSkipList.LastNode != track.NoteSkipList.Head && track.NoteSkipList.LastNode.Pair.Key.IsLaterThan(beatTime)) return false;
             if (track.HoldNoteSkipList.LastNode != track.HoldNoteSkipList.Head && track.HoldNoteSkipList.LastNode.Pair.Value.EndTime.IsLaterThan(beatTime)) return false;
             // 不能超过下一个Track
@@ -489,53 +490,45 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public bool TryMovePickedNote(BeatTime startBeatTime, BeatTime beatTime)
         {
-            //List<BeatTime> movedTimes = new List<BeatTime>();
-            //// 拍数差值
-            //BeatTime diffBeatTime = beatTime.Difference(startBeatTime);
-            //foreach (Note note in this.pickedNotes)
-            //{
-            //    // 计算新拍数
-            //    BeatTime newTime = note.Time.Sum(diffBeatTime);
-            //    movedTimes.Add(newTime);
-            //    // 超出Track范围
-            //    if (!note.Track.ContainsBeatTime(newTime)) return false;
-            //    // 与其他note冲突
-            //    if (note is HoldNote holdNote)
-            //    {
-            //        BeatTime newEndTime = holdNote.EndTime.Sum(diffBeatTime);
-            //        // HoldNote末端超出Track范围
-            //        if (!note.Track.ContainsBeatTime(newEndTime)) return false;
-            //        foreach (Note trackNote in note.Track.Notes)
-            //        {
-            //            if (this.pickedNotes.Contains(trackNote)) continue;
-            //            if (trackNote is HoldNote trackHoldNote)
-            //            {
-            //                if (newTime.IsEarlierThan(trackHoldNote.EndTime) && !newTime.IsEarlierThan(trackHoldNote.Time)) return false;
-            //                if (newEndTime.IsLaterThan(trackHoldNote.Time) && !newEndTime.IsLaterThan(trackHoldNote.EndTime)) return false;
-            //                if (newTime.IsEarlierThan(trackHoldNote.Time) && newEndTime.IsLaterThan(trackHoldNote.EndTime)) return false;
-            //            }
-            //        }
-            //    }
-            //    else
-            //    {
-            //        foreach (Note trackNote in note.Track.Notes)
-            //        {
-            //            if (trackNote.Type == NoteType.Hold || this.pickedNotes.Contains(trackNote)) continue;
-            //            if (trackNote.Time.IsEqualTo(newTime)) return false;
-            //        }
-            //    }
-            //}
-            //// 更新时间
-            //for (int i = 0; i < this.pickedNotes.Count; i++)
-            //{
-            //    Note tmpNote = this.pickedNotes[i];
-            //    BeatTime tmpBeatTime = movedTimes[i];
-            //    if (tmpNote is HoldNote tmpHoldNote)
-            //    {
-            //        tmpHoldNote.MoveHoldNoteToBeatTime(tmpBeatTime);
-            //    }
-            //    else tmpNote.MoveNoteToBeatTime(tmpBeatTime);
-            //}
+            List<BeatTime> movedTimes = new List<BeatTime>();
+            // 拍数差值
+            BeatTime diffBeatTime = beatTime.Difference(startBeatTime);
+            foreach (Note note in this.pickedNotes)
+            {
+                // 计算新拍数
+                BeatTime newTime = note.Time.Sum(diffBeatTime);
+                movedTimes.Add(newTime);
+                // 超出Track范围
+                if (!note.Track.ContainsBeatTime(newTime)) return false;
+                // 与其他note冲突
+                if (note is HoldNote holdNote)
+                {
+                    BeatTime newEndTime = holdNote.EndTime.Sum(diffBeatTime);
+                    // HoldNote末端超出Track范围
+                    if (!holdNote.Track.ContainsBeatTime(newEndTime)) return false;
+                    // 是否在新位置产生冲突
+                    SkipListNode<BeatTime, HoldNote> preNode = holdNote.Track.HoldNoteSkipList.GetPreNode(newTime);
+                    if (preNode != holdNote.Track.HoldNoteSkipList.Head && preNode.Pair.Value.EndTime.IsLaterThan(newTime)) return false;
+                    SkipListNode<BeatTime, HoldNote> nextNode = preNode.Next[0];
+                    if (nextNode != null && nextNode.Pair.Value.Time.IsEarlierThan(newEndTime)) return false;
+                }
+                else
+                {
+                    // 新位置是否冲突
+                    if (note.Track.NoteSkipList.TryGetValue(newTime, out Note value)) return false;
+                }
+            }
+            // 更新时间
+            for (int i = 0; i < this.pickedNotes.Count; i++)
+            {
+                Note tmpNote = this.pickedNotes[i];
+                BeatTime tmpBeatTime = movedTimes[i];
+                if (tmpNote is HoldNote tmpHoldNote)
+                {
+                    tmpHoldNote.MoveHoldNoteToBeatTime(tmpBeatTime);
+                }
+                else tmpNote.MoveNoteToBeatTime(tmpBeatTime);
+            }
             return true;
         }
 
@@ -544,23 +537,21 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public bool TryMovePickedTrack (BeatTime beatTime, int columnIndex)
         {
-            //// 拍数差值
-            //BeatTime diffBeatTime = beatTime.Difference(this.pickedTrack.StartTime);
-            //// 不能超出网格范围
-            //if (beatTime.Beat < 0) return false;
-            //BeatTime movedEndTime = this.pickedTrack.EndTime.Sum(diffBeatTime);
-            //if (movedEndTime.Beat >= this.BeatNum) return false;
-            //// 不能与其他轨道冲突
-            //foreach (Track track in this.tracks)
-            //{
-            //    if (track == this.pickedTrack || track.ColumnIndex != columnIndex) continue;
-            //    if (!beatTime.IsLaterThan(track.EndTime) && !beatTime.IsEarlierThan(track.StartTime)) return false;
-            //    if (!movedEndTime.IsLaterThan(track.EndTime) && !movedEndTime.IsEarlierThan(track.StartTime)) return false;
-            //    if (beatTime.IsEarlierThan(track.StartTime) && movedEndTime.IsLaterThan(track.EndTime)) return false;
-            //}
-            //// 更新时间和列号
-            //this.pickedTrack.MoveTrackToBeatTime(beatTime);
-            //this.pickedTrack.ColumnIndex = columnIndex;
+            // 拍数差值
+            BeatTime diffBeatTime = beatTime.Difference(this.pickedTrack.StartTime);
+            // 不能超出网格范围
+            if (beatTime.Beat < 0) return false;
+            BeatTime movedEndTime = this.pickedTrack.EndTime.Sum(diffBeatTime);
+            if (movedEndTime.Beat >= this.BeatNum) return false;
+            // 不能与其他轨道冲突
+            SkipList<BeatTime, Track> skipList = this.trackSkipLists[columnIndex];
+            SkipListNode<BeatTime, Track> preNode = skipList.GetPreNode(beatTime);
+            if (preNode != skipList.Head && !preNode.Pair.Value.EndTime.IsEarlierThan(beatTime)) return false;
+            SkipListNode<BeatTime, Track> nextNode = preNode.Next[0];
+            if (nextNode != null && !nextNode.Pair.Key.IsLaterThan(movedEndTime)) return false;
+            // 更新时间和列号
+            this.pickedTrack.MoveTrackToBeatTime(beatTime);
+            this.pickedTrack.ColumnIndex = columnIndex;
             return true;
         }
 
