@@ -27,7 +27,11 @@ namespace ChartEditor.Utils.Drawers
 
         private static DoubleAnimation StrokeAnimation = AnimationProvider.GetRepeatDoubleAnimation(8, 0, 1.0);
 
-        private Point? anchorPoint = null;
+        private Point? anchorPoint = new Point?();
+        public Point? AnchorPoint { get { return anchorPoint; } }
+
+        private Point? dragPoint = new Point?();
+        public Point? DragPoint { get { return dragPoint; } }
 
         public SelectBoxDrawer(TrackEditBoard trackEditBoard)
         {
@@ -71,7 +75,7 @@ namespace ChartEditor.Utils.Drawers
         public void DragSelectBoxTo(Point? point)
         {
             if (!point.HasValue || !this.anchorPoint.HasValue) return;
-            
+            this.dragPoint = point;
             double anchorX = this.anchorPoint.Value.X;
             double anchorY = this.anchorPoint.Value.Y;
             double pointX = point.Value.X;

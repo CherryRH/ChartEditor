@@ -125,13 +125,13 @@ namespace ChartEditor.Utils.Drawers
                 SkipListNode<BeatTime, Track> currentTrackNode = trackList.FirstNode;
                 while (currentTrackNode != null)
                 {
-                    Track track = currentTrackNode.Pair.Value;
+                    Track track = currentTrackNode.Value;
                     track.Rectangle.Width = this.ChartEditModel.ColumnWidth - 2 * trackPadding;
                     Canvas.SetLeft(track.Rectangle, track.ColumnIndex * this.ChartEditModel.ColumnWidth + trackPadding);
                     SkipListNode<BeatTime, Note> currentNoteNode = track.NoteSkipList.FirstNode;
                     while (currentNoteNode != null)
                     {
-                        Note note = currentNoteNode.Pair.Value;
+                        Note note = currentNoteNode.Value;
                         note.Rectangle.Width = this.ChartEditModel.ColumnWidth - 2 * notePadding;
                         Canvas.SetLeft(note.Rectangle, note.Track.ColumnIndex * this.ChartEditModel.ColumnWidth + notePadding);
                         currentNoteNode = currentNoteNode.Next[0];
@@ -139,7 +139,7 @@ namespace ChartEditor.Utils.Drawers
                     SkipListNode<BeatTime, HoldNote> currentHoldNoteNode = track.HoldNoteSkipList.FirstNode;
                     while (currentHoldNoteNode != null)
                     {
-                        HoldNote holdNote = currentHoldNoteNode.Pair.Value;
+                        HoldNote holdNote = currentHoldNoteNode.Value;
                         holdNote.Rectangle.Width = this.ChartEditModel.ColumnWidth - 2 * notePadding;
                         Canvas.SetLeft(holdNote.Rectangle, holdNote.Track.ColumnIndex * this.ChartEditModel.ColumnWidth + notePadding);
                         currentHoldNoteNode = currentHoldNoteNode.Next[0];
@@ -169,20 +169,20 @@ namespace ChartEditor.Utils.Drawers
                 SkipListNode<BeatTime, Track> currentTrackNode = trackList.FirstNode;
                 while (currentTrackNode != null)
                 {
-                    Track track = currentTrackNode.Pair.Value;
+                    Track track = currentTrackNode.Value;
                     track.Rectangle.Height = MinHeight + (track.EndTime.GetEquivalentBeat() - track.StartTime.GetEquivalentBeat()) * this.ChartEditModel.RowWidth;
                     Canvas.SetBottom(track.Rectangle, track.StartTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
                     SkipListNode<BeatTime, Note> currentNoteNode = track.NoteSkipList.FirstNode;
                     while (currentNoteNode != null)
                     {
-                        Note note = currentNoteNode.Pair.Value;
+                        Note note = currentNoteNode.Value;
                         Canvas.SetBottom(note.Rectangle, note.Time.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
                         currentNoteNode = currentNoteNode.Next[0];
                     }
                     SkipListNode<BeatTime, HoldNote> currentHoldNoteNode = track.HoldNoteSkipList.FirstNode;
                     while (currentHoldNoteNode != null)
                     {
-                        HoldNote holdNote = currentHoldNoteNode.Pair.Value;
+                        HoldNote holdNote = currentHoldNoteNode.Value;
                         holdNote.Rectangle.Height = MinHeight + (holdNote.EndTime.GetEquivalentBeat() - holdNote.Time.GetEquivalentBeat()) * this.ChartEditModel.RowWidth;
                         Canvas.SetBottom(holdNote.Rectangle, holdNote.Time.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
                         currentHoldNoteNode = currentHoldNoteNode.Next[0];
@@ -261,14 +261,14 @@ namespace ChartEditor.Utils.Drawers
             SkipListNode<BeatTime, Note> currentNoteNode = track.NoteSkipList.FirstNode;
             while (currentNoteNode != null)
             {
-                Note note = currentNoteNode.Pair.Value;
+                Note note = currentNoteNode.Value;
                 this.RedrawNoteWhenPosChanged(note);
                 currentNoteNode = currentNoteNode.Next[0];
             }
             SkipListNode<BeatTime, HoldNote> currentHoldNoteNode = track.HoldNoteSkipList.FirstNode;
             while (currentHoldNoteNode != null)
             {
-                HoldNote holdNote = currentHoldNoteNode.Pair.Value;
+                HoldNote holdNote = currentHoldNoteNode.Value;
                 this.RedrawNoteWhenPosChanged(holdNote);
                 currentHoldNoteNode = currentHoldNoteNode.Next[0];
             }

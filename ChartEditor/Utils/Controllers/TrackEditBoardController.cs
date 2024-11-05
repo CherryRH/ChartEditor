@@ -451,7 +451,6 @@ namespace ChartEditor.Utils.Controllers
                                     this.stretchingStartBeatTime = holdNote.Time;
                                     this.isStretchingEndPoint = false;
                                     this.TrackCanvas.CaptureMouse();
-                                    this.ChartEditModel.ChangePickedNoteTimeBegin();
                                     this.stretchingHoldNote = holdNote;
                                     break;
                                 }
@@ -477,8 +476,6 @@ namespace ChartEditor.Utils.Controllers
                                     this.stretchingStartBeatTime = this.ChartEditModel.PickedTrack.StartTime;
                                     this.isStretchingEndPoint = false;
                                     this.TrackCanvas.CaptureMouse();
-                                    // 暂时取出正在更改的Track
-                                    this.ChartEditModel.ChangePickedTrackTimeBegin();
                                     this.stretchingTrack = this.ChartEditModel.PickedTrack;
                                     break;
                                 }
@@ -589,8 +586,6 @@ namespace ChartEditor.Utils.Controllers
                     this.stretchingStartBeatTime = null;
                     Mouse.OverrideCursor = Cursors.Hand;
                     this.TrackCanvas.ReleaseMouseCapture();
-                    // 放回更改的Track
-                    if (!this.isStretchingEndPoint) this.ChartEditModel.ChangePickedTrackTimeOver();
                 }
                 if (this.stretchingHoldNote != null)
                 {
@@ -598,7 +593,6 @@ namespace ChartEditor.Utils.Controllers
                     this.stretchingStartBeatTime = null;
                     Mouse.OverrideCursor = Cursors.Hand;
                     this.TrackCanvas.ReleaseMouseCapture();
-                    if (!this.isStretchingEndPoint) this.ChartEditModel.ChangePickedNoteTimeOver();
                 }
                 if (this.isMovingNote)
                 {
@@ -1263,21 +1257,38 @@ namespace ChartEditor.Utils.Controllers
                 }
                 return false;
             });
+            // 确定左右边界的列数
+            int leftColumnIndex = Math.Max(0, (int)(selectBoxRect.X / this.ChartEditModel.ColumnWidth));
+            int rightColumnIndex = Math.Min(this.ChartEditModel.ColumnNum - 1, (int)((selectBoxRect.X + selectBoxRect.Width) / this.ChartEditModel.ColumnWidth));
+            if (leftColumnIndex >= this.ChartEditModel.ColumnNum || rightColumnIndex < 0) return;
+            // 确定上下边界的时间
+            BeatTime bottomBeatTime = new BeatTime(this.ChartEditModel.Divide);
+            bottomBeatTime.UpdateFromJudgeLineOffset(Math.Max(0, selectBoxRect.Top), this.ChartEditModel.RowWidth);
+            BeatTime topBeatTime = new BeatTime(this.ChartEditModel.Divide);
+            topBeatTime.UpdateFromJudgeLineOffset(Math.Min(this.ChartEditModel.TotalHeight, selectBoxRect.Bottom), this.ChartEditModel.RowWidth);
+            if (bottomBeatTime.Beat >= this.ChartEditModel.BeatNum || topBeatTime.Beat < 0) return;
             // 搜索与多选框相交的音符
-            foreach (var trackList in this.ChartEditModel.TrackSkipLists)
+            for (int i = leftColumnIndex; i <= rightColumnIndex; i++)
             {
-                SkipListNode<BeatTime, Track> currentTrackNode = trackList.FirstNode;
+                SkipList<BeatTime, Track> skipList = this.ChartEditModel.TrackSkipLists[i];
+                SkipListNode<BeatTime, Track> currentTrackNode = skipList.GetPreNode(bottomBeatTime);
+                if (currentTrackNode == skipList.Head) currentTrackNode = currentTrackNode.Next[0];
                 while (currentTrackNode != null)
                 {
-                    Track track = currentTrackNode.Pair.Value;
+                    Track track = currentTrackNode.Value;
+                    // 轨道超过搜索范围则退出
+                    if (track.StartTime.IsLaterThan(topBeatTime)) break;
                     Rect trackRect = track.GetRect();
 
                     if (selectBoxRect.IntersectsWith(trackRect))
                     {
-                        SkipListNode<BeatTime, Note> currentNoteNode = track.NoteSkipList.FirstNode;
+                        SkipListNode<BeatTime, Note> currentNoteNode = track.NoteSkipList.GetPreNode(bottomBeatTime);
+                        if (currentNoteNode == track.NoteSkipList.Head) currentNoteNode = currentNoteNode.Next[0];
                         while (currentNoteNode != null)
                         {
-                            Note note = currentNoteNode.Pair.Value;
+                            Note note = currentNoteNode.Value;
+                            // 超过搜索范围则退出
+                            if (note.Time.IsLaterThan(topBeatTime)) break;
                             currentNoteNode = currentNoteNode.Next[0];
                             if (this.selectBoxPickedNotes.Contains(note) || this.ChartEditModel.PickedNotes.Contains(note)) continue;
                             Rect noteRect = note.GetRect();
@@ -1288,10 +1299,12 @@ namespace ChartEditor.Utils.Controllers
                                 this.noteDrawer.RectPicked(note.Rectangle);
                             }
                         }
-                        SkipListNode<BeatTime, HoldNote> currentHoldNoteNode = track.HoldNoteSkipList.FirstNode;
+                        SkipListNode<BeatTime, HoldNote> currentHoldNoteNode = track.HoldNoteSkipList.GetPreNode(bottomBeatTime);
+                        if (currentHoldNoteNode == track.HoldNoteSkipList.Head) currentHoldNoteNode = currentHoldNoteNode.Next[0];
                         while (currentHoldNoteNode != null)
                         {
-                            HoldNote holdNote = currentHoldNoteNode.Pair.Value;
+                            HoldNote holdNote = currentHoldNoteNode.Value;
+                            if (holdNote.Time.IsLaterThan(topBeatTime)) break;
                             currentHoldNoteNode = currentHoldNoteNode.Next[0];
                             if (this.selectBoxPickedNotes.Contains(holdNote) || this.ChartEditModel.PickedNotes.Contains(holdNote)) continue;
                             Rect noteRect = holdNote.GetRect();

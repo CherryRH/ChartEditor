@@ -183,9 +183,9 @@ namespace ChartEditor.Models
             if (startTime.IsEqualTo(this.endTime)) return false;
             // 不能与其他HoldNote重叠
             SkipListNode<BeatTime, HoldNote> preNode = this.holdNoteSkipList.GetPreNode(startTime);
-            if (preNode != this.holdNoteSkipList.Head && startTime.IsEarlierThan(preNode.Pair.Value.EndTime)) return false;
+            if (preNode != this.holdNoteSkipList.Head && startTime.IsEarlierThan(preNode.Value.EndTime)) return false;
             SkipListNode<BeatTime, HoldNote> nextNode = preNode.Next[0];
-            if (nextNode != null && !startTime.IsEarlierThan(nextNode.Pair.Value.Time)) return false;
+            if (nextNode != null && !startTime.IsEarlierThan(nextNode.Value.Time)) return false;
             return true;
         }
 
@@ -197,7 +197,7 @@ namespace ChartEditor.Models
             // 不能与其他HoldNote重叠
             SkipListNode<BeatTime, HoldNote> preNode = this.holdNoteSkipList.GetPreNode(startTime);
             SkipListNode<BeatTime, HoldNote> nextNode = preNode.Next[0];
-            if (nextNode != null && endTime.IsLaterThan(nextNode.Pair.Value.Time)) return null;
+            if (nextNode != null && endTime.IsLaterThan(nextNode.Value.Time)) return null;
             // 可以添加HoldNote
             HoldNote holdNote = new HoldNote(startTime, endTime, this, id);
             this.holdNoteSkipList.Insert(startTime, holdNote);
@@ -242,17 +242,18 @@ namespace ChartEditor.Models
             SkipListNode<BeatTime, Note> current1 = this.noteSkipList.FirstNode;
             while (current1 != null)
             {
-                Note note = current1.Pair.Value;
-                BeatTime tmpBeatTime = note.Time.Sum(diffBeatTime);
-                note.MoveNoteToBeatTime(tmpBeatTime);
+                Note note = current1.Value;
+                note.Time.Add(diffBeatTime);
+                current1.Key = note.Time;
                 current1 = current1.Next[0];
             }
             SkipListNode<BeatTime, HoldNote> current2 = this.holdNoteSkipList.FirstNode;
             while (current2 != null)
             {
-                HoldNote holdNote = current2.Pair.Value;
-                BeatTime tmpBeatTime = holdNote.Time.Sum(diffBeatTime);
-                holdNote.MoveHoldNoteToBeatTime(tmpBeatTime);
+                HoldNote holdNote = current2.Value;
+                holdNote.Time.Add(diffBeatTime);
+                holdNote.EndTime.Add(diffBeatTime);
+                current2.Key = holdNote.Time;
                 current2 = current2.Next[0];
             }
         }
@@ -266,14 +267,14 @@ namespace ChartEditor.Models
             SkipListNode<BeatTime, Note> current1 = this.noteSkipList.FirstNode;
             while (current1 != null)
             {
-                Console.WriteLine(current1.Pair.Value.Track.ColumnIndex + " " + current1.Pair.Key.ToBeatString() + " " + current1.Pair.Value.Type);
+                Console.WriteLine(current1.Value.Track.ColumnIndex + " " + current1.Key.ToBeatString() + " " + current1.Value.Type);
                 current1 = current1.Next[0];
             }
             Console.WriteLine("Hold:");
             SkipListNode<BeatTime, HoldNote> current2 = this.holdNoteSkipList.FirstNode;
             while (current2 != null)
             {
-                Console.WriteLine(current2.Pair.Value.Track.ColumnIndex + " " + current2.Pair.Key.ToBeatString() + " " + current2.Pair.Value.Type);
+                Console.WriteLine(current2.Value.Track.ColumnIndex + " " + current2.Key.ToBeatString() + " " + current2.Value.Type);
                 current2 = current2.Next[0];
             }
         }

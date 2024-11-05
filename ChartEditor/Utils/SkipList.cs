@@ -63,14 +63,14 @@ namespace ChartEditor.Utils
 
             for (int i = level - 1; i >= 0; i--)
             {
-                while (current.Next[i] != null && comparer(current.Next[i].Pair.Key, key) < 0)
+                while (current.Next[i] != null && comparer(current.Next[i].Key, key) < 0)
                 {
                     current = current.Next[i];
                 }
 
-                if (current.Next[i] != null && comparer(current.Next[i].Pair.Key, key) == 0)
+                if (current.Next[i] != null && comparer(current.Next[i].Key, key) == 0)
                 {
-                    value = current.Next[i].Pair.Value;
+                    value = current.Next[i].Value;
                     return true;
                 }
             }
@@ -88,12 +88,12 @@ namespace ChartEditor.Utils
 
             for (int i = level - 1; i >= 0; i--)
             {
-                while (current.Next[i] != null && comparer(current.Next[i].Pair.Key, key) < 0)
+                while (current.Next[i] != null && comparer(current.Next[i].Key, key) < 0)
                 {
                     current = current.Next[i];
                 }
 
-                if (current.Next[i] != null && comparer(current.Next[i].Pair.Key, key) == 0)
+                if (current.Next[i] != null && comparer(current.Next[i].Key, key) == 0)
                 {
                     skipListNode = current.Next[i];
                     return true;
@@ -114,12 +114,12 @@ namespace ChartEditor.Utils
 
             for (int i = level - 1; i >= 0; i--)
             {
-                while (current.Next[i] != null && comparer(current.Next[i].Pair.Key, key) < 0)
+                while (current.Next[i] != null && comparer(current.Next[i].Key, key) < 0)
                 {
                     current = current.Next[i];
                 }
 
-                if (current.Next[i] != null && comparer(current.Next[i].Pair.Key, key) == 0)
+                if (current.Next[i] != null && comparer(current.Next[i].Key, key) == 0)
                 {
                     return false;
                 }
@@ -143,7 +143,7 @@ namespace ChartEditor.Utils
                 newNode.Next[i] = update[i].Next[i];
                 update[i].Next[i] = newNode;
             }
-            if (lastNode == head || comparer(lastNode.Pair.Key, key) < 0)
+            if (lastNode == head || comparer(lastNode.Key, key) < 0)
             {
                 lastNode = newNode;
             }
@@ -161,7 +161,7 @@ namespace ChartEditor.Utils
 
             for (int i = level - 1; i >= 0; i--)
             {
-                while (current.Next[i] != null && comparer(current.Next[i].Pair.Key, key) < 0)
+                while (current.Next[i] != null && comparer(current.Next[i].Key, key) < 0)
                 {
                     current = current.Next[i];
                 }
@@ -170,7 +170,7 @@ namespace ChartEditor.Utils
             }
 
             current = current.Next[0];
-            if (current != null && comparer(current.Pair.Key, key) == 0)
+            if (current != null && comparer(current.Key, key) == 0)
             {
                 for (int i = 0; i < level; i++)
                 {
@@ -183,7 +183,7 @@ namespace ChartEditor.Utils
                     level--;
                 }
 
-                if (comparer(lastNode.Pair.Key, key) == 0)
+                if (comparer(lastNode.Key, key) == 0)
                 {
                     lastNode = head;
                     for (int i = level - 1; i >= 0; i--)
@@ -210,7 +210,7 @@ namespace ChartEditor.Utils
 
             for (int i = level - 1; i >= 0; i--)
             {
-                while (current.Next[i] != null && comparer(current.Next[i].Pair.Key, target) < 0)
+                while (current.Next[i] != null && comparer(current.Next[i].Key, target) < 0)
                 {
                     current = current.Next[i];
                 }
@@ -222,12 +222,15 @@ namespace ChartEditor.Utils
 
     public class SkipListNode<TKey, TValue>
     {
-        public KeyValuePair<TKey, TValue> Pair { get; }
+        public TKey Key { get; set; }
+        public TValue Value { get; set; } = default(TValue);
+
         public SkipListNode<TKey, TValue>[] Next;
 
         public SkipListNode(TKey key, TValue value, int level)
         {
-            this.Pair = new KeyValuePair<TKey, TValue>(key, value);
+            this.Key = key;
+            this.Value = value;
             this.Next = new SkipListNode<TKey, TValue>[level];
         }
     }

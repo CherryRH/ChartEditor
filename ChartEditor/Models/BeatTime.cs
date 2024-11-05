@@ -186,6 +186,44 @@ namespace ChartEditor.Models
         }
 
         /// <summary>
+        /// 与一个拍数相减
+        /// </summary>
+        public void Subtract(BeatTime other)
+        {
+            if (other == null) return;
+            // 通分
+            int numerator = this.divideIndex * other.Divide - other.divideIndex * this.divide;
+            int denominator = this.divide * other.Divide;
+            // 约分
+            int gcd = MathUtil.GCD(numerator, denominator);
+            int divide = denominator / gcd;
+            int divideIndex = numerator > 0 ? (numerator / gcd) : (numerator / gcd + divide);
+            int beat = numerator > 0 ? (this.beat - other.beat) : (this.beat - other.beat - 1);
+            this.beat = beat;
+            this.divideIndex = divideIndex;
+            this.divide = divide;
+        }
+
+        /// <summary>
+        /// 与一个拍数相加
+        /// </summary>
+        public void Add(BeatTime other)
+        {
+            if (other == null) return;
+            // 通分
+            int numerator = this.divideIndex * other.Divide + other.divideIndex * this.divide;
+            int denominator = this.divide * other.Divide;
+            // 约分
+            int gcd = MathUtil.GCD(numerator, denominator);
+            int divide = denominator / gcd;
+            int divideIndex = numerator >= denominator ? ((numerator - denominator) / gcd) : (numerator / gcd);
+            int beat = numerator >= denominator ? (this.beat + other.beat + 1) : (this.beat + other.beat);
+            this.beat = beat;
+            this.divideIndex = divideIndex;
+            this.divide = divide;
+        }
+
+        /// <summary>
         /// 获取下一个divide的拍数
         /// </summary>
         public BeatTime GetNextDivideBeatTime(int divide)
