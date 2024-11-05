@@ -14,12 +14,18 @@ namespace ChartEditor.Utils
     public class SkipList<TKey, TValue>
     {
         private readonly Random random = new Random();
+
         private readonly SkipListNode<TKey, TValue> head;
         public SkipListNode<TKey, TValue> Head { get { return head; } }
+
+        private SkipListNode<TKey, TValue> lastNode;
+        public SkipListNode<TKey, TValue> LastNode { get { return lastNode; } }
 
         private readonly Comparison<TKey> comparer;
         private readonly int maxLevel;
         private int level;
+
+        public int Count { get; set; } = 0;
 
         /// <summary>
         /// 第一个节点
@@ -32,6 +38,7 @@ namespace ChartEditor.Utils
             this.level = 1;
             this.comparer = comparer;
             this.head = new SkipListNode<TKey, TValue>(default, default, this.maxLevel);
+            this.lastNode = this.head; 
         }
 
         /// <summary>
@@ -69,6 +76,31 @@ namespace ChartEditor.Utils
             }
 
             value = default;
+            return false;
+        }
+
+        /// <summary>
+        /// 尝试获取节点
+        /// </summary>
+        public bool TryGetNode(TKey key, out SkipListNode<TKey, TValue> skipListNode)
+        {
+            SkipListNode<TKey, TValue> current = head;
+
+            for (int i = level - 1; i >= 0; i--)
+            {
+                while (current.Next[i] != null && comparer(current.Next[i].Pair.Key, key) < 0)
+                {
+                    current = current.Next[i];
+                }
+
+                if (current.Next[i] != null && comparer(current.Next[i].Pair.Key, key) == 0)
+                {
+                    skipListNode = current.Next[i];
+                    return true;
+                }
+            }
+
+            skipListNode = default;
             return false;
         }
 
@@ -111,7 +143,11 @@ namespace ChartEditor.Utils
                 newNode.Next[i] = update[i].Next[i];
                 update[i].Next[i] = newNode;
             }
-
+            if (lastNode == head || comparer(lastNode.Pair.Key, key) < 0)
+            {
+                lastNode = newNode;
+            }
+            this.Count++;
             return true;
         }
 
@@ -146,6 +182,19 @@ namespace ChartEditor.Utils
                 {
                     level--;
                 }
+
+                if (comparer(lastNode.Pair.Key, key) == 0)
+                {
+                    lastNode = head;
+                    for (int i = level - 1; i >= 0; i--)
+                    {
+                        while (lastNode.Next[i] != null)
+                        {
+                            lastNode = lastNode.Next[i];
+                        }
+                    }
+                }
+                this.Count--;
                 return true;
             }
 

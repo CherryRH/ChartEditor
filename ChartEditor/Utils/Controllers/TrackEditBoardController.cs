@@ -51,6 +51,9 @@ namespace ChartEditor.Utils.Controllers
         private HashSet<Note> highLightNotes = new HashSet<Note>();
         // 多选框选中的Note
         private HashSet<Note> selectBoxPickedNotes = new HashSet<Note>();
+        // 拖动起始位置
+        private Point? stretchingStartPoint = null;
+        private BeatTime stretchingStartBeatTime = null;
         // 正在拉伸的Track
         private Track stretchingTrack = null;
         // 正在拉伸的HoldNote
@@ -240,8 +243,8 @@ namespace ChartEditor.Utils.Controllers
                 {
                     // 选择状态时禁用拖动效果
                     this.DragMousePosition = mousePosition;
-                    this.isScrollViewerDragging = true;
                     this.TrackCanvasViewer.CaptureMouse();
+                    this.isScrollViewerDragging = true;
                 }
             }
         }
@@ -275,8 +278,7 @@ namespace ChartEditor.Utils.Controllers
             if (this.isPlaying) return;
             if (this.isPicking)
             {
-                if (this.isSelectBoxDragging || this.stretchingTrack != null || this.stretchingHoldNote != null 
-                    || this.isMovingNote || this.isMovingTrack)
+                if (this.isSelectBoxDragging || this.stretchingStartBeatTime != null || this.movingStartBeatTime != null)
                 {
                     double testWidth = this.TrackCanvasViewer.ActualWidth / 20;
                     double testHeight = this.TrackCanvasViewer.ActualHeight / 20;
@@ -318,7 +320,7 @@ namespace ChartEditor.Utils.Controllers
             this.CanvasMousePosition = mousePosition;
             if (this.isPicking)
             {
-                if (this.stretchingTrack == null && this.stretchingHoldNote == null && this.movingStartBeatTime != null)
+                if (!this.isSelectBoxDragging && this.stretchingStartBeatTime == null && this.movingStartBeatTime != null)
                 {
                     double pointY = mousePosition.Value.Y;
                     double startPointY = this.movingStartPoint.Value.Y;
@@ -378,18 +380,19 @@ namespace ChartEditor.Utils.Controllers
                 if (this.isPicking)
                 {
                     // 判断是否开始移动
-                    if (this.stretchingTrack == null && this.stretchingHoldNote == null && this.movingStartBeatTime == null)
+                    if (!this.isSelectBoxDragging && this.stretchingStartBeatTime == null && this.movingStartBeatTime == null)
                     {
                         // 是否在某个被选中的音符中
                         foreach (Note note in this.ChartEditModel.PickedNotes)
                         {
                             if (note.ContainsPoint(mousePosition, this.TrackCanvas))
                             {
-                                this.isMovingNote = true;
+                                
                                 this.movingStartPoint = mousePosition;
                                 this.movingCurrentBeatTime = note.Time;
                                 this.movingStartBeatTime = note.Time;
                                 this.movingCurrentColumnIndex = this.ChartEditModel.GetColumnIndexFromPoint(mousePosition);
+                                this.isMovingNote = true;
                                 break;
                             }
                         }
@@ -397,11 +400,12 @@ namespace ChartEditor.Utils.Controllers
                         {
                             if (this.ChartEditModel.PickedTrack.ContainsPoint(mousePosition, this.TrackCanvas))
                             {
-                                this.isMovingTrack = true;
+                                
                                 this.movingStartPoint = mousePosition;
                                 this.movingStartBeatTime = this.ChartEditModel.PickedTrack.StartTime;
                                 this.movingCurrentBeatTime = this.ChartEditModel.PickedTrack.StartTime;
                                 this.movingCurrentColumnIndex = this.ChartEditModel.GetColumnIndexFromPoint(mousePosition);
+                                this.isMovingTrack = true;
                             }
                         }
                     }
@@ -432,13 +436,7 @@ namespace ChartEditor.Utils.Controllers
             if (this.isPlaying) return;
             if (this.isPicking)
             {
-                // 进入复选框状态
-                if (Mouse.OverrideCursor != Cursors.SizeNS)
-                {
-                    this.selectBoxDrawer.SetSelectedBoxAt(mousePosition);
-                    this.isSelectBoxDragging = true;
-                }
-                if (this.stretchingTrack == null && this.stretchingHoldNote == null)
+                if (this.stretchingStartBeatTime == null && this.movingStartBeatTime == null && !this.isSelectBoxDragging)
                 {
                     if (this.ChartEditModel.PickedNotes.Count == 1 && this.ChartEditModel.PickedNotes[0] is HoldNote holdNote)
                     {
@@ -447,16 +445,21 @@ namespace ChartEditor.Utils.Controllers
                             case 0: break;
                             case 1:
                                 {
-                                    this.stretchingHoldNote = holdNote;
+                                    this.stretchingStartPoint = mousePosition;
+                                    this.stretchingStartBeatTime = holdNote.Time;
                                     this.isStretchingEndPoint = false;
                                     this.TrackCanvas.CaptureMouse();
+                                    this.ChartEditModel.ChangePickedNoteTimeBegin();
+                                    this.stretchingHoldNote = holdNote;
                                     break;
                                 }
                             case 2:
                                 {
-                                    this.stretchingHoldNote = holdNote;
+                                    this.stretchingStartPoint = mousePosition;
+                                    this.stretchingStartBeatTime = holdNote.EndTime;
                                     this.isStretchingEndPoint = true;
                                     this.TrackCanvas.CaptureMouse();
+                                    this.stretchingHoldNote = holdNote;
                                     break;
                                 }
                         }
@@ -468,20 +471,31 @@ namespace ChartEditor.Utils.Controllers
                             case 0: break;
                             case 1:
                                 {
-                                    this.stretchingTrack = this.ChartEditModel.PickedTrack;
+                                    this.stretchingStartPoint = mousePosition;
+                                    this.stretchingStartBeatTime = this.ChartEditModel.PickedTrack.StartTime;
                                     this.isStretchingEndPoint = false;
                                     this.TrackCanvas.CaptureMouse();
+                                    // 暂时取出正在更改的Track
+                                    this.ChartEditModel.ChangePickedTrackTimeBegin();
+                                    this.stretchingTrack = this.ChartEditModel.PickedTrack;
                                     break;
                                 }
                             case 2:
                                 {
-                                    this.stretchingTrack = this.ChartEditModel.PickedTrack;
+                                    this.stretchingStartPoint = mousePosition;
+                                    this.stretchingStartBeatTime = this.ChartEditModel.PickedTrack.EndTime;
                                     this.isStretchingEndPoint = true;
                                     this.TrackCanvas.CaptureMouse();
+                                    this.stretchingTrack = this.ChartEditModel.PickedTrack;
                                     break;
                                 }
                         }
                     }
+                }
+                // 尝试进入复选框状态
+                if (!this.isSelectBoxDragging && this.stretchingStartBeatTime == null && this.movingStartBeatTime == null)
+                {
+                    this.isSelectBoxDragging = this.selectBoxDrawer.SetSelectedBoxAt(mousePosition);
                 }
             }
         }
@@ -494,66 +508,12 @@ namespace ChartEditor.Utils.Controllers
                 if (this.isSelectBoxDragging)
                 {
                     this.selectBoxDrawer.DragSelectBoxTo(mousePosition);
-                    Rect selectBoxRect = this.selectBoxDrawer.GetRect();
-                    // 检查已选中的音符是否还在多选框内
-                    this.selectBoxPickedNotes.RemoveWhere(note =>
-                    {
-                        Rect noteRect = note.GetRect();
-                        if (!selectBoxRect.IntersectsWith(noteRect))
-                        {
-                            note.IsPicked = false;
-                            this.noteDrawer.ClearRectState(note.Rectangle);
-                            return true;
-                        }
-                        return false;
-                    });
-                    // 搜索与多选框相交的音符
-                    foreach (var trackList in this.ChartEditModel.TrackSkipLists)
-                    {
-                        SkipListNode<BeatTime, Track> currentTrackNode = trackList.FirstNode;
-                        while (currentTrackNode != null)
-                        {
-                            Track track = currentTrackNode.Pair.Value;
-                            Rect trackRect = track.GetRect();
-
-                            if (selectBoxRect.IntersectsWith(trackRect))
-                            {
-                                SkipListNode<BeatTime, Note> currentNoteNode = track.NoteSkipList.FirstNode;
-                                while (currentNoteNode != null)
-                                {
-                                    Note note = currentNoteNode.Pair.Value;
-                                    currentNoteNode = currentNoteNode.Next[0];
-                                    if (this.selectBoxPickedNotes.Contains(note) || this.ChartEditModel.PickedNotes.Contains(note)) continue;
-                                    Rect noteRect = note.GetRect();
-                                    if (selectBoxRect.IntersectsWith(noteRect))
-                                    {
-                                        note.IsPicked = true;
-                                        this.selectBoxPickedNotes.Add(note);
-                                        this.noteDrawer.RectPicked(note.Rectangle);
-                                    }
-                                }
-                                SkipListNode<BeatTime, HoldNote> currentHoldNoteNode = track.HoldNoteSkipList.FirstNode;
-                                while (currentHoldNoteNode != null)
-                                {
-                                    HoldNote holdNote = currentHoldNoteNode.Pair.Value;
-                                    currentHoldNoteNode = currentHoldNoteNode.Next[0];
-                                    if (this.selectBoxPickedNotes.Contains(holdNote) || this.ChartEditModel.PickedNotes.Contains(holdNote)) continue;
-                                    Rect noteRect = holdNote.GetRect();
-                                    if (selectBoxRect.IntersectsWith(noteRect))
-                                    {
-                                        holdNote.IsPicked = true;
-                                        this.selectBoxPickedNotes.Add(holdNote);
-                                        this.noteDrawer.RectPicked(holdNote.Rectangle);
-                                    }
-                                }
-                            }
-                            currentTrackNode = currentTrackNode.Next[0];
-                        }
-                    }
+                    // 查找并更新所有在多选框中的音符
+                    this.SelectBoxNotes();
                 }
                 else
                 {
-                    if (this.stretchingTrack == null && this.stretchingHoldNote == null)
+                    if (this.stretchingStartBeatTime == null && this.movingStartBeatTime == null)
                     {
                         // 检测鼠标是否在被选中轨道的两端
                         if (this.ChartEditModel.PickedTrack != null)
@@ -578,7 +538,9 @@ namespace ChartEditor.Utils.Controllers
                     }
                     else if (this.stretchingTrack != null)
                     {
-                        BeatTime beatTime = this.ChartEditModel.GetBeatTimeFromPoint(mousePosition, this.TrackCanvas.Height);
+                        double pointY = mousePosition.Value.Y;
+                        double startPointY = this.stretchingStartPoint.Value.Y;
+                        BeatTime beatTime = this.stretchingStartBeatTime.CreateByOffsetY(this.ChartEditModel.Divide, this.ChartEditModel.RowWidth, pointY - startPointY);
                         if (this.isStretchingEndPoint && !beatTime.IsEqualTo(this.stretchingTrack.EndTime))
                         {
                             bool result = this.ChartEditModel.TryChangeTrackEndTime(this.stretchingTrack, beatTime);
@@ -592,7 +554,9 @@ namespace ChartEditor.Utils.Controllers
                     }
                     else if (this.stretchingHoldNote != null)
                     {
-                        BeatTime beatTime = this.ChartEditModel.GetBeatTimeFromPoint(mousePosition, this.TrackCanvas.Height);
+                        double pointY = mousePosition.Value.Y;
+                        double startPointY = this.stretchingStartPoint.Value.Y;
+                        BeatTime beatTime = this.stretchingStartBeatTime.CreateByOffsetY(this.ChartEditModel.Divide, this.ChartEditModel.RowWidth, pointY - startPointY);
                         if (this.isStretchingEndPoint && !beatTime.IsEqualTo(this.stretchingHoldNote.EndTime))
                         {
                             bool result = this.ChartEditModel.TryChangeHoldNoteEndTime(this.stretchingHoldNote, beatTime);
@@ -626,14 +590,19 @@ namespace ChartEditor.Utils.Controllers
                 if (this.stretchingTrack != null)
                 {
                     this.stretchingTrack = null;
+                    this.stretchingStartBeatTime = null;
                     Mouse.OverrideCursor = Cursors.Hand;
                     this.TrackCanvas.ReleaseMouseCapture();
+                    // 放回更改的Track
+                    if (!this.isStretchingEndPoint) this.ChartEditModel.ChangePickedTrackTimeOver();
                 }
                 if (this.stretchingHoldNote != null)
                 {
                     this.stretchingHoldNote = null;
+                    this.stretchingStartBeatTime = null;
                     Mouse.OverrideCursor = Cursors.Hand;
                     this.TrackCanvas.ReleaseMouseCapture();
+                    if (!this.isStretchingEndPoint) this.ChartEditModel.ChangePickedNoteTimeOver();
                 }
                 if (this.isMovingNote)
                 {
@@ -1264,6 +1233,69 @@ namespace ChartEditor.Utils.Controllers
             this.TrackEditBoard.TimeLineCanvas.Height = this.ChartEditModel.TotalHeight;
             this.TrackEditBoard.TimeLineCanvasFloor.Height = this.ChartEditModel.TotalHeight + this.TrackEditBoard.TimeLineCanvasViewer.ActualHeight;
             Canvas.SetTop(this.TrackEditBoard.TimeLineCanvas, this.TrackEditBoard.TimeLineCanvasViewer.ActualHeight * Common.JudgeLineRateOp);
+        }
+
+        /// <summary>
+        /// 查找多选框中的音符
+        /// </summary>
+        private void SelectBoxNotes()
+        {
+            Rect selectBoxRect = this.selectBoxDrawer.GetRect();
+            // 检查已选中的音符是否还在多选框内
+            this.selectBoxPickedNotes.RemoveWhere(note =>
+            {
+                Rect noteRect = note.GetRect();
+                if (!selectBoxRect.IntersectsWith(noteRect))
+                {
+                    note.IsPicked = false;
+                    this.noteDrawer.ClearRectState(note.Rectangle);
+                    return true;
+                }
+                return false;
+            });
+            // 搜索与多选框相交的音符
+            foreach (var trackList in this.ChartEditModel.TrackSkipLists)
+            {
+                SkipListNode<BeatTime, Track> currentTrackNode = trackList.FirstNode;
+                while (currentTrackNode != null)
+                {
+                    Track track = currentTrackNode.Pair.Value;
+                    Rect trackRect = track.GetRect();
+
+                    if (selectBoxRect.IntersectsWith(trackRect))
+                    {
+                        SkipListNode<BeatTime, Note> currentNoteNode = track.NoteSkipList.FirstNode;
+                        while (currentNoteNode != null)
+                        {
+                            Note note = currentNoteNode.Pair.Value;
+                            currentNoteNode = currentNoteNode.Next[0];
+                            if (this.selectBoxPickedNotes.Contains(note) || this.ChartEditModel.PickedNotes.Contains(note)) continue;
+                            Rect noteRect = note.GetRect();
+                            if (selectBoxRect.IntersectsWith(noteRect))
+                            {
+                                note.IsPicked = true;
+                                this.selectBoxPickedNotes.Add(note);
+                                this.noteDrawer.RectPicked(note.Rectangle);
+                            }
+                        }
+                        SkipListNode<BeatTime, HoldNote> currentHoldNoteNode = track.HoldNoteSkipList.FirstNode;
+                        while (currentHoldNoteNode != null)
+                        {
+                            HoldNote holdNote = currentHoldNoteNode.Pair.Value;
+                            currentHoldNoteNode = currentHoldNoteNode.Next[0];
+                            if (this.selectBoxPickedNotes.Contains(holdNote) || this.ChartEditModel.PickedNotes.Contains(holdNote)) continue;
+                            Rect noteRect = holdNote.GetRect();
+                            if (selectBoxRect.IntersectsWith(noteRect))
+                            {
+                                holdNote.IsPicked = true;
+                                this.selectBoxPickedNotes.Add(holdNote);
+                                this.noteDrawer.RectPicked(holdNote.Rectangle);
+                            }
+                        }
+                    }
+                    currentTrackNode = currentTrackNode.Next[0];
+                }
+            }
         }
 
         public void OnScrollChanged()

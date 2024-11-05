@@ -209,7 +209,8 @@ namespace ChartEditor.Models
         /// </summary>
         public void DeleteNote(Note note)
         {
-            this.noteSkipList.Delete(note.Time);
+            if (note is HoldNote) this.HoldNoteSkipList.Delete(note.Time);
+            else this.noteSkipList.Delete(note.Time);
         }
 
         /// <summary>

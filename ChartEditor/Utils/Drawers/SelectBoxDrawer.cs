@@ -48,13 +48,13 @@ namespace ChartEditor.Utils.Drawers
         }
 
         /// <summary>
-        /// 以一点为锚点设置多选框
+        /// 以一点为锚点设置多选框，如果不能设置，则返回false
         /// </summary>
-        public void SetSelectedBoxAt(Point? point)
+        public bool SetSelectedBoxAt(Point? point)
         {
-            if (!point.HasValue) return;
+            if (!point.HasValue) return false;
             // 如果在轨道或音符的范围内，则退出
-            if (this.TrackEditBoard.IsMouseInTrackOrNote(point)) return;
+            if (this.TrackEditBoard.IsMouseInTrackOrNote(point)) return false;
             this.anchorPoint = point;
             // 启动虚线旋转动画
             this.selectBox.BeginAnimation(Shape.StrokeDashOffsetProperty, StrokeAnimation);
@@ -62,6 +62,7 @@ namespace ChartEditor.Utils.Drawers
             this.selectBox.Height = 0;
             this.selectBox.Visibility = Visibility.Visible;
             this.TrackCanvas.CaptureMouse();
+            return true;
         }
 
         /// <summary>
