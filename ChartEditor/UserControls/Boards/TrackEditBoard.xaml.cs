@@ -339,7 +339,6 @@ namespace ChartEditor.UserControls.Boards
             if (result as bool? == true)
             {
                 // 更新并保存文件
-                this.Model.ChartInfo.UpdateAtNow();
                 this.UpdateCurrentBeatTime();
                 if (!ChartUtilV1.SaveChartInfo(this.Model.ChartInfo))
                 {
@@ -354,9 +353,17 @@ namespace ChartEditor.UserControls.Boards
             }
         }
 
-        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        private async void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-
+            // 更新并保存文件
+            if (!await ChartUtilV1.SaveChart(this.Model))
+            {
+                this.SetMessage("谱面保存失败", 2, MessageType.Error);
+                return;
+            }
+            // 更新主页曲目
+            this.MainWindowModel.UpdateChartMusic(this.Model.ChartInfo.ChartMusic);
+            this.SetMessage("谱面保存成功", 2, MessageType.Notice);
         }
 
         private void ExportButton_Click(object sender, RoutedEventArgs e)
@@ -396,12 +403,12 @@ namespace ChartEditor.UserControls.Boards
             {
                 if (this.TrackEditBoardController.IsCtrlDown)
                 {
-                    DeleteButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    DeleteNoteButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 }
             }
             else if (e.Key == Key.Delete)
             {
-                DeleteButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                DeleteNoteButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             }
             else if (e.Key == Key.S)
             {
@@ -477,7 +484,7 @@ namespace ChartEditor.UserControls.Boards
             this.SetScrollViewerVerticalOffset(e.VerticalOffset);
         }
 
-        private void DeleteButton_Click(object sender, RoutedEventArgs e)
+        private void DeleteNoteButton_Click(object sender, RoutedEventArgs e)
         {
             this.TrackEditBoardController.DeletePickedNotes();
         }
@@ -514,6 +521,11 @@ namespace ChartEditor.UserControls.Boards
                 }
             }
             return false;
+        }
+
+        private void DeleteTrackButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.TrackEditBoardController.DeletePickedTrack();
         }
     }
 }

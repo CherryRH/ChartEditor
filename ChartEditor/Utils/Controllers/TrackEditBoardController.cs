@@ -154,6 +154,8 @@ namespace ChartEditor.Utils.Controllers
                 this.DrawTimeLine();
                 // 初始化Note绘制器
                 this.noteDrawer = new NoteDrawer(this.TrackEditBoard);
+                // 绘制谱面（轨道和音符）
+                this.LoadChart();
                 // 初始化列标签绘制器
                 this.columnLabelDrawer = new ColumnLabelDrawer(this.TrackEditBoard);
                 // 初始化多选框绘制器
@@ -193,6 +195,66 @@ namespace ChartEditor.Utils.Controllers
             {
                 this.noteDrawer.ShowPreviewerAt(this.CanvasMousePosition);
             }
+        }
+
+        /// <summary>
+        /// 加载谱面（轨道和音符）
+        /// </summary>
+        private void LoadChart()
+        {
+            // 统计个数
+            int trackNum = 0;
+            int tapNoteNum = 0;
+            int flickNoteNum = 0;
+            int holdNoteNum = 0;
+            int catchNoteNum = 0;
+            foreach (SkipList<BeatTime, Track> trackList in this.ChartEditModel.TrackSkipLists)
+            {
+                var currentTrackNode = trackList.FirstNode;
+                while (currentTrackNode != null)
+                {
+                    Track track = currentTrackNode.Value;
+                    this.noteDrawer.CreateTrack(track);
+                    track.Rectangle.MouseEnter += TrackRectangle_MouseEnter;
+                    track.Rectangle.MouseLeave += TrackRectangle_MouseLeave;
+                    track.Rectangle.MouseDown += TrackRectangle_MouseDown;
+                    trackNum++;
+                    var currentNoteNode = track.NoteSkipList.FirstNode;
+                    while (currentNoteNode != null)
+                    {
+                        Note note = currentNoteNode.Value;
+                        this.noteDrawer.CreateNote(note);
+                        note.Rectangle.MouseEnter += NoteRectangle_MouseEnter;
+                        note.Rectangle.MouseLeave += NoteRectangle_MouseLeave;
+                        note.Rectangle.MouseDown += NoteRectangle_MouseDown;
+                        switch (note.Type)
+                        {
+                            case NoteType.Tap: tapNoteNum++; break;
+                            case NoteType.Flick: flickNoteNum++; break;
+                            case NoteType.Catch: catchNoteNum++; break;
+                        }
+                        currentNoteNode = currentNoteNode.Next[0];
+                    }
+                    var currentHoldNoteNode = track.HoldNoteSkipList.FirstNode;
+                    while (currentHoldNoteNode != null)
+                    {
+                        HoldNote holdNote = currentHoldNoteNode.Value;
+                        this.noteDrawer.CreateNote(holdNote);
+                        holdNote.Rectangle.MouseEnter += NoteRectangle_MouseEnter;
+                        holdNote.Rectangle.MouseLeave += NoteRectangle_MouseLeave;
+                        holdNote.Rectangle.MouseDown += NoteRectangle_MouseDown;
+                        holdNoteNum++;
+                        currentHoldNoteNode = currentHoldNoteNode.Next[0];
+                    }
+                    currentTrackNode = currentTrackNode.Next[0];
+                }
+            }
+            // 更新统计个数
+            this.ChartEditModel.TrackNum = trackNum;
+            this.ChartEditModel.TapNoteNum = tapNoteNum;
+            this.ChartEditModel.FlickNoteNum = flickNoteNum;
+            this.ChartEditModel.HoldNoteNum = holdNoteNum;
+            this.ChartEditModel.CatchNoteNum = catchNoteNum;
         }
 
         private void MusicPlayer_PlaybackStopped(object sender, StoppedEventArgs e)
@@ -865,7 +927,7 @@ namespace ChartEditor.Utils.Controllers
                             {
                                 this.noteDrawer.HideTrackHeader();
                                 // 显示轨道
-                                this.noteDrawer.CreateTrackItem(newTrack);
+                                this.noteDrawer.CreateTrack(newTrack);
                                 this.isTrackPutting = false;
                                 // 设置移入移出事件
                                 newTrack.Rectangle.MouseEnter += TrackRectangle_MouseEnter;
@@ -902,7 +964,7 @@ namespace ChartEditor.Utils.Controllers
                         if (newTapNote != null)
                         {
                             // 显示Note
-                            this.noteDrawer.CreateNoteItem(newTapNote);
+                            this.noteDrawer.CreateNote(newTapNote);
                             newTapNote.Rectangle.MouseEnter += NoteRectangle_MouseEnter;
                             newTapNote.Rectangle.MouseLeave += NoteRectangle_MouseLeave;
                             newTapNote.Rectangle.MouseDown += NoteRectangle_MouseDown;
@@ -919,7 +981,7 @@ namespace ChartEditor.Utils.Controllers
                         if (newFlickNote != null)
                         {
                             // 显示Note
-                            this.noteDrawer.CreateNoteItem(newFlickNote);
+                            this.noteDrawer.CreateNote(newFlickNote);
                             newFlickNote.Rectangle.MouseEnter += NoteRectangle_MouseEnter;
                             newFlickNote.Rectangle.MouseLeave += NoteRectangle_MouseLeave;
                             newFlickNote.Rectangle.MouseDown += NoteRectangle_MouseDown;
@@ -938,7 +1000,7 @@ namespace ChartEditor.Utils.Controllers
                             if (newHoldNote != null)
                             {
                                 this.noteDrawer.HideHoldNoteHeader();
-                                this.noteDrawer.CreateNoteItem(newHoldNote);
+                                this.noteDrawer.CreateNote(newHoldNote);
                                 this.isHoldNotePutting = false;
                                 newHoldNote.Rectangle.MouseEnter += NoteRectangle_MouseEnter;
                                 newHoldNote.Rectangle.MouseLeave += NoteRectangle_MouseLeave;
@@ -973,7 +1035,7 @@ namespace ChartEditor.Utils.Controllers
                         if (newCatchNote != null)
                         {
                             // 显示Note
-                            this.noteDrawer.CreateNoteItem(newCatchNote);
+                            this.noteDrawer.CreateNote(newCatchNote);
                             newCatchNote.Rectangle.MouseEnter += NoteRectangle_MouseEnter;
                             newCatchNote.Rectangle.MouseLeave += NoteRectangle_MouseLeave;
                             newCatchNote.Rectangle.MouseDown += NoteRectangle_MouseDown;
@@ -1338,6 +1400,16 @@ namespace ChartEditor.Utils.Controllers
                 this.ChartEditModel.DeleteNote(note);
             }
             this.ChartEditModel.PickedNotes.Clear();
+        }
+
+        /// <summary>
+        /// 删除被选中的轨道
+        /// </summary>
+        public void DeletePickedTrack()
+        {
+            this.noteDrawer.RemoveTrack(this.ChartEditModel.PickedTrack);
+            this.ChartEditModel.DeleteTrack(this.ChartEditModel.PickedTrack);
+            this.ChartEditModel.PickedTrack = null;
         }
 
         /// <summary>

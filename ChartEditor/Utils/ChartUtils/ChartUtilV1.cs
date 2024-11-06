@@ -1,4 +1,5 @@
 ﻿using ChartEditor.Models;
+using ChartEditor.Utils.Drawers;
 using ChartEditor.ViewModels;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -41,7 +42,7 @@ namespace ChartEditor.Utils.ChartUtils
                 JObject chartJObject = new JObject();
                 chartJObject.Add("ChartVersion", ChartVersion);
                 chartJObject.Add("ChartInfo", chartInfo.ToJson());
-
+                chartJObject.Add("Data", new JArray());
                 File.WriteAllText(chartFilePath, chartJObject.ToString());
             }
             catch(Exception ex)
@@ -72,7 +73,8 @@ namespace ChartEditor.Utils.ChartUtils
 
                     if (CheckChartFolder(folder))
                     {
-                        JObject jObject = JsonConvert.DeserializeObject<JObject>(File.ReadAllText(chartFilePath));
+                        string json = File.ReadAllText(chartFilePath);
+                        var jObject = JObject.Parse(json);
                         chartInfos.Add(new ChartInfo(folder, (JObject)jObject["ChartInfo"], chartMusic));
                     }
                 }
@@ -119,6 +121,7 @@ namespace ChartEditor.Utils.ChartUtils
             try
             {
                 if (chartInfo == null) throw new Exception("ChartInfo对象为空");
+                chartInfo.UpdateAtNow();
                 string chartFilePath = Path.Combine(chartInfo.FolderPath, Common.ChartFileName);
                 // 写入文件
                 string json = File.ReadAllText(chartFilePath);
@@ -130,7 +133,7 @@ namespace ChartEditor.Utils.ChartUtils
                 }
                 else
                 {
-                    throw new Exception("ChartInfo不存在");
+                    throw new Exception("Json中ChartInfo不存在");
                 }
                 return true;
             }
@@ -144,16 +147,147 @@ namespace ChartEditor.Utils.ChartUtils
         /// <summary>
         /// 保存谱面
         /// </summary>
-        public static bool SaveChart(ChartEditModel chartEditModel)
+        public async static Task<bool> SaveChart(ChartEditModel chartEditModel)
         {
             try
             {
-
+                await Task.Run(() =>
+                {
+                    if (chartEditModel == null) throw new Exception("ChartEditModel对象为空");
+                    chartEditModel.ChartInfo.UpdateAtNow();
+                    string chartFilePath = Path.Combine(chartEditModel.ChartInfo.FolderPath, Common.ChartFileName);
+                    // 写入文件
+                    string json = File.ReadAllText(chartFilePath);
+                    var jObject = JObject.Parse(json);
+                    if (jObject["ChartInfo"] != null)
+                    {
+                        jObject["ChartInfo"] = chartEditModel.ChartInfo.ToJson();
+                    }
+                    else
+                    {
+                        throw new Exception("Json中ChartInfo不存在");
+                    }
+                    if (jObject["Data"] != null)
+                    {
+                        jObject["Data"] = chartEditModel.GetTracksJson();
+                    }
+                    else
+                    {
+                        throw new Exception("Json中Data不存在");
+                    }
+                    File.WriteAllText(chartFilePath, jObject.ToString(Formatting.Indented));
+                });
                 return true;
             }
             catch (Exception ex)
             {
                 Console.WriteLine(logTag + ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 获取谱面数据对象
+        /// </summary>
+        public static JArray GetChartData(ChartEditModel chartEditModel)
+        {
+            try
+            {
+                if (chartEditModel == null) throw new Exception("ChartEditModel对象为空");
+                string chartFilePath = Path.Combine(chartEditModel.ChartInfo.FolderPath, Common.ChartFileName);
+                string json = File.ReadAllText(chartFilePath);
+                var jObject = JObject.Parse(json);
+                if (jObject["Data"] != null)
+                {
+                    return (JArray)jObject["Data"];
+                }
+                else
+                {
+                    throw new Exception("Json中Data不存在");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(logTag + ex.Message);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 加载谱面数据
+        /// </summary>
+        public async static Task<bool> LoadChartData(ChartEditModel chartEditModel)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    JArray chartData = GetChartData(chartEditModel) ?? throw new Exception("谱面数据读取失败");
+                    int index = 0;
+                    foreach (var columnJToken in chartData)
+                    {
+                        JArray tracks = (JArray)columnJToken["Tracks"];
+                        if (tracks == null)
+                        {
+                            index++;
+                            continue;
+                        }
+                        SkipList<BeatTime, Track> trackList = chartEditModel.TrackSkipLists[index];
+                        // 遍历Track数组
+                        foreach (var trackJToken in tracks)
+                        {
+                            int trackId = trackJToken.Value<int?>("Id") ?? throw new Exception("Track的Id解析失败");
+                            BeatTime trackStartTime = BeatTime.FromBeatString(trackJToken.Value<string>("StartTime")) ?? throw new Exception("Track的StartTime解析失败");
+                            BeatTime trackEndTime = BeatTime.FromBeatString(trackJToken.Value<string>("EndTime")) ?? throw new Exception("Track的EndTime解析失败");
+                            Track track = new Track(trackStartTime, trackEndTime, index, trackId);
+                            // 插入列表
+                            trackList.Insert(trackStartTime, track);
+                            // 遍历Note数组
+                            JArray notes = (JArray)trackJToken["Notes"];
+                            if (notes != null)
+                            {
+                                foreach (var noteJToken in notes)
+                                {
+                                    int noteId = noteJToken.Value<int?>("Id") ?? throw new Exception("Note的Id解析失败");
+                                    BeatTime noteTime = BeatTime.FromBeatString(noteJToken.Value<string>("Time")) ?? throw new Exception("Note的Time解析失败");
+                                    var typeIndex = noteJToken.Value<int?>("Type");
+                                    if (typeIndex == null || !Enum.IsDefined(typeof(NoteType), typeIndex.Value)) throw new Exception("Note的Type解析失败");
+                                    Note note = null;
+                                    switch ((NoteType)typeIndex)
+                                    {
+                                        case NoteType.Tap: note = new TapNote(noteTime, track, noteId); break;
+                                        case NoteType.Flick: note = new FlickNote(noteTime, track, noteId); break;
+                                        case NoteType.Catch: note = new CatchNote(noteTime, track, noteId); break;
+                                    }
+                                    // 插入列表
+                                    track.NoteSkipList.Insert(noteTime, note);
+                                }
+                            }
+                            
+                            // 遍历HoldNote数组
+                            JArray holdNotes = (JArray)trackJToken["HoldNotes"];
+                            if (holdNotes != null)
+                            {
+                                foreach (var holdNoteJToken in holdNotes)
+                                {
+                                    int holdNoteId = holdNoteJToken.Value<int?>("Id") ?? throw new Exception("HoldNote的Id解析失败");
+                                    BeatTime holdNoteTime = BeatTime.FromBeatString(holdNoteJToken.Value<string>("Time")) ?? throw new Exception("HoldNote的Time解析失败");
+                                    BeatTime holdNoteEndTime = BeatTime.FromBeatString(holdNoteJToken.Value<string>("EndTime")) ?? throw new Exception("HoldNote的EndTime解析失败");
+                                    HoldNote holdNote = new HoldNote(holdNoteTime, holdNoteEndTime, track, holdNoteId);
+                                    // 插入列表
+                                    track.HoldNoteSkipList.Insert(holdNoteTime, holdNote);
+                                }
+                            }
+                        }
+                        // 增加列序号
+                        index++;
+                    }
+                });
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(logTag + e.Message);
                 return false;
             }
         }
@@ -165,7 +299,39 @@ namespace ChartEditor.Utils.ChartUtils
         {
             try
             {
+                if (chartEditModel == null) throw new Exception("ChartEditModel对象为空");
+                string workspaceFilePath = Path.Combine(chartEditModel.ChartInfo.FolderPath, Common.WorkspaceName);
+                File.WriteAllText(workspaceFilePath, chartEditModel.GetWorkspaceJson().ToString(Formatting.Indented));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(logTag + ex.Message);
+                return false;
+            }
+        }
 
+        /// <summary>
+        /// 加载工作区文件
+        /// </summary>
+        public static bool LoadWorkPlaceData(ChartEditModel chartEditModel)
+        {
+            try
+            {
+                if (chartEditModel == null) throw new Exception("ChartEditModel对象为空");
+                string workspaceFilePath = Path.Combine(chartEditModel.ChartInfo.FolderPath, Common.WorkspaceName);
+                if (File.Exists(workspaceFilePath))
+                {
+                    string json = File.ReadAllText(workspaceFilePath);
+                    var jObject = JObject.Parse(json);
+                    chartEditModel.ColumnWidth = jObject.Value<double?>("ColumnWidth") ?? Common.ColumnWidth;
+                    chartEditModel.RowWidth = jObject.Value<double?>("RowWidth") ?? Common.RowWidth;
+                    chartEditModel.Divide = jObject.Value<int?>("Divide") ?? 4;
+                    chartEditModel.Speed = jObject.Value<double?>("Speed") ?? 1.0;
+                    chartEditModel.CurrentBeat = BeatTime.FromBeatString(jObject.Value<string>("CurrentBeat")) ?? new BeatTime();
+                    chartEditModel.MusicVolume = jObject.Value<float?>("MusicVolume") ?? 50;
+                    chartEditModel.NoteVolume = jObject.Value<float?>("NoteVolume") ?? 50;
+                }
                 return true;
             }
             catch (Exception ex)

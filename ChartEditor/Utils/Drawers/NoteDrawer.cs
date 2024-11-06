@@ -193,11 +193,11 @@ namespace ChartEditor.Utils.Drawers
         }
 
         /// <summary>
-        /// 新建一个Track
+        /// 创建一个Track的矩形
         /// </summary>
-        public void CreateTrackItem(Track track)
+        public Rectangle CreateTrackRectangle(Track track)
         {
-            Rectangle newTrack = new Rectangle
+            Rectangle newRectangle = new Rectangle
             {
                 Tag = "Track",
                 Width = this.ChartEditModel.ColumnWidth - 2 * Common.TrackPadding * this.ChartEditModel.ColumnWidth,
@@ -210,9 +210,17 @@ namespace ChartEditor.Utils.Drawers
                 Opacity = TrackOpacity
             };
             // 将矩形的上下文绑定在track上
-            newTrack.DataContext = track;
+            newRectangle.DataContext = track;
+            track.Rectangle = newRectangle;
+            return newRectangle;
+        }
 
-            track.Rectangle = newTrack;
+        /// <summary>
+        /// 新建一个Track
+        /// </summary>
+        public void CreateTrack(Track track)
+        {
+            Rectangle newTrack = this.CreateTrackRectangle(track);
             this.trackCanvas.Children.Add(newTrack);
             Canvas.SetLeft(newTrack, track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.TrackPadding * this.ChartEditModel.ColumnWidth);
             Canvas.SetBottom(newTrack, track.StartTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
@@ -277,9 +285,9 @@ namespace ChartEditor.Utils.Drawers
         }
 
         /// <summary>
-        /// 新建一个Note
+        /// 创建一个Note的矩形
         /// </summary>
-        public void CreateNoteItem(Note note)
+        public Rectangle CreateNoteRectangle(Note note)
         {
             Rectangle newNote = new Rectangle
             {
@@ -326,6 +334,15 @@ namespace ChartEditor.Utils.Drawers
                     }
             }
             note.Rectangle = newNote;
+            return newNote;
+        }
+
+        /// <summary>
+        /// 新建一个Note
+        /// </summary>
+        public void CreateNote(Note note)
+        {
+            Rectangle newNote = this.CreateNoteRectangle(note);
             this.trackCanvas.Children.Add(newNote);
             Canvas.SetLeft(newNote, note.Track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.NotePadding * this.ChartEditModel.ColumnWidth);
             Canvas.SetBottom(newNote, note.Time.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
@@ -347,6 +364,27 @@ namespace ChartEditor.Utils.Drawers
         {
             if (note == null) return;
             this.trackCanvas.Children.Remove(note.Rectangle);
+        }
+
+        /// <summary>
+        /// 移除一个轨道图形，包括所有音符
+        /// </summary>
+        public void RemoveTrack(Track track)
+        {
+            if (track == null) return;
+            this.trackCanvas.Children.Remove(track.Rectangle);
+            var currentNoteNode = track.NoteSkipList.FirstNode;
+            while (currentNoteNode != null)
+            {
+                this.RemoveNote(currentNoteNode.Value);
+                currentNoteNode = currentNoteNode.Next[0];
+            }
+            var currentHoldNoteNode = track.HoldNoteSkipList.FirstNode;
+            while (currentHoldNoteNode != null)
+            {
+                this.RemoveNote(currentHoldNoteNode.Value);
+                currentHoldNoteNode = currentHoldNoteNode.Next[0];
+            }
         }
 
         /// <summary>

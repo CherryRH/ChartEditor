@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Shapes;
+using Newtonsoft.Json.Linq;
 
 namespace ChartEditor.Models
 {
@@ -90,6 +91,42 @@ namespace ChartEditor.Models
             else if (this.Time.IsEqualTo(y.Time)) return 0;
             else return 1;
         }
+
+        /// <summary>
+        /// 转化为JObject
+        /// </summary>
+        public virtual JObject ToJson()
+        {
+            return new JObject
+            {
+                ["Id"] = this.id,
+                ["Type"] = (int)this.type,
+                ["Time"] = this.time.ToBeatString()
+            };
+        }
+
+        /// <summary>
+        /// 从Json转化
+        /// </summary>
+        public static Note FromJson(JObject jObject)
+        {
+            if (jObject == null) return null;
+            var id = jObject.Value<int?>("Id");
+            if (id == null) return null;
+            var typeIndex = jObject.Value<int?>("Type");
+            if (typeIndex == null || !Enum.IsDefined(typeof(NoteType), typeIndex.Value))
+            {
+                return null;
+            }
+            var time = BeatTime.FromBeatString(jObject.Value<string>("Time"));
+            if (time == null) return null;
+            return new Note
+            {
+                id = id.Value,
+                type = (NoteType)typeIndex,
+                time = time
+            };
+        }
     }
 
     /// <summary>
@@ -159,6 +196,16 @@ namespace ChartEditor.Models
             if (endDelta <= testY && endDelta > 0) return 2;
             if (startDelta <= testY && startDelta > 0) return 1;
             return 0;
+        }
+
+        /// <summary>
+        /// 转化为JObject
+        /// </summary>
+        public override JObject ToJson()
+        {
+            var json = base.ToJson();
+            json.Add("EndTime", this.endTime.ToBeatString());
+            return json;
         }
     }
 

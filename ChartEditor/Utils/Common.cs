@@ -68,6 +68,7 @@ namespace ChartEditor.Utils
         public static string ChartMusicConfigFileName = "music_config.json";
         public static string ChartFileName = "chart.json";
         public static string ChartMusicFileName = "music.ogg";
+        public static string WorkspaceName = "workspace.json";
 
         /// <summary>
         /// 获取应用所在文件夹路径
@@ -78,19 +79,11 @@ namespace ChartEditor.Utils
         }
 
         /// <summary>
-        /// 获取数据所在文件夹路径
-        /// </summary>
-        public static string GetDataFolderPath()
-        {
-            return AppDomain.CurrentDomain.BaseDirectory;
-        }
-
-        /// <summary>
         /// 获取设置所在文件夹路径
         /// </summary>
         public static string GetConfigFolderPath()
         {
-            return Path.Combine(GetDataFolderPath(), "config");
+            return Path.Combine(GetAppFolderPath(), "config");
         }
 
         /// <summary>
@@ -98,7 +91,7 @@ namespace ChartEditor.Utils
         /// </summary>
         public static string GetChartMusicFolderPath()
         {
-            return Path.Combine(GetDataFolderPath(), "charts");
+            return Path.Combine(GetAppFolderPath(), "charts");
         }
 
         /// <summary>
@@ -106,7 +99,7 @@ namespace ChartEditor.Utils
         /// </summary>
         public static string GetResourcesFolderPath()
         {
-            return Path.Combine(GetDataFolderPath(), "Resources");
+            return Path.Combine(GetAppFolderPath(), "Resources");
         }
 
         /// <summary>
@@ -114,7 +107,7 @@ namespace ChartEditor.Utils
         /// </summary>
         public static string GetExportFolderPath()
         {
-            return Path.Combine(GetDataFolderPath(), "exports");
+            return Path.Combine(GetAppFolderPath(), "exports");
         }
 
         /// <summary>

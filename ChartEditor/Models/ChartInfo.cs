@@ -64,19 +64,19 @@ namespace ChartEditor.Models
         /// <summary>
         /// 物量
         /// </summary>
-        private int volume;
+        private int volume = 0;
         public int Volume { get { return volume; } set { volume = value; } }
 
         /// <summary>
         /// 谱面延迟
         /// </summary>
-        private double delay;
+        private double delay = 0.0;
         public double Delay { get { return delay; } set { delay = value; } }
 
         /// <summary>
         /// 预览时间
         /// </summary>
-        private double preview;
+        private double preview = 0.0;
         public double Preview { get { return preview; } set { preview = value; } }
 
         /// <summary>
@@ -84,6 +84,18 @@ namespace ChartEditor.Models
         /// </summary>
         private string folderPath;
         public string FolderPath { get { return folderPath; } set { folderPath = value; } }
+
+        /// <summary>
+        /// 轨道最大Id
+        /// </summary>
+        private int trackMaxId = 0;
+        public int TrackMaxId { get { return trackMaxId; } set { trackMaxId = value; } }
+
+        /// <summary>
+        /// 音符最大Id
+        /// </summary>
+        private int noteMaxId = 0;
+        public int NoteMaxId { get { return noteMaxId; } set { noteMaxId = value; } }
 
         public ChartInfo()
         {
@@ -97,10 +109,6 @@ namespace ChartEditor.Models
             this.author = author;
             this.createdAt = DateTime.Now;
             this.updatedAt = DateTime.Now;
-            this.difficulty = 0;
-            this.volume = 0;
-            this.delay = 0;
-            this.preview = 0;
             this.columnNum = columnNum;
             this.folderPath = ChartUtilV1.GenerateNewChartFolderPath(chartMusic.FolderPath, this.createdAt);
         }
@@ -120,7 +128,9 @@ namespace ChartEditor.Models
                 ["ColumnNum"] = this.columnNum,
                 ["Volume"] = this.volume,
                 ["Delay"] = this.delay,
-                ["Preview"] = this.preview
+                ["Preview"] = this.preview,
+                ["TrackMaxId"] = this.trackMaxId,
+                ["NoteMaxId"] = this.noteMaxId
             };
         }
 
@@ -144,6 +154,8 @@ namespace ChartEditor.Models
                 this.volume = jObject.Value<int?>("Volume") ?? 0;
                 this.delay = jObject.Value<double?>("Delay") ?? 0.0;
                 this.preview = jObject.Value<double?>("Preview") ?? 0.0;
+                this.trackMaxId = jObject.Value<int?>("TrackMaxId") ?? 0;
+                this.noteMaxId = jObject.Value<int?>("NoteMaxId") ?? 0;
             }
             catch (Exception ex)
             {

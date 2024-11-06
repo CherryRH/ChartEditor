@@ -1,8 +1,10 @@
 ﻿using ChartEditor.Models;
 using ChartEditor.Utils;
 using ChartEditor.Utils.Cache;
+using ChartEditor.Utils.ChartUtils;
 using ChartEditor.Windows;
 using MaterialDesignThemes.Wpf;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -23,7 +25,7 @@ namespace ChartEditor.ViewModels
         /// <summary>
         /// 谱面编辑窗口实例
         /// </summary>
-        public ChartWindow ChartWindow { get; private set; }
+        public ChartWindow ChartWindow { get; set; }
 
         /// <summary>
         /// 谱面信息
@@ -82,18 +84,17 @@ namespace ChartEditor.ViewModels
         {
             get
             {
-                return TapNoteNum + FlickNoteNum + HoldNoteNum + CatchNoteNum;
+                this.ChartInfo.Volume = TapNoteNum + FlickNoteNum + HoldNoteNum + CatchNoteNum;
+                return this.ChartInfo.Volume;
             }
         }
 
         // 当前轨道id
-        private int currentTrackId = 0;
-        public int CurrentTrackId { get { return currentTrackId; } }
-        public int GetNextTrackId() => currentTrackId++;
+        public int CurrentTrackId { get { return this.ChartInfo.TrackMaxId; } }
+        public int GetNextTrackId() => this.ChartInfo.TrackMaxId++;
         // 当前音符id
-        private int currentNoteId = 0;
-        public int CurrentNoteId { get { return currentNoteId; } }
-        public int GetNextNoteId() => currentNoteId++;
+        public int CurrentNoteId { get { return this.ChartInfo.NoteMaxId; } }
+        public int GetNextNoteId() => this.ChartInfo.NoteMaxId++;
 
         /// <summary>
         /// 每一列的宽度
@@ -235,9 +236,8 @@ namespace ChartEditor.ViewModels
         private float noteVolume = 50;
         public float NoteVolume { get { return noteVolume; } set { noteVolume = value; OnPropertyChanged(nameof(NoteVolume)); } }
 
-        public ChartEditModel(ChartInfo chartInfo, ChartWindow chartWindow)
+        public ChartEditModel(ChartInfo chartInfo)
         {
-            this.ChartWindow = chartWindow;
             this.ChartInfo = chartInfo;
             this.currentTime = this.ChartInfo.Delay;
             this.bpm = this.ChartInfo.ChartMusic.Bpm;
@@ -376,6 +376,32 @@ namespace ChartEditor.ViewModels
                 case NoteType.Catch: this.CatchNoteNum--; break;
             }
             note.Track.DeleteNote(note);
+        }
+
+        /// <summary>
+        /// 删除Track
+        /// </summary>
+        public void DeleteTrack(Track track)
+        {
+            if (track == null) return;
+            
+            if (this.trackSkipLists[track.ColumnIndex].Delete(track.StartTime))
+            {
+                // 更新统计数据
+                this.TrackNum--;
+                var currentNoteNode = track.NoteSkipList.FirstNode;
+                while (currentNoteNode != null)
+                {
+                    switch (currentNoteNode.Value.Type)
+                    {
+                        case NoteType.Tap: this.TapNoteNum--; break;
+                        case NoteType.Flick: this.FlickNoteNum--; break;
+                        case NoteType.Catch: this.CatchNoteNum--; break;
+                    }
+                    currentNoteNode = currentNoteNode.Next[0];
+                }
+                this.HoldNoteNum -= track.HoldNoteSkipList.Count;
+            }
         }
 
         /// <summary>
@@ -580,6 +606,45 @@ namespace ChartEditor.ViewModels
             if (judgeLineOffset >= canvasHeight) judgeLineOffset = canvasHeight - 0.1;
             newBeatTime.UpdateFromJudgeLineOffset(judgeLineOffset, this.rowWidth);
             return newBeatTime;
+        }
+
+        /// <summary>
+        /// 将Tracks转化为Json
+        /// </summary>
+        public JArray GetTracksJson()
+        {
+            JArray jArray = new JArray();
+            for (int i = 0; i < this.trackSkipLists.Count; i++)
+            {
+                JObject tracksJObject = new JObject();
+                JArray tracksJArray = new JArray();
+                SkipListNode<BeatTime, Track> current = this.trackSkipLists[i].FirstNode;
+                while (current != null)
+                {
+                    tracksJArray.Add(current.Value.ToJson());
+                    current = current.Next[0];
+                }
+                tracksJObject.Add("Tracks", tracksJArray);
+                jArray.Add(tracksJObject);
+            }
+            return jArray;
+        }
+
+        /// <summary>
+        /// 将工作区参数转化为Json
+        /// </summary>
+        public JObject GetWorkspaceJson()
+        {
+            return new JObject
+            {
+                ["ColumnWidth"] = this.columnWidth,
+                ["RowWidth"] = this.rowWidth,
+                ["Divide"] = this.divide,
+                ["Speed"] = this.speed,
+                ["CurrentBeat"] = this.currentBeat.ToBeatString(),
+                ["MusicVolume"] = this.musicVolume,
+                ["NoteVolume"] = this.noteVolume
+            };
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

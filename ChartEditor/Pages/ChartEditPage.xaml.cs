@@ -44,12 +44,12 @@ namespace ChartEditor.Pages
         /// </summary>
         private TrackEditBoard trackEditBoard;
 
-        public ChartEditPage(ChartInfo chartInfo, MainWindowModel mainWindowModel, ChartListModel chartListModel, ChartWindow chartWindow)
+        public ChartEditPage(MainWindowModel mainWindowModel, ChartListModel chartListModel, ChartEditModel chartEditModel)
         {
             InitializeComponent();
             this.MainWindowModel = mainWindowModel;
             this.ChartListModel = chartListModel;
-            this.Model = new ChartEditModel(chartInfo, chartWindow);
+            this.Model = chartEditModel;
             this.DataContext = this.Model;
 
             TrackEditBoard.DataContext = this.Model;

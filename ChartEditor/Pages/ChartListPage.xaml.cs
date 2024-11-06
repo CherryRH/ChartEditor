@@ -61,7 +61,6 @@ namespace ChartEditor.Pages
         {
             ChartInfo result = (ChartInfo)await DialogHost.Show(new CreateChartDialog(new CreateChartModel(), this.MainWindowModel, this.Model), "ChartListDialog");
             if (result == null) { return; }
-
             // 创建基础谱面文件
             ChartUtilV1.CreateBasicChartFile(result);
             // 更新谱面列表
@@ -72,12 +71,38 @@ namespace ChartEditor.Pages
         /// <summary>
         /// 处理谱面点击事件
         /// </summary>
-        private void ChartItemButton_Click(object sender, RoutedEventArgs e)
+        private async void ChartItemButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button item && item.DataContext is ChartItemModel selectedItem)
             {
+                ChartEditModel chartEditModel = new ChartEditModel(selectedItem.ChartInfo);
+                // 加载窗口
+                LoadingDialog loadingDialog = new LoadingDialog("正在加载谱面~");
+
+                ChartListDialog.CloseOnClickAway = false;
+                // 异步显示 loadingDialog，并等待加载完成
+                var dialogTask = DialogHost.Show(loadingDialog, "ChartListDialog");
+
+                // 加载谱面文件
+                bool loadChartSuccess = await ChartUtilV1.LoadChartData(chartEditModel);
+
+                // 加载工作区文件
+                bool loadWorkspaceSuccess = ChartUtilV1.LoadWorkPlaceData(chartEditModel);
+
+                // 加载完成后，关闭 loadingDialog
+                DialogHost.CloseDialogCommand.Execute(null, loadingDialog);
+                ChartListDialog.CloseOnClickAway = true;
+
+                if (!loadChartSuccess)
+                {
+                    // 加载失败显示警告
+                    await DialogHost.Show(new WarnDialog("谱面加载失败"), "ChartListDialog");
+                    return;
+                }
+                ChartListDialog.CloseOnClickAway = true;
+                // 谱面加载成功，打开编辑窗口
                 this.MainWindowModel.MainWindow.Hide();
-                ChartWindow chartWindow = new ChartWindow(selectedItem.ChartInfo, this.MainWindowModel, this.Model);
+                ChartWindow chartWindow = new ChartWindow(this.MainWindowModel, this.Model, chartEditModel);
                 chartWindow.Show();
             }
         }
@@ -95,7 +120,7 @@ namespace ChartEditor.Pages
         /// </summary>
         private async void ChartDeleteButton_Click(Object sender, RoutedEventArgs e)
         {
-            bool result = (bool)await DialogHost.Show(new ConfirmDialog("确认要删除谱面吗？删除后谱面还可以在回收站恢复。"), "ChartListDialog");
+            bool result = (bool?)await DialogHost.Show(new ConfirmDialog("确认要删除谱面吗？删除后谱面还可以在回收站恢复。"), "ChartListDialog") ?? false;
             if (result)
             {
                 if (sender is Button item && item.DataContext is ChartItemModel selectedItem)

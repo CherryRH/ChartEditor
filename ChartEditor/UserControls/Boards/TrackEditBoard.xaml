@@ -220,11 +220,11 @@
                                     <materialDesign:PackIcon Kind="CursorPointer"/>
                                 </ToggleButton>
                                 <Button
-                                    x:Name="DeleteButton"
+                                    x:Name="DeleteNoteButton"
                                     Width="40"
                                     Height="40"
                                     ToolTip="删除选中的音符/Ctrl+D/Delete"
-                                    Click="DeleteButton_Click"
+                                    Click="DeleteNoteButton_Click"
                                     Foreground="Orchid"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="Delete"/>
@@ -248,6 +248,16 @@
                                     Foreground="Orchid"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="ContentPaste"/>
+                                </Button>
+                                <Button
+                                    x:Name="DeleteTrackButton"
+                                    Width="40"
+                                    Height="40"
+                                    ToolTip="删除选中的轨道"
+                                    Click="DeleteTrackButton_Click"
+                                    Foreground="Red"
+                                    Style="{StaticResource MaterialDesignIconButton}">
+                                    <materialDesign:PackIcon Kind="DeleteForever"/>
                                 </Button>
                                 
                                 <Separator/>

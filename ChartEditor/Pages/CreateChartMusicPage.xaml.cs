@@ -124,7 +124,7 @@ namespace ChartEditor.Pages
                 }
             }
 
-            DialogHost.Show(new LoadingDialog("曲目正在创建中~"), "CreateChartMusicDialog");
+            var task = DialogHost.Show(new LoadingDialog("曲目正在创建中~"), "CreateChartMusicDialog");
             ChartMusic createResult = await this.Model.CreateChartMusicFolder();
             DialogHost.Close("CreateChartMusicDialog");
 

@@ -2,6 +2,7 @@
 using ChartEditor.Pages;
 using ChartEditor.UserControls.Boards;
 using ChartEditor.Utils;
+using ChartEditor.Utils.ChartUtils;
 using ChartEditor.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -30,25 +31,31 @@ namespace ChartEditor.Windows
 
         private ChartListModel ChartListModel;
 
-        public ChartWindow(ChartInfo chartInfo, MainWindowModel mainWindowModel, ChartListModel chartListModel)
+        private ChartEditModel ChartEditModel;
+
+        public ChartWindow(MainWindowModel mainWindowModel, ChartListModel chartListModel, ChartEditModel chartEditModel)
         {
             InitializeComponent();
-            this.Title = Common.GenerateChartWindowTitle(chartInfo);
+            chartEditModel.ChartWindow = this;
+            this.ChartEditModel = chartEditModel;
+
+            this.Title = Common.GenerateChartWindowTitle(chartEditModel.ChartInfo);
             this.MainWindowModel = mainWindowModel;
             this.ChartListModel = chartListModel;
-            ChartEditPage chartEditPage = new ChartEditPage(chartInfo, mainWindowModel, chartListModel, this);
+            ChartEditPage chartEditPage = new ChartEditPage(mainWindowModel, chartListModel, chartEditModel);
             this.ChartEditPage = chartEditPage;
             ChartPage.Navigate(chartEditPage);
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private async void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             // 保存谱面和工作区
-
-            // 刷新谱面列表
-
-            // 更新曲目数据
+            await ChartUtilV1.SaveChart(this.ChartEditModel);
+            ChartUtilV1.SaveWorkPlace(this.ChartEditModel);
+            // 更新谱面列表数据
             this.ChartListModel.GetChartInfos();
+            // 更新主页曲目
+            this.MainWindowModel.UpdateChartMusic(this.ChartEditModel.ChartInfo.ChartMusic);
         }
 
         private void Window_Closed(object sender, EventArgs e)

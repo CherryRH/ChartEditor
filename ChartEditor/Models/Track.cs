@@ -7,6 +7,9 @@ using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Shapes;
 using ChartEditor.Utils;
+using Newtonsoft.Json.Linq;
+using Microsoft.SqlServer.Server;
+using Newtonsoft.Json;
 
 namespace ChartEditor.Models
 {
@@ -277,6 +280,38 @@ namespace ChartEditor.Models
                 Console.WriteLine(current2.Value.Track.ColumnIndex + " " + current2.Key.ToBeatString() + " " + current2.Value.Type);
                 current2 = current2.Next[0];
             }
+        }
+
+        /// <summary>
+        /// 转化为Json
+        /// </summary>
+        public JObject ToJson()
+        {
+            JObject jObject = new JObject
+            {
+                ["Id"] = this.id,
+                ["StartTime"] = this.startTime.ToBeatString(),
+                ["EndTime"] = this.endTime.ToBeatString(),
+            };
+            // Note列表
+            JArray noteJArray = new JArray();
+            SkipListNode<BeatTime, Note> currentNoteNode = this.noteSkipList.FirstNode;
+            while (currentNoteNode != null)
+            {
+                noteJArray.Add(currentNoteNode.Value.ToJson());
+                currentNoteNode = currentNoteNode.Next[0];
+            }
+            jObject.Add("Notes", noteJArray);
+            // HoldNote列表
+            JArray holdNoteJArray = new JArray();
+            SkipListNode<BeatTime, HoldNote> currentHoldNoteNode = this.holdNoteSkipList.FirstNode;
+            while (currentHoldNoteNode != null)
+            {
+                holdNoteJArray.Add(currentHoldNoteNode.Value.ToJson());
+                currentHoldNoteNode = currentHoldNoteNode.Next[0];
+            }
+            jObject.Add("HoldNotes", holdNoteJArray);
+            return jObject;
         }
     }
 }

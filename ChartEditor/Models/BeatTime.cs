@@ -75,7 +75,24 @@ namespace ChartEditor.Models
         /// </summary>
         public string ToBeatString()
         {
-            return beat + ":" + divideIndex + "/" + divide;
+            return $"{beat}:{divideIndex}/{divide}";
+        }
+
+        /// <summary>
+        /// 从节拍字符串转化
+        /// </summary>
+        public static BeatTime FromBeatString(string beatString)
+        {
+            BeatTime beatTime = new BeatTime();
+            var parts = beatString.Split(new[] { ':', '/' });
+            if (parts.Length == 3 &&
+                int.TryParse(parts[0], out beatTime.beat) &&
+                int.TryParse(parts[1], out beatTime.divideIndex) &&
+                int.TryParse(parts[2], out beatTime.divide))
+            {
+                return beatTime;
+            }
+            else return null;
         }
 
         public void Reset()
