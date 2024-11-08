@@ -68,6 +68,14 @@ namespace ChartEditor.UserControls.Boards
             {
                 this.TrackEditBoardController.OnMusicVolumeChanged(this.Model.MusicVolume / 100);
             }
+            else if (e.PropertyName == nameof(this.Model.NoteVolume))
+            {
+                this.TrackEditBoardController.OnNoteVolumeChanged(this.Model.NoteVolume / 100);
+            }
+            else if (e.PropertyName == nameof(this.Model.GlobalVolume))
+            {
+                this.TrackEditBoardController.OnGlobalVolumeChanged(this.Model.GlobalVolume / 100);
+            }
             else if (e.PropertyName == nameof(this.Model.ColumnWidth))
             {
                 this.TrackEditBoardController.OnColumnWidthChanged();
@@ -381,16 +389,15 @@ namespace ChartEditor.UserControls.Boards
         /// </summary>
         public void SetScrollViewerVerticalOffset(double verticalOffset)
         {
-            // 同步滚动条
-            if (TrackCanvasViewer.VerticalOffset != verticalOffset) TrackCanvasViewer.ScrollToVerticalOffset(verticalOffset);
-            if (TimeLineCanvasViewer.VerticalOffset != verticalOffset) TimeLineCanvasViewer.ScrollToVerticalOffset(verticalOffset);
-            
             if (this.IsLoaded)
             {
                 // 更新当前时间信息
                 this.Model.UpdateCurrentBeatTime(TrackCanvasViewer.VerticalOffset, TrackCanvasViewer.ExtentHeight, TrackCanvasViewer.ActualHeight);
                 this.TrackEditBoardController.OnScrollChanged();
             }
+            // 同步滚动条
+            if (TrackCanvasViewer.VerticalOffset != verticalOffset) TrackCanvasViewer.ScrollToVerticalOffset(verticalOffset);
+            if (TimeLineCanvasViewer.VerticalOffset != verticalOffset) TimeLineCanvasViewer.ScrollToVerticalOffset(verticalOffset);
         }
 
         private void TrackEditCard_KeyDown(object sender, KeyEventArgs e)

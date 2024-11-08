@@ -329,6 +329,7 @@ namespace ChartEditor.Utils.ChartUtils
                     chartEditModel.Divide = jObject.Value<int?>("Divide") ?? 4;
                     chartEditModel.Speed = jObject.Value<double?>("Speed") ?? 1.0;
                     chartEditModel.CurrentBeat = BeatTime.FromBeatString(jObject.Value<string>("CurrentBeat")) ?? new BeatTime();
+                    chartEditModel.GlobalVolume = jObject.Value<float?>("GlobalVolume") ?? 100;
                     chartEditModel.MusicVolume = jObject.Value<float?>("MusicVolume") ?? 50;
                     chartEditModel.NoteVolume = jObject.Value<float?>("NoteVolume") ?? 50;
                 }

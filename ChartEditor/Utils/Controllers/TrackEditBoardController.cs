@@ -1,5 +1,6 @@
 ﻿using ChartEditor.Models;
 using ChartEditor.UserControls.Boards;
+using ChartEditor.Utils.AudioUtils;
 using ChartEditor.Utils.Drawers;
 using ChartEditor.Utils.MusicUtils;
 using ChartEditor.ViewModels;
@@ -73,18 +74,23 @@ namespace ChartEditor.Utils.Controllers
         private int movingCurrentColumnIndex = 0;
 
         /// <summary>
-        /// 音乐播放
+        /// 混音器
+        /// </summary>
+        private AudioMixer audioMixer;
+
+        /// <summary>
+        /// 音乐播放器
         /// </summary>
         private MusicPlayer musicPlayer;
 
-        private DateTime musicStartDateTime;
-        public DateTime MusicStartDateTime { get { return musicStartDateTime; } }
-
-        private double musicStartTime;
-        public double MusicStartTime { get { return musicStartTime; } }
         // 播放状态
         private bool isPlaying = false;
         public bool IsPlaying { get { return isPlaying; } }
+
+        /// <summary>
+        /// 获取当前谱面时间
+        /// </summary>
+        public double CurrentChartTime { get { return this.musicPlayer.GetMusicTime() - this.ChartInfo.Delay; } }
 
         /// <summary>
         /// 鼠标控制
@@ -146,8 +152,10 @@ namespace ChartEditor.Utils.Controllers
         {
             try
             {
+                // 初始化混音器
+                this.audioMixer = new AudioMixer();
                 // 初始化音乐播放器
-                this.musicPlayer = new MusicPlayer(this.TrackEditBoard.Model.ChartInfo, this.MusicPlayer_PlaybackStopped);
+                this.musicPlayer = new MusicPlayer(this.ChartEditModel, this.audioMixer);
                 // 绘制网格
                 this.DrawTrackGrid();
                 // 绘制时间轴
@@ -178,7 +186,9 @@ namespace ChartEditor.Utils.Controllers
         {
             if (this.isPlaying)
             {
-                double currentHeight = ((DateTime.Now - this.musicStartDateTime).TotalSeconds + this.musicStartTime - this.ChartInfo.Delay) * this.ChartEditModel.ScrollSpeed;
+                if (this.ChartEditModel.CurrentTime >= this.ChartInfo.ChartMusic.Duration) this.TrackEditBoard.PlayButton.IsChecked = false;
+                // 当前谱面运行时间，为音乐播放时间减去延迟
+                double currentHeight = this.CurrentChartTime * this.ChartEditModel.ScrollSpeed;
                 this.TrackCanvasViewer.ScrollToVerticalOffset(this.ChartEditModel.TotalHeight - currentHeight);
             }
             else
@@ -455,7 +465,10 @@ namespace ChartEditor.Utils.Controllers
                     {
                         if (!this.movingCurrentBeatTime.IsEqualTo(mouseBeatTime))
                         {
-                            if (!this.hasMoved) this.ChartEditModel.ChangePickedNoteTimeBegin();
+                            if (!this.hasMoved)
+                            {
+                                this.ChartEditModel.ChangePickedNoteTimeBegin();
+                            }
                             this.hasMoved = true;
                             Mouse.OverrideCursor = Cursors.SizeAll;
                             this.TrackCanvas.CaptureMouse();
@@ -476,7 +489,10 @@ namespace ChartEditor.Utils.Controllers
                         int columnIndex = this.ChartEditModel.GetColumnIndexFromPoint(mousePosition);
                         if (!this.movingCurrentBeatTime.IsEqualTo(mouseBeatTime) || this.movingCurrentColumnIndex != columnIndex)
                         {
-                            if (!this.hasMoved) this.ChartEditModel.ChangePickedTrackTimeBegin();
+                            if (!this.hasMoved)
+                            {
+                                this.ChartEditModel.ChangePickedTrackTimeBegin();
+                            }
                             this.hasMoved = true;
                             Mouse.OverrideCursor = Cursors.SizeAll;
                             this.TrackCanvas.CaptureMouse();
@@ -620,7 +636,10 @@ namespace ChartEditor.Utils.Controllers
                         else if (!this.isStretchingEndPoint && !beatTime.IsEqualTo(this.stretchingHoldNote.Time))
                         {
                             bool result = this.ChartEditModel.TryChangeHoldNoteStartTime(this.stretchingHoldNote, beatTime);
-                            if (result) this.noteDrawer.RedrawHoldNoteWhenTimeChanged(this.stretchingHoldNote);
+                            if (result)
+                            {
+                                this.noteDrawer.RedrawHoldNoteWhenTimeChanged(this.stretchingHoldNote);
+                            }
                         }
                     }
                 }
@@ -845,8 +864,6 @@ namespace ChartEditor.Utils.Controllers
                 this.TrackEditBoard.PlayIcon.Kind = PackIconKind.Pause;
                 this.ChartEditModel.ResetCurrentBeatTime();
                 this.TrackEditBoard.ScrollToCurrentBeat();
-                this.musicStartDateTime = DateTime.Now;
-                this.musicStartTime = this.ChartEditModel.CurrentTime;
                 isPlaying = true;
 
                 this.noteDrawer.HidePreviewer();
@@ -864,7 +881,7 @@ namespace ChartEditor.Utils.Controllers
         {
             try
             {
-                if (this.musicPlayer.IsMusicOver(this.ChartEditModel.CurrentTime))
+                if (this.musicPlayer.IsMusicAboutOver(this.ChartEditModel.CurrentTime))
                 {
                     this.ReplayChart();
                     return;
@@ -875,8 +892,6 @@ namespace ChartEditor.Utils.Controllers
                     return;
                 }
                 this.TrackEditBoard.PlayIcon.Kind = PackIconKind.Pause;
-                this.musicStartDateTime = DateTime.Now;
-                this.musicStartTime = this.ChartEditModel.CurrentTime;
                 this.isPlaying = true;
                 // 清除状态
                 if (this.isPicking)
@@ -904,7 +919,6 @@ namespace ChartEditor.Utils.Controllers
         public void PauseChart()
         {
             this.musicPlayer.PauseMusic();
-
             this.TrackEditBoard.PlayIcon.Kind = PackIconKind.Play;
             this.isPlaying = false;
 
@@ -1245,6 +1259,16 @@ namespace ChartEditor.Utils.Controllers
             this.musicPlayer.SetVolume(musicVolume);
         }
 
+        public void OnNoteVolumeChanged(float noteVolume)
+        {
+            
+        }
+
+        public void OnGlobalVolumeChanged(float globalVolume)
+        {
+            this.audioMixer.SetVolume(globalVolume);
+        }
+
         /// <summary>
         /// 当列宽变化时
         /// </summary>
@@ -1417,7 +1441,9 @@ namespace ChartEditor.Utils.Controllers
         /// </summary>
         public void Dispose()
         {
+            this.audioMixer.RemoveAllMixerInput();
             this.musicPlayer.Dispose();
+            this.audioMixer.Dispose();
             GC.Collect();
             Console.WriteLine(logTag + "占用文件已释放");
         }

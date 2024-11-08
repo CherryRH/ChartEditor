@@ -6,20 +6,36 @@
              xmlns:local="clr-namespace:ChartEditor.UserControls.Dialogs"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d" 
-             d:DesignHeight="300" d:DesignWidth="400">
+             d:DesignHeight="400" d:DesignWidth="400">
     <Grid>
         <StackPanel
             Margin="20"
             VerticalAlignment="Center">
 
             <TextBlock
-                Text="音乐音量"
+                Text="总音量"
                 TextWrapping="Wrap"
                 Margin="0, 10"
                 Style="{StaticResource MaterialDesignTitleSmallTextBlock}"
                 HorizontalAlignment="Left"/>
+
+            <Slider
+                x:Name="GlobalVolumeSlider"
+                Maximum="100"
+                Minimum="0"
+                Style="{StaticResource MaterialDesign3.MaterialDesignDiscreteSlider}"
+                TickFrequency="1"
+                Value="{Binding GlobalVolume}"/>
+
+            <TextBlock
+                Text="音乐音量"
+                TextWrapping="Wrap"
+                Margin="0, 20, 0, 10"
+                Style="{StaticResource MaterialDesignTitleSmallTextBlock}"
+                HorizontalAlignment="Left"/>
             
             <Slider
+                x:Name="MusicVolumeSlider"
                 Maximum="100"
                 Minimum="0"
                 Style="{StaticResource MaterialDesign3.MaterialDesignDiscreteSlider}"
@@ -34,6 +50,7 @@
                 HorizontalAlignment="Left"/>
 
             <Slider
+                x:Name="NoteVolumeSlider"
                 Maximum="100"
                 Minimum="0"
                 Style="{StaticResource MaterialDesign3.MaterialDesignDiscreteSlider}"

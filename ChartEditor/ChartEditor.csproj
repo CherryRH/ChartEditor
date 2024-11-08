@@ -218,6 +218,7 @@
       <DependentUpon>ChartMusicItem.xaml</DependentUpon>
     </Compile>
     <Compile Include="Utils\AnimationProvider.cs" />
+    <Compile Include="Utils\AudioUtils\AudioMixer.cs" />
     <Compile Include="Utils\Cache\CoverImageCache.cs" />
     <Compile Include="Utils\ChartMusicUtil.cs" />
     <Compile Include="Utils\ChartUtils\ChartUtilV1.cs" />
@@ -231,8 +232,8 @@
     <Compile Include="Utils\Drawers\TrackGridDrawer.cs" />
     <Compile Include="Utils\ImageUtil.cs" />
     <Compile Include="Utils\MathUtil.cs" />
-    <Compile Include="Utils\MusicUtils\MusicPlayer.cs" />
-    <Compile Include="Utils\MusicUtils\MusicUtil.cs" />
+    <Compile Include="Utils\AudioUtils\MusicPlayer.cs" />
+    <Compile Include="Utils\AudioUtils\MusicUtil.cs" />
     <Compile Include="Utils\SkipList.cs" />
     <Compile Include="ViewModels\ChartEditModel.cs" />
     <Compile Include="ViewModels\ChartInfoModel.cs" />
@@ -390,28 +391,36 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Resources\Audios\" />
     <Folder Include="Services\" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\Textures\Headphone.jpg" />
+    <None Include="Resources\Textures\Headphone.jpg" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\Textures\a.png" />
+    <None Include="Resources\Textures\a.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\Textures\音乐.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\ffmpeg\bin\ffmpeg.exe">
+    <Content Include="Resources\ffmpeg\bin\ffmpeg.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\ffmpeg\bin\ffplay.exe">
+    </Content>
+    <None Include="Resources\ffmpeg\bin\ffplay.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\ffmpeg\bin\ffprobe.exe">
+    </None>
+    <None Include="Resources\ffmpeg\bin\ffprobe.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
+    </None>
+    <Content Include="Resources\Audios\HitSong0.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Audios\HitSong1.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Audios\HitSong2.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\ffmpeg\doc\bootstrap.min.css" />
     <Content Include="Resources\ffmpeg\doc\community.html" />
     <Content Include="Resources\ffmpeg\doc\default.css" />
@@ -447,6 +456,9 @@
     <Content Include="Resources\ffmpeg\doc\platform.html" />
     <Content Include="Resources\ffmpeg\doc\style.min.css" />
     <Resource Include="Resources\ffmpeg\README.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\MaterialDesignThemes.5.1.0\build\MaterialDesignThemes.targets" Condition="Exists('..\packages\MaterialDesignThemes.5.1.0\build\MaterialDesignThemes.targets')" />

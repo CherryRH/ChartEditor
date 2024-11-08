@@ -22,7 +22,9 @@ namespace ChartEditor.Utils
         public SkipListNode<TKey, TValue> LastNode { get { return lastNode; } }
 
         private readonly Comparison<TKey> comparer;
+
         private readonly int maxLevel;
+
         private int level;
 
         public int Count { get; set; } = 0;
@@ -102,6 +104,23 @@ namespace ChartEditor.Utils
 
             skipListNode = default;
             return false;
+        }
+
+        /// <summary>
+        /// 尝试获取节点或下一个节点
+        /// </summary>
+        public SkipListNode<TKey, TValue> TryGetNodeOrNext(TKey key)
+        {
+            SkipListNode<TKey, TValue> current = head;
+
+            for (int i = level - 1; i >= 0; i--)
+            {
+                while (current.Next[i] != null && comparer(current.Next[i].Key, key) < 0)
+                {
+                    current = current.Next[i];
+                }
+            }
+            return current.Next[0];
         }
 
         /// <summary>

@@ -225,6 +225,12 @@ namespace ChartEditor.ViewModels
         public int NoteSelectedIndex { get { return noteSelectedIndex; } set { noteSelectedIndex = value; } }
 
         /// <summary>
+        /// 总音量
+        /// </summary>
+        private float globalVolume = 100;
+        public float GlobalVolume { get { return globalVolume; } set { globalVolume = value; OnPropertyChanged(nameof(GlobalVolume)); } }
+
+        /// <summary>
         /// 音乐音量
         /// </summary>
         private float musicVolume = 50;
@@ -609,6 +615,15 @@ namespace ChartEditor.ViewModels
         }
 
         /// <summary>
+        /// 根据Bpm（表）获取BeatTime的毫秒数
+        /// </summary>
+        public int GetBeatTimeMs(BeatTime beatTime)
+        {
+            double beatSecond = beatTime.GetEquivalentBeat() * this.BeatTime;
+            return (int)(beatSecond * 1000);
+        }
+
+        /// <summary>
         /// 将Tracks转化为Json
         /// </summary>
         public JArray GetTracksJson()
@@ -642,6 +657,7 @@ namespace ChartEditor.ViewModels
                 ["Divide"] = this.divide,
                 ["Speed"] = this.speed,
                 ["CurrentBeat"] = this.currentBeat.ToBeatString(),
+                ["GlobalVolume"] = this.globalVolume,
                 ["MusicVolume"] = this.musicVolume,
                 ["NoteVolume"] = this.noteVolume
             };

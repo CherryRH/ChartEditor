@@ -36,7 +36,7 @@
                         <RowDefinition Height="400"/>
                     </Grid.RowDefinitions>
 
-                    <Grid Grid.Row="0">
+                    <Grid Grid.Row="0" Opacity="0.9">
                         <ucb:UnityBoard x:Name="UnityBoard"/>
                     </Grid>
 

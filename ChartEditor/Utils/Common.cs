@@ -70,6 +70,13 @@ namespace ChartEditor.Utils
         public static string ChartMusicFileName = "music.ogg";
         public static string WorkspaceName = "workspace.json";
 
+        public static Dictionary<int, string> HitSoundPaths = new Dictionary<int, string>
+        {
+            { 0, Path.Combine(GetResourcesFolderPath(), "Audios/HitSong0.wav") },
+            { 1, Path.Combine(GetResourcesFolderPath(), "Audios/HitSong1.wav") },
+            { 2, Path.Combine(GetResourcesFolderPath(), "Audios/HitSong2.wav") }
+        };
+
         /// <summary>
         /// 获取应用所在文件夹路径
         /// </summary>
