@@ -107,7 +107,7 @@ namespace ChartEditor.Utils
         }
 
         /// <summary>
-        /// 尝试获取节点或下一个节点
+        /// 尝试获取此节点或下一个节点
         /// </summary>
         public SkipListNode<TKey, TValue> TryGetNodeOrNext(TKey key)
         {
@@ -121,6 +121,30 @@ namespace ChartEditor.Utils
                 }
             }
             return current.Next[0];
+        }
+
+        /// <summary>
+        /// 尝试获取下一个节点
+        /// </summary>
+        public SkipListNode<TKey, TValue> TryGetNext(TKey key)
+        {
+            SkipListNode<TKey, TValue> current = head;
+
+            for (int i = level - 1; i >= 0; i--)
+            {
+                while (current.Next[i] != null && comparer(current.Next[i].Key, key) < 0)
+                {
+                    current = current.Next[i];
+                }
+            }
+            var next = current.Next[0];
+            if (next != null && comparer(next.Key, key) <= 0)
+            {
+                next = next.Next[0];
+            }
+
+            // 返回找到的比key大的节点或null
+            return next;
         }
 
         /// <summary>

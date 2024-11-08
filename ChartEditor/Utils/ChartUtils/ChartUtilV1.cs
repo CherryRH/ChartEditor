@@ -236,47 +236,79 @@ namespace ChartEditor.Utils.ChartUtils
                         // 遍历Track数组
                         foreach (var trackJToken in tracks)
                         {
-                            int trackId = trackJToken.Value<int?>("Id") ?? throw new Exception("Track的Id解析失败");
-                            BeatTime trackStartTime = BeatTime.FromBeatString(trackJToken.Value<string>("StartTime")) ?? throw new Exception("Track的StartTime解析失败");
-                            BeatTime trackEndTime = BeatTime.FromBeatString(trackJToken.Value<string>("EndTime")) ?? throw new Exception("Track的EndTime解析失败");
-                            Track track = new Track(trackStartTime, trackEndTime, index, trackId);
-                            // 插入列表
-                            trackList.Insert(trackStartTime, track);
-                            // 遍历Note数组
-                            JArray notes = (JArray)trackJToken["Notes"];
-                            if (notes != null)
+                            try
                             {
-                                foreach (var noteJToken in notes)
+                                int trackId = trackJToken.Value<int?>("Id") ?? throw new Exception("Track的Id解析失败");
+                                BeatTime trackStartBeatTime = BeatTime.FromBeatString(trackJToken.Value<string>("StartBeatTime")) ?? throw new Exception("Track的StartBeatTime解析失败");
+                                BeatTime trackEndBeatTime = BeatTime.FromBeatString(trackJToken.Value<string>("EndBeatTime")) ?? throw new Exception("Track的EndBeatTime解析失败");
+                                int trackStartTime = trackJToken.Value<int?>("StartTime") ?? throw new Exception("Track的StartTime解析失败");
+                                int trackEndTime = trackJToken.Value<int?>("EndTime") ?? throw new Exception("Track的EndTime解析失败");
+
+                                Track track = new Track(trackStartBeatTime, trackEndBeatTime, index, trackId, trackStartTime, trackEndTime);
+                                // 插入列表
+                                trackList.Insert(trackStartBeatTime, track);
+                                // 遍历Note数组
+                                JArray notes = (JArray)trackJToken["Notes"];
+                                if (notes != null)
                                 {
-                                    int noteId = noteJToken.Value<int?>("Id") ?? throw new Exception("Note的Id解析失败");
-                                    BeatTime noteTime = BeatTime.FromBeatString(noteJToken.Value<string>("Time")) ?? throw new Exception("Note的Time解析失败");
-                                    var typeIndex = noteJToken.Value<int?>("Type");
-                                    if (typeIndex == null || !Enum.IsDefined(typeof(NoteType), typeIndex.Value)) throw new Exception("Note的Type解析失败");
-                                    Note note = null;
-                                    switch ((NoteType)typeIndex)
+                                    foreach (var noteJToken in notes)
                                     {
-                                        case NoteType.Tap: note = new TapNote(noteTime, track, noteId); break;
-                                        case NoteType.Flick: note = new FlickNote(noteTime, track, noteId); break;
-                                        case NoteType.Catch: note = new CatchNote(noteTime, track, noteId); break;
+                                        try
+                                        {
+                                            int noteId = noteJToken.Value<int?>("Id") ?? throw new Exception("Note的Id解析失败");
+                                            BeatTime noteStartBeatTime = BeatTime.FromBeatString(noteJToken.Value<string>("StartBeatTime")) ?? throw new Exception("Note的Time解析失败");
+                                            int noteStartTime = noteJToken.Value<int?>("StartTime") ?? throw new Exception("Note的StartTime解析失败");
+
+                                            var typeIndex = noteJToken.Value<int?>("Type");
+                                            if (typeIndex == null || !Enum.IsDefined(typeof(NoteType), typeIndex.Value)) throw new Exception("Note的Type解析失败");
+                                            Note note = null;
+                                            switch ((NoteType)typeIndex)
+                                            {
+                                                case NoteType.Tap: note = new TapNote(noteStartBeatTime, track, noteId, noteStartTime); break;
+                                                case NoteType.Flick: note = new FlickNote(noteStartBeatTime, track, noteId, noteStartTime); break;
+                                                case NoteType.Catch: note = new CatchNote(noteStartBeatTime, track, noteId, noteStartTime); break;
+                                            }
+                                            // 插入列表
+                                            track.NoteSkipList.Insert(noteStartBeatTime, note);
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Console.WriteLine(logTag + e.Message);
+                                            continue;
+                                        }
                                     }
-                                    // 插入列表
-                                    track.NoteSkipList.Insert(noteTime, note);
+                                }
+
+                                // 遍历HoldNote数组
+                                JArray holdNotes = (JArray)trackJToken["HoldNotes"];
+                                if (holdNotes != null)
+                                {
+                                    foreach (var holdNoteJToken in holdNotes)
+                                    {
+                                        try
+                                        {
+                                            int holdNoteId = holdNoteJToken.Value<int?>("Id") ?? throw new Exception("HoldNote的Id解析失败");
+                                            BeatTime holdNoteStartBeatTime = BeatTime.FromBeatString(holdNoteJToken.Value<string>("StartBeatTime")) ?? throw new Exception("HoldNote的Time解析失败");
+                                            BeatTime holdNoteEndBeatTime = BeatTime.FromBeatString(holdNoteJToken.Value<string>("EndBeatTime")) ?? throw new Exception("HoldNote的EndTime解析失败");
+                                            int holdNoteStartTime = holdNoteJToken.Value<int?>("StartTime") ?? throw new Exception("HoldNote的StartTime解析失败");
+                                            int holdNoteEndTime = holdNoteJToken.Value<int?>("EndTime") ?? throw new Exception("HoldNote的EndTime解析失败");
+
+                                            HoldNote holdNote = new HoldNote(holdNoteStartBeatTime, holdNoteEndBeatTime, track, holdNoteId, holdNoteStartTime, holdNoteEndTime);
+                                            // 插入列表
+                                            track.HoldNoteSkipList.Insert(holdNoteStartBeatTime, holdNote);
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Console.WriteLine(logTag + e.Message);
+                                            continue;
+                                        }
+                                    }
                                 }
                             }
-                            
-                            // 遍历HoldNote数组
-                            JArray holdNotes = (JArray)trackJToken["HoldNotes"];
-                            if (holdNotes != null)
+                            catch (Exception e)
                             {
-                                foreach (var holdNoteJToken in holdNotes)
-                                {
-                                    int holdNoteId = holdNoteJToken.Value<int?>("Id") ?? throw new Exception("HoldNote的Id解析失败");
-                                    BeatTime holdNoteTime = BeatTime.FromBeatString(holdNoteJToken.Value<string>("Time")) ?? throw new Exception("HoldNote的Time解析失败");
-                                    BeatTime holdNoteEndTime = BeatTime.FromBeatString(holdNoteJToken.Value<string>("EndTime")) ?? throw new Exception("HoldNote的EndTime解析失败");
-                                    HoldNote holdNote = new HoldNote(holdNoteTime, holdNoteEndTime, track, holdNoteId);
-                                    // 插入列表
-                                    track.HoldNoteSkipList.Insert(holdNoteTime, holdNote);
-                                }
+                                Console.WriteLine(logTag + e.Message);
+                                continue;
                             }
                         }
                         // 增加列序号

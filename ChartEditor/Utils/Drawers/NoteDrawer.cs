@@ -170,21 +170,21 @@ namespace ChartEditor.Utils.Drawers
                 while (currentTrackNode != null)
                 {
                     Track track = currentTrackNode.Value;
-                    track.Rectangle.Height = MinHeight + (track.EndTime.GetEquivalentBeat() - track.StartTime.GetEquivalentBeat()) * this.ChartEditModel.RowWidth;
-                    Canvas.SetBottom(track.Rectangle, track.StartTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
+                    track.Rectangle.Height = MinHeight + (track.EndBeatTime.GetEquivalentBeat() - track.StartBeatTime.GetEquivalentBeat()) * this.ChartEditModel.RowWidth;
+                    Canvas.SetBottom(track.Rectangle, track.StartBeatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
                     SkipListNode<BeatTime, Note> currentNoteNode = track.NoteSkipList.FirstNode;
                     while (currentNoteNode != null)
                     {
                         Note note = currentNoteNode.Value;
-                        Canvas.SetBottom(note.Rectangle, note.Time.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
+                        Canvas.SetBottom(note.Rectangle, note.StartBeatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
                         currentNoteNode = currentNoteNode.Next[0];
                     }
                     SkipListNode<BeatTime, HoldNote> currentHoldNoteNode = track.HoldNoteSkipList.FirstNode;
                     while (currentHoldNoteNode != null)
                     {
                         HoldNote holdNote = currentHoldNoteNode.Value;
-                        holdNote.Rectangle.Height = MinHeight + (holdNote.EndTime.GetEquivalentBeat() - holdNote.Time.GetEquivalentBeat()) * this.ChartEditModel.RowWidth;
-                        Canvas.SetBottom(holdNote.Rectangle, holdNote.Time.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
+                        holdNote.Rectangle.Height = MinHeight + (holdNote.EndBeatTime.GetEquivalentBeat() - holdNote.StartBeatTime.GetEquivalentBeat()) * this.ChartEditModel.RowWidth;
+                        Canvas.SetBottom(holdNote.Rectangle, holdNote.StartBeatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
                         currentHoldNoteNode = currentHoldNoteNode.Next[0];
                     }
                     currentTrackNode = currentTrackNode.Next[0];
@@ -201,7 +201,7 @@ namespace ChartEditor.Utils.Drawers
             {
                 Tag = "Track",
                 Width = this.ChartEditModel.ColumnWidth - 2 * Common.TrackPadding * this.ChartEditModel.ColumnWidth,
-                Height = MinHeight + (track.EndTime.GetEquivalentBeat() - track.StartTime.GetEquivalentBeat()) * this.ChartEditModel.RowWidth,
+                Height = MinHeight + (track.EndBeatTime.GetEquivalentBeat() - track.StartBeatTime.GetEquivalentBeat()) * this.ChartEditModel.RowWidth,
                 Stroke = ColorProvider.TrackBorderBrush,
                 StrokeThickness = StrokeThickness,
                 Fill = ColorProvider.TrackGradientBrush,
@@ -223,7 +223,7 @@ namespace ChartEditor.Utils.Drawers
             Rectangle newTrack = this.CreateTrackRectangle(track);
             this.trackCanvas.Children.Add(newTrack);
             Canvas.SetLeft(newTrack, track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.TrackPadding * this.ChartEditModel.ColumnWidth);
-            Canvas.SetBottom(newTrack, track.StartTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
+            Canvas.SetBottom(newTrack, track.StartBeatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
             // 保持在最底层
             if (track.IsMiniTrack()) Canvas.SetZIndex(newTrack, MiniTrackZIndex);
             else Canvas.SetZIndex(newTrack, TrackZIndex);
@@ -234,10 +234,10 @@ namespace ChartEditor.Utils.Drawers
         /// </summary>
         public void RedrawTrackWhenTimeChanged(Track track)
         {
-            track.Rectangle.Height = MinHeight + (track.EndTime.GetEquivalentBeat() - track.StartTime.GetEquivalentBeat()) * this.ChartEditModel.RowWidth;
+            track.Rectangle.Height = MinHeight + (track.EndBeatTime.GetEquivalentBeat() - track.StartBeatTime.GetEquivalentBeat()) * this.ChartEditModel.RowWidth;
             track.Rectangle.Width = this.ChartEditModel.ColumnWidth - 2 * Common.TrackPadding * this.ChartEditModel.ColumnWidth;
             Canvas.SetLeft(track.Rectangle, track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.TrackPadding * this.ChartEditModel.ColumnWidth);
-            Canvas.SetBottom(track.Rectangle, track.StartTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
+            Canvas.SetBottom(track.Rectangle, track.StartBeatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
         }
 
         /// <summary>
@@ -245,10 +245,10 @@ namespace ChartEditor.Utils.Drawers
         /// </summary>
         public void RedrawHoldNoteWhenTimeChanged(HoldNote holdNote)
         {
-            holdNote.Rectangle.Height = MinHeight + (holdNote.EndTime.GetEquivalentBeat() - holdNote.Time.GetEquivalentBeat()) * this.ChartEditModel.RowWidth;
+            holdNote.Rectangle.Height = MinHeight + (holdNote.EndBeatTime.GetEquivalentBeat() - holdNote.StartBeatTime.GetEquivalentBeat()) * this.ChartEditModel.RowWidth;
             holdNote.Rectangle.Width = this.ChartEditModel.ColumnWidth - 2 * Common.NotePadding * this.ChartEditModel.ColumnWidth;
             Canvas.SetLeft(holdNote.Rectangle, holdNote.Track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.NotePadding * this.ChartEditModel.ColumnWidth);
-            Canvas.SetBottom(holdNote.Rectangle, holdNote.Time.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
+            Canvas.SetBottom(holdNote.Rectangle, holdNote.StartBeatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
         }
 
         /// <summary>
@@ -257,7 +257,7 @@ namespace ChartEditor.Utils.Drawers
         public void RedrawNoteWhenPosChanged(Note note)
         {
             Canvas.SetLeft(note.Rectangle, note.Track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.NotePadding * this.ChartEditModel.ColumnWidth);
-            Canvas.SetBottom(note.Rectangle, note.Time.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
+            Canvas.SetBottom(note.Rectangle, note.StartBeatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
         }
 
         /// <summary>
@@ -281,7 +281,7 @@ namespace ChartEditor.Utils.Drawers
                 currentHoldNoteNode = currentHoldNoteNode.Next[0];
             }
             Canvas.SetLeft(track.Rectangle, track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.TrackPadding * this.ChartEditModel.ColumnWidth);
-            Canvas.SetBottom(track.Rectangle, track.StartTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
+            Canvas.SetBottom(track.Rectangle, track.StartBeatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
         }
 
         /// <summary>
@@ -319,7 +319,7 @@ namespace ChartEditor.Utils.Drawers
                 case NoteType.Hold:
                     {
                         newNote.Tag = "Hold";
-                        newNote.Height = MinHeight + (((HoldNote)note).EndTime.GetEquivalentBeat() - note.Time.GetEquivalentBeat()) * this.ChartEditModel.RowWidth;
+                        newNote.Height = MinHeight + (((HoldNote)note).EndBeatTime.GetEquivalentBeat() - note.StartBeatTime.GetEquivalentBeat()) * this.ChartEditModel.RowWidth;
                         newNote.Stroke = ColorProvider.HoldNoteBorderBrush;
                         newNote.Fill = ColorProvider.HoldNoteGradientBrush;
                         break;
@@ -345,7 +345,7 @@ namespace ChartEditor.Utils.Drawers
             Rectangle newNote = this.CreateNoteRectangle(note);
             this.trackCanvas.Children.Add(newNote);
             Canvas.SetLeft(newNote, note.Track.ColumnIndex * this.ChartEditModel.ColumnWidth + Common.NotePadding * this.ChartEditModel.ColumnWidth);
-            Canvas.SetBottom(newNote, note.Time.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
+            Canvas.SetBottom(newNote, note.StartBeatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
             // HoldNote在其他Note下层
             if (note.Type == NoteType.Hold)
             {

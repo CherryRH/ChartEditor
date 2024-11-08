@@ -1,10 +1,12 @@
-﻿using NAudio.Wave;
+﻿using ManagedBass;
+using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TagLib.Png;
 
 namespace ChartEditor.Utils.AudioUtils
 {
@@ -21,7 +23,7 @@ namespace ChartEditor.Utils.AudioUtils
         /// <summary>
         /// 混音器
         /// </summary>
-        private MixingSampleProvider mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(44100, 2))
+        private MixingSampleProvider mixer = new MixingSampleProvider(NAudio.Wave.WaveFormat.CreateIeeeFloatWaveFormat(44100, 2))
         {
             ReadFully = true
         };
@@ -30,7 +32,10 @@ namespace ChartEditor.Utils.AudioUtils
         {
             this.waveOutEvent.Init(this.mixer);
             this.SetVolume(1);
-            this.waveOutEvent.Play();
+            if (!Bass.Init())
+            {
+                Console.WriteLine("BASS初始化失败");
+            }
         }
 
         public void AddMixerInput(VolumeSampleProvider provider)
@@ -61,7 +66,6 @@ namespace ChartEditor.Utils.AudioUtils
 
         public void Dispose()
         {
-            this.waveOutEvent.Stop();
             this.waveOutEvent.Dispose();
         }
     }

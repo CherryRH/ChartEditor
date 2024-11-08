@@ -83,6 +83,11 @@ namespace ChartEditor.Utils.Controllers
         /// </summary>
         private MusicPlayer musicPlayer;
 
+        /// <summary>
+        /// 打击音播放器
+        /// </summary>
+        private HitSoundPlayer hitSoundPlayer;
+
         // 播放状态
         private bool isPlaying = false;
         public bool IsPlaying { get { return isPlaying; } }
@@ -155,7 +160,9 @@ namespace ChartEditor.Utils.Controllers
                 // 初始化混音器
                 this.audioMixer = new AudioMixer();
                 // 初始化音乐播放器
-                this.musicPlayer = new MusicPlayer(this.ChartEditModel, this.audioMixer);
+                this.musicPlayer = new MusicPlayer(this.ChartEditModel);
+                // 初始化打击音播放器
+                this.hitSoundPlayer = new HitSoundPlayer(this.ChartEditModel, this.musicPlayer);
                 // 绘制网格
                 this.DrawTrackGrid();
                 // 绘制时间轴
@@ -186,7 +193,10 @@ namespace ChartEditor.Utils.Controllers
         {
             if (this.isPlaying)
             {
-                if (this.ChartEditModel.CurrentTime >= this.ChartInfo.ChartMusic.Duration) this.TrackEditBoard.PlayButton.IsChecked = false;
+                if (this.TrackCanvasViewer.VerticalOffset <= 0)
+                {
+                    this.TrackEditBoard.PlayButton.IsChecked = false;
+                }
                 // 当前谱面运行时间，为音乐播放时间减去延迟
                 double currentHeight = this.CurrentChartTime * this.ChartEditModel.ScrollSpeed;
                 this.TrackCanvasViewer.ScrollToVerticalOffset(this.ChartEditModel.TotalHeight - currentHeight);
@@ -267,9 +277,12 @@ namespace ChartEditor.Utils.Controllers
             this.ChartEditModel.CatchNoteNum = catchNoteNum;
         }
 
-        private void MusicPlayer_PlaybackStopped(object sender, StoppedEventArgs e)
+        /// <summary>
+        /// 测试按键按下时
+        /// </summary>
+        public void TestKeyDown()
         {
-            this.TrackEditBoard.PlayButton.IsChecked = false;
+            this.hitSoundPlayer.PlayHitSound(0);
         }
 
         /// <summary>
@@ -409,8 +422,8 @@ namespace ChartEditor.Utils.Controllers
                             if (note.ContainsPoint(mousePosition, this.TrackCanvas))
                             {
                                 this.movingStartPoint = mousePosition;
-                                this.movingCurrentBeatTime = note.Time;
-                                this.movingStartBeatTime = note.Time;
+                                this.movingCurrentBeatTime = note.StartBeatTime;
+                                this.movingStartBeatTime = note.StartBeatTime;
                                 this.isMovingNote = true;
                                 break;
                             }
@@ -420,8 +433,8 @@ namespace ChartEditor.Utils.Controllers
                             if (this.ChartEditModel.PickedTrack.ContainsPoint(mousePosition, this.TrackCanvas))
                             {
                                 this.movingStartPoint = mousePosition;
-                                this.movingStartBeatTime = this.ChartEditModel.PickedTrack.StartTime;
-                                this.movingCurrentBeatTime = this.ChartEditModel.PickedTrack.StartTime;
+                                this.movingStartBeatTime = this.ChartEditModel.PickedTrack.StartBeatTime;
+                                this.movingCurrentBeatTime = this.ChartEditModel.PickedTrack.StartBeatTime;
                                 this.movingCurrentColumnIndex = this.ChartEditModel.GetColumnIndexFromPoint(mousePosition);
                                 this.isMovingTrack = true;
                             }
@@ -526,7 +539,7 @@ namespace ChartEditor.Utils.Controllers
                             case 1:
                                 {
                                     this.stretchingStartPoint = mousePosition;
-                                    this.stretchingStartBeatTime = holdNote.Time;
+                                    this.stretchingStartBeatTime = holdNote.StartBeatTime;
                                     this.isStretchingEndPoint = false;
                                     this.TrackCanvas.CaptureMouse();
                                     this.stretchingHoldNote = holdNote;
@@ -535,7 +548,7 @@ namespace ChartEditor.Utils.Controllers
                             case 2:
                                 {
                                     this.stretchingStartPoint = mousePosition;
-                                    this.stretchingStartBeatTime = holdNote.EndTime;
+                                    this.stretchingStartBeatTime = holdNote.EndBeatTime;
                                     this.isStretchingEndPoint = true;
                                     this.TrackCanvas.CaptureMouse();
                                     this.stretchingHoldNote = holdNote;
@@ -551,7 +564,7 @@ namespace ChartEditor.Utils.Controllers
                             case 1:
                                 {
                                     this.stretchingStartPoint = mousePosition;
-                                    this.stretchingStartBeatTime = this.ChartEditModel.PickedTrack.StartTime;
+                                    this.stretchingStartBeatTime = this.ChartEditModel.PickedTrack.StartBeatTime;
                                     this.isStretchingEndPoint = false;
                                     this.TrackCanvas.CaptureMouse();
                                     this.stretchingTrack = this.ChartEditModel.PickedTrack;
@@ -560,7 +573,7 @@ namespace ChartEditor.Utils.Controllers
                             case 2:
                                 {
                                     this.stretchingStartPoint = mousePosition;
-                                    this.stretchingStartBeatTime = this.ChartEditModel.PickedTrack.EndTime;
+                                    this.stretchingStartBeatTime = this.ChartEditModel.PickedTrack.EndBeatTime;
                                     this.isStretchingEndPoint = true;
                                     this.TrackCanvas.CaptureMouse();
                                     this.stretchingTrack = this.ChartEditModel.PickedTrack;
@@ -612,12 +625,12 @@ namespace ChartEditor.Utils.Controllers
                         double pointY = mousePosition.Value.Y;
                         double startPointY = this.stretchingStartPoint.Value.Y;
                         BeatTime beatTime = this.stretchingStartBeatTime.CreateByOffsetY(this.ChartEditModel.Divide, this.ChartEditModel.RowWidth, pointY - startPointY);
-                        if (this.isStretchingEndPoint && !beatTime.IsEqualTo(this.stretchingTrack.EndTime))
+                        if (this.isStretchingEndPoint && !beatTime.IsEqualTo(this.stretchingTrack.EndBeatTime))
                         {
                             bool result = this.ChartEditModel.TryChangeTrackEndTime(this.stretchingTrack, beatTime);
                             if (result) this.noteDrawer.RedrawTrackWhenTimeChanged(this.stretchingTrack);
                         }
-                        else if (!this.isStretchingEndPoint && !beatTime.IsEqualTo(this.stretchingTrack.StartTime))
+                        else if (!this.isStretchingEndPoint && !beatTime.IsEqualTo(this.stretchingTrack.StartBeatTime))
                         {
                             bool result = this.ChartEditModel.TryChangeTrackStartTime(this.stretchingTrack, beatTime);
                             if (result) this.noteDrawer.RedrawTrackWhenTimeChanged(this.stretchingTrack);
@@ -628,12 +641,12 @@ namespace ChartEditor.Utils.Controllers
                         double pointY = mousePosition.Value.Y;
                         double startPointY = this.stretchingStartPoint.Value.Y;
                         BeatTime beatTime = this.stretchingStartBeatTime.CreateByOffsetY(this.ChartEditModel.Divide, this.ChartEditModel.RowWidth, pointY - startPointY);
-                        if (this.isStretchingEndPoint && !beatTime.IsEqualTo(this.stretchingHoldNote.EndTime))
+                        if (this.isStretchingEndPoint && !beatTime.IsEqualTo(this.stretchingHoldNote.EndBeatTime))
                         {
                             bool result = this.ChartEditModel.TryChangeHoldNoteEndTime(this.stretchingHoldNote, beatTime);
                             if (result) this.noteDrawer.RedrawHoldNoteWhenTimeChanged(this.stretchingHoldNote);
                         }
-                        else if (!this.isStretchingEndPoint && !beatTime.IsEqualTo(this.stretchingHoldNote.Time))
+                        else if (!this.isStretchingEndPoint && !beatTime.IsEqualTo(this.stretchingHoldNote.StartBeatTime))
                         {
                             bool result = this.ChartEditModel.TryChangeHoldNoteStartTime(this.stretchingHoldNote, beatTime);
                             if (result)
@@ -855,11 +868,16 @@ namespace ChartEditor.Utils.Controllers
         {
             try
             {
+                // 重置打击音播放节点
+                this.hitSoundPlayer.ResetPlayNodes();
+
                 if (!this.musicPlayer.ReplayMusic())
                 {
                     this.TrackEditBoard.SetMessage("音乐播放异常，再试一次吧", 2, MessageType.Error);
                     return;
                 }
+                this.hitSoundPlayer.ResumePlayLoop();
+
                 this.TrackEditBoard.PlayButton.IsChecked = true;
                 this.TrackEditBoard.PlayIcon.Kind = PackIconKind.Pause;
                 this.ChartEditModel.ResetCurrentBeatTime();
@@ -881,6 +899,9 @@ namespace ChartEditor.Utils.Controllers
         {
             try
             {
+                // 搜索打击音播放节点
+                this.hitSoundPlayer.SetPlayNodes();
+
                 if (this.musicPlayer.IsMusicAboutOver(this.ChartEditModel.CurrentTime))
                 {
                     this.ReplayChart();
@@ -891,6 +912,8 @@ namespace ChartEditor.Utils.Controllers
                     this.TrackEditBoard.SetMessage("音乐播放异常，再试一次吧", 2, MessageType.Error);
                     return;
                 }
+                this.hitSoundPlayer.ResumePlayLoop();
+
                 this.TrackEditBoard.PlayIcon.Kind = PackIconKind.Pause;
                 this.isPlaying = true;
                 // 清除状态
@@ -919,6 +942,8 @@ namespace ChartEditor.Utils.Controllers
         public void PauseChart()
         {
             this.musicPlayer.PauseMusic();
+            this.hitSoundPlayer.PausePlayLoop();
+
             this.TrackEditBoard.PlayIcon.Kind = PackIconKind.Play;
             this.isPlaying = false;
 
@@ -1086,8 +1111,8 @@ namespace ChartEditor.Utils.Controllers
                             this.highLightNotes.Remove(note);
                             // 尝试移动
                             this.movingStartPoint = e.GetPosition(this.TrackCanvas);
-                            this.movingCurrentBeatTime = note.Time;
-                            this.movingStartBeatTime = note.Time;
+                            this.movingCurrentBeatTime = note.StartBeatTime;
+                            this.movingStartBeatTime = note.StartBeatTime;
                             this.isMovingNote = true;
                         }
                     }
@@ -1132,8 +1157,8 @@ namespace ChartEditor.Utils.Controllers
                             this.highLightTracks.Remove(track);
                             // 尝试移动
                             this.movingStartPoint = e.GetPosition(this.TrackCanvas);
-                            this.movingCurrentBeatTime = track.StartTime;
-                            this.movingStartBeatTime = track.StartTime;
+                            this.movingCurrentBeatTime = track.StartBeatTime;
+                            this.movingStartBeatTime = track.StartBeatTime;
                             this.isMovingTrack = true;
                         }
                     }
@@ -1261,7 +1286,7 @@ namespace ChartEditor.Utils.Controllers
 
         public void OnNoteVolumeChanged(float noteVolume)
         {
-            
+            this.hitSoundPlayer.SetVolume(noteVolume);
         }
 
         public void OnGlobalVolumeChanged(float globalVolume)
@@ -1363,7 +1388,7 @@ namespace ChartEditor.Utils.Controllers
                 {
                     Track track = currentTrackNode.Value;
                     // 轨道超过搜索范围则退出
-                    if (track.StartTime.IsLaterThan(topBeatTime)) break;
+                    if (track.StartBeatTime.IsLaterThan(topBeatTime)) break;
                     Rect trackRect = track.GetRect();
 
                     if (selectBoxRect.IntersectsWith(trackRect))
@@ -1374,7 +1399,7 @@ namespace ChartEditor.Utils.Controllers
                         {
                             Note note = currentNoteNode.Value;
                             // 超过搜索范围则退出
-                            if (note.Time.IsLaterThan(topBeatTime)) break;
+                            if (note.StartBeatTime.IsLaterThan(topBeatTime)) break;
                             currentNoteNode = currentNoteNode.Next[0];
                             if (this.selectBoxPickedNotes.Contains(note) || this.ChartEditModel.PickedNotes.Contains(note)) continue;
                             Rect noteRect = note.GetRect();
@@ -1390,7 +1415,7 @@ namespace ChartEditor.Utils.Controllers
                         while (currentHoldNoteNode != null)
                         {
                             HoldNote holdNote = currentHoldNoteNode.Value;
-                            if (holdNote.Time.IsLaterThan(topBeatTime)) break;
+                            if (holdNote.StartBeatTime.IsLaterThan(topBeatTime)) break;
                             currentHoldNoteNode = currentHoldNoteNode.Next[0];
                             if (this.selectBoxPickedNotes.Contains(holdNote) || this.ChartEditModel.PickedNotes.Contains(holdNote)) continue;
                             Rect noteRect = holdNote.GetRect();
@@ -1442,6 +1467,7 @@ namespace ChartEditor.Utils.Controllers
         public void Dispose()
         {
             this.audioMixer.RemoveAllMixerInput();
+            this.hitSoundPlayer.Dispose();
             this.musicPlayer.Dispose();
             this.audioMixer.Dispose();
             GC.Collect();

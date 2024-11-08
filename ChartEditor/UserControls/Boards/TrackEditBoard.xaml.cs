@@ -444,6 +444,11 @@ namespace ChartEditor.UserControls.Boards
             {
                 NoteSelectBox.SelectedIndex = 4;
             }
+            else if (e.Key == Key.D0)
+            {
+                // 测试按键
+                //this.TrackEditBoardController.TestKeyDown();
+            }
         }
 
         private void TrackEditCard_KeyUp(object sender, KeyEventArgs e)

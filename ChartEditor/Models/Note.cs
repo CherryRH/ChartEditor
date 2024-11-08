@@ -21,8 +21,11 @@ namespace ChartEditor.Models
         /// <summary>
         /// 音符的时间
         /// </summary>
-        private BeatTime time;
-        public BeatTime Time { get { return time; } set { time = value; } }
+        private BeatTime startBeatTime;
+        public BeatTime StartBeatTime { get { return startBeatTime; } set { startBeatTime = value; } }
+
+        private int startTime = 0;
+        public int StartTime { get { return startTime; } set { startTime = value; } }
 
         /// <summary>
         /// 音符种类
@@ -49,12 +52,13 @@ namespace ChartEditor.Models
 
         public Note() { }
 
-        public Note(BeatTime time, NoteType type, Track track, int id)
+        public Note(BeatTime time, NoteType type, Track track, int id, int startTime = 0)
         {
             this.id = id;
-            this.time = time;
+            this.startBeatTime = time;
             this.type = type;
             this.Track = track;
+            this.startTime = startTime;
         }
 
         /// <summary>
@@ -87,9 +91,17 @@ namespace ChartEditor.Models
         /// </summary>
         public int CompareTo(Note y)
         {
-            if (this.Time.IsEarlierThan(y.Time)) return -1;
-            else if (this.Time.IsEqualTo(y.Time)) return 0;
+            if (this.StartBeatTime.IsEarlierThan(y.StartBeatTime)) return -1;
+            else if (this.StartBeatTime.IsEqualTo(y.StartBeatTime)) return 0;
             else return 1;
+        }
+
+        /// <summary>
+        /// 更新时间
+        /// </summary>
+        public virtual void UpdateTime(BpmList bpmList)
+        {
+            this.startTime = bpmList.GetBeatTimeMs(this.StartBeatTime);
         }
 
         /// <summary>
@@ -101,7 +113,8 @@ namespace ChartEditor.Models
             {
                 ["Id"] = this.id,
                 ["Type"] = (int)this.type,
-                ["Time"] = this.time.ToBeatString()
+                ["StartBeatTime"] = this.startBeatTime.ToBeatString(),
+                ["StartTime"] = this.startTime
             };
         }
 
@@ -124,7 +137,7 @@ namespace ChartEditor.Models
             {
                 id = id.Value,
                 type = (NoteType)typeIndex,
-                time = time
+                startBeatTime = time
             };
         }
     }
@@ -134,8 +147,8 @@ namespace ChartEditor.Models
     /// </summary>
     public class TapNote : Note
     {
-        public TapNote(BeatTime time, Track track, int id)
-            : base(time, NoteType.Tap, track, id)
+        public TapNote(BeatTime startBeatTime, Track track, int id, int startTime = 0)
+            : base(startBeatTime, NoteType.Tap, track, id, startTime)
         {
 
         }
@@ -146,8 +159,8 @@ namespace ChartEditor.Models
     /// </summary>
     public class CatchNote : Note
     {
-        public CatchNote(BeatTime time, Track track, int id)
-            : base(time, NoteType.Catch, track, id)
+        public CatchNote(BeatTime startBeatTime, Track track, int id, int startTime = 0)
+            : base(startBeatTime, NoteType.Catch, track, id, startTime)
         {
 
         }
@@ -155,8 +168,8 @@ namespace ChartEditor.Models
 
     public class FlickNote : Note
     {
-        public FlickNote(BeatTime time, Track track, int id)
-            : base(time, NoteType.Flick, track, id)
+        public FlickNote(BeatTime startBeatTime, Track track, int id, int startTime = 0)
+            : base(startBeatTime, NoteType.Flick, track, id, startTime)
         {
             
         }
@@ -167,12 +180,16 @@ namespace ChartEditor.Models
         /// <summary>
         /// 结束时间
         /// </summary>
-        private BeatTime endTime;
-        public BeatTime EndTime { get { return endTime; } set { endTime = value; } }
+        private BeatTime endBeatTime;
+        public BeatTime EndBeatTime { get { return endBeatTime; } set { endBeatTime = value; } }
 
-        public HoldNote(BeatTime time, BeatTime endTime, Track track, int id)
-            : base(time, NoteType.Hold, track, id)
+        private int endTime = 0;
+        public int EndTime { get { return endTime; } set { endTime = value; } }
+
+        public HoldNote(BeatTime startBeatTime, BeatTime endBeatTime, Track track, int id, int startTime = 0, int endTime = 0)
+            : base(startBeatTime, NoteType.Hold, track, id, startTime)
         {
+            this.endBeatTime = endBeatTime;
             this.endTime = endTime;
         }
 
@@ -204,8 +221,18 @@ namespace ChartEditor.Models
         public override JObject ToJson()
         {
             var json = base.ToJson();
-            json.Add("EndTime", this.endTime.ToBeatString());
+            json.Add("EndBeatTime", this.endBeatTime.ToBeatString());
+            json.Add("EndTime", this.endTime);
             return json;
+        }
+
+        /// <summary>
+        /// 更新时间
+        /// </summary>
+        public override void UpdateTime(BpmList bpmList)
+        {
+            base.UpdateTime(bpmList);
+            this.endTime = bpmList.GetBeatTimeMs(this.endBeatTime);
         }
     }
 

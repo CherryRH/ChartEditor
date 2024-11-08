@@ -52,6 +52,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Bass.Net, Version=2.4.17.5, Culture=neutral, PublicKeyToken=b7566c273e6ef480, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Debug\Bass.Net.dll</HintPath>
+    </Reference>
+    <Reference Include="ManagedBass, Version=3.1.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ManagedBass.3.1.1\lib\net45\ManagedBass.dll</HintPath>
+    </Reference>
     <Reference Include="MaterialDesignColors, Version=3.1.0.0, Culture=neutral, PublicKeyToken=df2a72020bd7962a, processorArchitecture=MSIL">
       <HintPath>..\packages\MaterialDesignColors.3.1.0\lib\net462\MaterialDesignColors.dll</HintPath>
     </Reference>
@@ -151,6 +158,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Models\BeatTime.cs" />
+    <Compile Include="Models\BpmList.cs" />
     <Compile Include="Models\ChartInfo.cs" />
     <Compile Include="Models\ChartMusic.cs" />
     <Compile Include="Models\KeyPoint.cs" />
@@ -219,6 +227,7 @@
     </Compile>
     <Compile Include="Utils\AnimationProvider.cs" />
     <Compile Include="Utils\AudioUtils\AudioMixer.cs" />
+    <Compile Include="Utils\AudioUtils\HitSoundPlayer.cs" />
     <Compile Include="Utils\Cache\CoverImageCache.cs" />
     <Compile Include="Utils\ChartMusicUtil.cs" />
     <Compile Include="Utils\ChartUtils\ChartUtilV1.cs" />
@@ -403,6 +412,12 @@
     <Resource Include="Resources\Textures\音乐.png" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="bass.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Bass.Net.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\ffmpeg\bin\ffmpeg.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -83,6 +83,7 @@ namespace ChartEditor.Models
         /// </summary>
         public static BeatTime FromBeatString(string beatString)
         {
+            if (string.IsNullOrEmpty(beatString)) return null;
             BeatTime beatTime = new BeatTime();
             var parts = beatString.Split(new[] { ':', '/' });
             if (parts.Length == 3 &&
@@ -327,6 +328,14 @@ namespace ChartEditor.Models
                 else return this;
             }
             return result;
+        }
+
+        /// <summary>
+        /// 是否是0拍
+        /// </summary>
+        public bool IsZero()
+        {
+            return this.beat == 0 && this.divideIndex == 0;
         }
     }
 }
