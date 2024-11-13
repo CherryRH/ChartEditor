@@ -1,9 +1,11 @@
 ﻿using ChartEditor.Models;
 using ChartEditor.Pages;
 using ChartEditor.UserControls.Boards;
+using ChartEditor.UserControls.Dialogs;
 using ChartEditor.Utils;
 using ChartEditor.Utils.ChartUtils;
 using ChartEditor.ViewModels;
+using MaterialDesignThemes.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,6 +35,8 @@ namespace ChartEditor.Windows
 
         private ChartEditModel ChartEditModel;
 
+        private bool isClosingHandled = false;
+
         public ChartWindow(MainWindowModel mainWindowModel, ChartListModel chartListModel, ChartEditModel chartEditModel)
         {
             InitializeComponent();
@@ -49,13 +53,27 @@ namespace ChartEditor.Windows
 
         private async void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            // 保存谱面和工作区
-            await ChartUtilV1.SaveChart(this.ChartEditModel);
-            ChartUtilV1.SaveWorkPlace(this.ChartEditModel);
-            // 更新谱面列表数据
-            this.ChartListModel.GetChartInfos();
-            // 更新主页曲目
-            this.MainWindowModel.UpdateChartMusic(this.ChartEditModel.ChartInfo.ChartMusic);
+            if (isClosingHandled) return;
+
+            e.Cancel = true;
+
+            var result = await DialogHost.Show(new ConfirmDialog("确定要保存谱面吗？"), "ChartWindowDialog");
+
+            if (result is bool && (bool)result)
+            {
+                // 保存谱面和工作区
+                await ChartUtilV1.SaveChart(this.ChartEditModel);
+                ChartUtilV1.SaveWorkPlace(this.ChartEditModel);
+                // 更新谱面列表数据
+                this.ChartListModel.GetChartInfos();
+                // 更新主页曲目
+                this.MainWindowModel.UpdateChartMusic(this.ChartEditModel.ChartInfo.ChartMusic);
+            }
+
+            isClosingHandled = true;
+            e.Cancel = false;
+
+            this.Close();
         }
 
         private void Window_Closed(object sender, EventArgs e)

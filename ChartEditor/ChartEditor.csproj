@@ -244,6 +244,7 @@
     <Compile Include="Utils\AudioUtils\MusicPlayer.cs" />
     <Compile Include="Utils\AudioUtils\MusicUtil.cs" />
     <Compile Include="Utils\SkipList.cs" />
+    <Compile Include="Utils\Timer.cs" />
     <Compile Include="ViewModels\ChartEditModel.cs" />
     <Compile Include="ViewModels\ChartInfoModel.cs" />
     <Compile Include="ViewModels\ChartItemModel.cs" />

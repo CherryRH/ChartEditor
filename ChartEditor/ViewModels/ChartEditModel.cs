@@ -251,16 +251,33 @@ namespace ChartEditor.ViewModels
         }
 
         /// <summary>
-        /// 判断指定起始位置能否加入Track
+        /// 判断指定起始位置能否加入Track，返回0为不能加入，返回1为可以加入，返回2为可以插入
         /// </summary>
-        public bool AddTrackHeader(BeatTime start, int columnIndex)
+        public int AddTrackHeader(BeatTime start, int columnIndex, out Track insertedTrack)
         {
             SkipList<BeatTime, Track> trackList = this.trackSkipLists[columnIndex];
             SkipListNode<BeatTime, Track> preNode = trackList.GetPreNode(start);
-            if (preNode != trackList.Head && !start.IsLaterThan(preNode.Value.EndBeatTime)) return false;
-            SkipListNode<BeatTime, Track> nextNode = preNode.Next[0];
-            if (nextNode != null && !start.IsEarlierThan(nextNode.Value.StartBeatTime)) return false;
-            return true;
+            if (preNode != trackList.Head && preNode.Value.EndBeatTime.IsLaterThan(start))
+            {
+                insertedTrack = preNode.Value;
+                return 2;
+            }
+            else
+            {
+                insertedTrack = null;
+                if (preNode != trackList.Head && !start.IsLaterThan(preNode.Value.EndBeatTime)) return 0;
+                SkipListNode<BeatTime, Track> nextNode = preNode.Next[0];
+                if (nextNode != null && !start.IsEarlierThan(nextNode.Value.StartBeatTime)) return 0;
+                return 1;
+            }
+        }
+
+        /// <summary>
+        /// 插入Track
+        /// </summary>
+        public Track InsertTrack(Track insertedTrack, BeatTime start)
+        {
+
         }
 
         /// <summary>
@@ -401,7 +418,10 @@ namespace ChartEditor.ViewModels
                 var currentNoteNode = track.NoteSkipList.FirstNode;
                 while (currentNoteNode != null)
                 {
-                    switch (currentNoteNode.Value.Type)
+                    Note note = currentNoteNode.Value;
+                    // 如果有被选中的，去除
+                    if (this.pickedNotes.Contains(note)) this.pickedNotes.Remove(note);
+                    switch (note.Type)
                     {
                         case NoteType.Tap: this.TapNoteNum--; break;
                         case NoteType.Flick: this.FlickNoteNum--; break;
@@ -549,37 +569,59 @@ namespace ChartEditor.ViewModels
         /// <summary>
         /// 尝试移动选中的Note
         /// </summary>
-        public bool TryMovePickedNote(BeatTime startBeatTime, BeatTime beatTime)
+        public bool TryMovePickedNote(BeatTime startBeatTime, BeatTime beatTime, int startColumnIndex, int columnIndex)
         {
+            // 记录每个音符移动后的拍数
             List<BeatTime> movedTimes = new List<BeatTime>();
+            // 记录移动后的Track
+            List<Track> movedTracks = new List<Track>();
             // 拍数差值
             BeatTime diffBeatTime = beatTime.Difference(startBeatTime);
+            // 列数差值
+            int diffColumnIndex = columnIndex - startColumnIndex;
             foreach (Note note in this.pickedNotes)
             {
                 // 计算新拍数
                 BeatTime newTime = note.StartBeatTime.Sum(diffBeatTime);
                 movedTimes.Add(newTime);
-                // 超出Track范围
-                if (!note.Track.ContainsBeatTime(newTime)) return false;
+                // 计算新列数
+                int newColumnIndex = note.Track.ColumnIndex + diffColumnIndex;
+                // 如果列数超出范围
+                if (newColumnIndex < 0 || newColumnIndex >= this.ColumnNum) return false;
+                // 搜索Track
+                Track newTrack = null;
+                var trackList = this.trackSkipLists[newColumnIndex];
+                var preTrackNode = trackList.GetPreNode(newTime);
+                if (preTrackNode != trackList.Head && preTrackNode.Value.ContainsBeatTime(newTime))
+                {
+                    newTrack = preTrackNode.Value;
+                    movedTracks.Add(newTrack);
+                }
+                else if (preTrackNode.Next[0] != null && preTrackNode.Next[0].Value.ContainsBeatTime(newTime))
+                {
+                    newTrack = preTrackNode.Next[0].Value;
+                    movedTracks.Add(newTrack);
+                }
+                else return false;
                 // 与其他note冲突
                 if (note is HoldNote holdNote)
                 {
                     BeatTime newEndTime = holdNote.EndBeatTime.Sum(diffBeatTime);
                     // HoldNote末端超出Track范围
-                    if (!holdNote.Track.ContainsBeatTime(newEndTime)) return false;
+                    if (!newTrack.ContainsBeatTime(newEndTime)) return false;
                     // 是否在新位置产生冲突
-                    SkipListNode<BeatTime, HoldNote> preNode = holdNote.Track.HoldNoteSkipList.GetPreNode(newTime);
-                    if (preNode != holdNote.Track.HoldNoteSkipList.Head && preNode.Value.EndBeatTime.IsLaterThan(newTime)) return false;
+                    SkipListNode<BeatTime, HoldNote> preNode = newTrack.HoldNoteSkipList.GetPreNode(newTime);
+                    if (preNode != newTrack.HoldNoteSkipList.Head && preNode.Value.EndBeatTime.IsLaterThan(newTime)) return false;
                     SkipListNode<BeatTime, HoldNote> nextNode = preNode.Next[0];
                     if (nextNode != null && nextNode.Value.StartBeatTime.IsEarlierThan(newEndTime)) return false;
                 }
                 else
                 {
                     // 新位置是否冲突
-                    if (note.Track.NoteSkipList.TryGetValue(newTime, out Note value)) return false;
+                    if (newTrack.NoteSkipList.TryGetValue(newTime, out Note value)) return false;
                 }
             }
-            // 更新时间
+            // 更新时间和音符所属的Track
             for (int i = 0; i < this.pickedNotes.Count; i++)
             {
                 Note tmpNote = this.pickedNotes[i];
@@ -589,6 +631,7 @@ namespace ChartEditor.ViewModels
                 {
                     tmpHoldNote.EndBeatTime.Add(diffBeatTime);
                 }
+                tmpNote.Track = movedTracks[i];
             }
             return true;
         }

@@ -19,13 +19,12 @@ namespace ChartEditor.Utils.MusicUtils
 
         private ChartInfo ChartInfo;
 
-        private double musicStartTime;
+        private Timer Timer;
 
-        private Stopwatch stopwatch = new Stopwatch();
-
-        public MusicPlayer(ChartEditModel chartEditModel)
+        public MusicPlayer(ChartEditModel chartEditModel, Timer timer)
         {
             this.ChartInfo = chartEditModel.ChartInfo;
+            this.Timer = timer;
             this.volume = chartEditModel.MusicVolume / 100;
 
             streamHandle = Bass.CreateStream(this.ChartInfo.ChartMusic.GetMusicPath(), Flags: BassFlags.Default);
@@ -41,23 +40,19 @@ namespace ChartEditor.Utils.MusicUtils
         /// </summary>
         public long GetPositionFromSecond(double second)
         {
-            return (long)(second * Bass.ChannelGetInfo(streamHandle).Frequency * 4);
+            long totalBytes = Bass.ChannelGetLength(streamHandle);
+            double totalSeconds = Bass.ChannelBytes2Seconds(streamHandle, Bass.ChannelGetLength(streamHandle));
+            return (long)((second / totalSeconds) * totalBytes);
         }
 
         /// <summary>
-        /// 重播音乐，播放失败返回false
+        /// 设置音乐位置
         /// </summary>
-        public bool ReplayMusic()
+        public bool SetMusic(double currentTime)
         {
             try
             {
-                this.musicStartTime = Math.Max(this.ChartInfo.Delay, double.Epsilon);
-
-                Bass.ChannelSetPosition(streamHandle, this.GetPositionFromSecond(this.musicStartTime));
-                if (!Bass.ChannelPlay(streamHandle)) throw new Exception("播放失败");
-
-                stopwatch.Restart();
-                Console.WriteLine(logTag + "重新播放");
+                Bass.ChannelSetPosition(streamHandle, this.GetPositionFromSecond(currentTime));
                 return true;
             }
             catch (Exception ex)
@@ -70,17 +65,11 @@ namespace ChartEditor.Utils.MusicUtils
         /// <summary>
         /// 播放音乐
         /// </summary>
-        public bool PlayMusic(double currentTime)
+        public bool PlayMusic()
         {
             try
             {
-                this.musicStartTime = currentTime;
-
-                Bass.ChannelSetPosition(streamHandle, this.GetPositionFromSecond(this.musicStartTime));
-
                 if (!Bass.ChannelPlay(streamHandle)) throw new Exception("播放失败");
-
-                stopwatch.Restart();
                 Console.WriteLine(logTag + "播放开始");
                 return true;
             }
@@ -92,12 +81,11 @@ namespace ChartEditor.Utils.MusicUtils
         }
 
         /// <summary>
-        /// 停止音乐播放
+        /// 暂停音乐
         /// </summary>
         public void PauseMusic()
         {
             Bass.ChannelStop(streamHandle);
-            stopwatch.Stop();
         }
 
         /// <summary>
@@ -129,14 +117,6 @@ namespace ChartEditor.Utils.MusicUtils
                 Bass.StreamFree(streamHandle);
             }
             Bass.Free();
-        }
-
-        /// <summary>
-        /// 获取当前音乐播放的时间（秒）
-        /// </summary>
-        public double GetMusicTime()
-        {
-            return this.musicStartTime + stopwatch.Elapsed.TotalSeconds;
         }
     }
 }

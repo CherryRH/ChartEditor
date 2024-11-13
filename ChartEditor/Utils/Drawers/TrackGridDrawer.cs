@@ -94,10 +94,10 @@ namespace ChartEditor.Utils.Drawers
                     }
                 }
                 // 绘制行
-                Pen beatPen = new Pen(Brushes.Purple, 1.5);
+                Pen beatPen = new Pen(Brushes.Purple, 2.0);
                 Pen dividePen1 = new Pen(Brushes.DarkGreen, 1);
                 Pen dividePen2 = new Pen(Brushes.Cyan, 1);
-                Pen dividePen3 = new Pen(Brushes.Gray, 0.5);
+                Pen dividePen3 = new Pen(Brushes.Gray, 0.3);
 
                 for (int i = 0; i <= beatNum; i++)
                 {
@@ -110,6 +110,7 @@ namespace ChartEditor.Utils.Drawers
                         // 绘制分割线
                         switch (divide)
                         {
+                            case 1: break;
                             case 2:
                                 {
                                     dc.DrawLine(dividePen1, new Point(0, lineY + rowWidth * 1 / 2), new Point(totalWidth, lineY + rowWidth * 1 / 2));

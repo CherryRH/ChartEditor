@@ -51,32 +51,33 @@
                             SelectedIndex="{Binding NoteSelectedIndex}"
                             SelectionChanged="NoteSelectBox_SelectionChanged"
                             HorizontalAlignment="Center"
+                            Focusable="False"
                             Style="{StaticResource MaterialDesignToolToggleListBox}">
-                            <ListBoxItem x:Name="TrackSelectBox">
+                            <ListBoxItem x:Name="TrackSelectBox" Focusable="False">
                                 <StackPanel>
                                     <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="16" Text="Track"/>
                                     <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="12" Text="{Binding TrackNum}"/>
                                 </StackPanel>
                             </ListBoxItem>
-                            <ListBoxItem x:Name="TapNoteSelectBox" FontWeight="Bold" FontSize="16">
+                            <ListBoxItem x:Name="TapNoteSelectBox" FontWeight="Bold" FontSize="16" Focusable="False">
                                 <StackPanel>
                                     <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="16" Text="Tap"/>
                                     <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="12" Text="{Binding TapNoteNum}"/>
                                 </StackPanel>
                             </ListBoxItem>
-                            <ListBoxItem x:Name="FlickNoteSelectBox" FontWeight="Bold" FontSize="16">
+                            <ListBoxItem x:Name="FlickNoteSelectBox" FontWeight="Bold" FontSize="16" Focusable="False">
                                 <StackPanel>
                                     <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="16" Text="Flick"/>
                                     <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="12" Text="{Binding FlickNoteNum}"/>
                                 </StackPanel>
                             </ListBoxItem>
-                            <ListBoxItem x:Name="HoldNoteSelectBox" FontWeight="Bold" FontSize="16">
+                            <ListBoxItem x:Name="HoldNoteSelectBox" FontWeight="Bold" FontSize="16" Focusable="False">
                                 <StackPanel>
                                     <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="16" Text="Hold"/>
                                     <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="12" Text="{Binding HoldNoteNum}"/>
                                 </StackPanel>
                             </ListBoxItem>
-                            <ListBoxItem x:Name="CatchNoteSelectBox" FontWeight="Bold" FontSize="16">
+                            <ListBoxItem x:Name="CatchNoteSelectBox" FontWeight="Bold" FontSize="16" Focusable="False">
                                 <StackPanel>
                                     <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="16" Text="Catch"/>
                                     <TextBlock HorizontalAlignment="Center" FontWeight="Bold" FontSize="12" Text="{Binding CatchNoteNum}"/>
@@ -177,6 +178,7 @@
                                     ToolTip="重新播放"
                                     Click="ReplayButton_Click"
                                     Foreground="CornflowerBlue"
+                                    Focusable="False"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="Replay"/>
                                 </Button>
@@ -188,6 +190,7 @@
                                     Checked="PlayButton_Checked"
                                     Unchecked="PlayButton_Unchecked"
                                     Foreground="CornflowerBlue"
+                                    Focusable="False"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon x:Name="PlayIcon" Kind="Play"/>
                                 </ToggleButton>
@@ -198,6 +201,7 @@
                                     ToolTip="播放速度"
                                     Click="PlaySpeedButton_Click"
                                     Foreground="CornflowerBlue"
+                                    Focusable="False"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="PlaySpeed"/>
                                 </Button>
@@ -216,6 +220,7 @@
                                     Checked="PickerButton_Checked"
                                     Unchecked="PickerButton_Unchecked"
                                     Foreground="Orchid"
+                                    Focusable="False"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="CursorPointer"/>
                                 </ToggleButton>
@@ -226,6 +231,7 @@
                                     ToolTip="删除选中的音符/Ctrl+D/Delete"
                                     Click="DeleteNoteButton_Click"
                                     Foreground="Orchid"
+                                    Focusable="False"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="Delete"/>
                                 </Button>
@@ -236,6 +242,7 @@
                                     ToolTip="复制选中的轨道/Ctrl+C"
                                     Click="CopyButton_Click"
                                     Foreground="Orchid"
+                                    Focusable="False"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="ContentCopy"/>
                                 </Button>
@@ -246,6 +253,7 @@
                                     ToolTip="粘贴已复制的轨道/Ctrl+V"
                                     Click="PasteButton_Click"
                                     Foreground="Orchid"
+                                    Focusable="False"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="ContentPaste"/>
                                 </Button>
@@ -256,18 +264,20 @@
                                     ToolTip="删除选中的轨道"
                                     Click="DeleteTrackButton_Click"
                                     Foreground="Red"
+                                    Focusable="False"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="DeleteForever"/>
                                 </Button>
-                                
+
                                 <Separator/>
-                                
+
                                 <Button
                                     x:Name="SizeButton"
                                     Width="40"
                                     Height="40"
                                     ToolTip="网格尺寸"
                                     Click="SizeButton_Click"
+                                    Focusable="False"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="Resize"/>
                                 </Button>
@@ -277,6 +287,7 @@
                                     Height="40"
                                     ToolTip="分割"
                                     Click="DivideButton_Click"
+                                    Focusable="False"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="Divide"/>
                                 </Button>
@@ -286,6 +297,7 @@
                                     Height="40"
                                     ToolTip="Bpm列表"
                                     Click="BpmManagerButton_Click"
+                                    Focusable="False"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="SpeedometerMedium"/>
                                 </Button>
@@ -295,6 +307,7 @@
                                     Height="40"
                                     ToolTip="音量"
                                     Click="VolumeButton_Click"
+                                    Focusable="False"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="VolumeHigh"/>
                                 </Button>
@@ -304,12 +317,13 @@
                                     Height="40"
                                     ToolTip="谱面信息"
                                     Click="InfomationButton_Click"
+                                    Focusable="False"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="InfoBox"/>
                                 </Button>
 
                                 <Separator/>
-                                
+
                                 <Button
                                     x:Name="SaveButton"
                                     Width="40"
@@ -317,6 +331,7 @@
                                     ToolTip="保存/Ctrl+S"
                                     Click="SaveButton_Click"
                                     Foreground="Brown"
+                                    Focusable="False"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="ContentSave"/>
                                 </Button>
@@ -327,6 +342,7 @@
                                     ToolTip="导出"
                                     Click="ExportButton_Click"
                                     Foreground="Brown"
+                                    Focusable="False"
                                     Style="{StaticResource MaterialDesignIconButton}">
                                     <materialDesign:PackIcon Kind="Export"/>
                                 </Button>

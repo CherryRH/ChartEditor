@@ -21,8 +21,6 @@ namespace ChartEditor.Utils.AudioUtils
 
         private ChartEditModel ChartEditModel;
 
-        private MusicPlayer MusicPlayer;
-
         private List<int> hitSoundPool0 = new List<int>();
 
         private List<int> hitSoundPool1 = new List<int>();
@@ -39,16 +37,18 @@ namespace ChartEditor.Utils.AudioUtils
 
         private ManualResetEvent playEvent = new ManualResetEvent(false);
 
+        private Timer Timer;
+
         List<SkipListNode<BeatTime, Track>> trackNodes = new List<SkipListNode<BeatTime, Track>>();
 
         List<SkipListNode<BeatTime, Note>> noteNodes = new List<SkipListNode<BeatTime, Note>>();
 
         List<SkipListNode<BeatTime, HoldNote>> holdNoteNodes = new List<SkipListNode<BeatTime, HoldNote>>();
 
-        public HitSoundPlayer(ChartEditModel chartEditModel, MusicPlayer musicPlayer)
+        public HitSoundPlayer(ChartEditModel chartEditModel, Timer timer)
         {
             this.ChartEditModel = chartEditModel;
-            this.MusicPlayer = musicPlayer;
+            this.Timer = timer;
             this.volume = chartEditModel.NoteVolume / 100;
             // 初始化所有播放节点
             foreach (var trackList in this.ChartEditModel.TrackSkipLists)
@@ -69,15 +69,12 @@ namespace ChartEditor.Utils.AudioUtils
             // 初始化音频池
             for (int i = 0; i < poolSize; i++)
             {
-                int stream = Bass.CreateStream(Common.HitSoundPaths[0], Flags: BassFlags.Default);
-                if (stream == 0) Console.WriteLine(logTag + "音效加载失败：" + Bass.LastError);
-                hitSoundPool0.Add(stream);
-                stream = Bass.CreateStream(Common.HitSoundPaths[1], Flags: BassFlags.Default);
-                if (stream == 0) Console.WriteLine(logTag + "音效加载失败：" + Bass.LastError);
-                hitSoundPool1.Add(stream);
-                stream = Bass.CreateStream(Common.HitSoundPaths[2], Flags: BassFlags.Default);
-                if (stream == 0) Console.WriteLine(logTag + "音效加载失败：" + Bass.LastError);
-                hitSoundPool2.Add(stream);
+                int stream = this.GetNewStream(0);
+                if (stream != 0) hitSoundPool0.Add(stream);
+                stream = this.GetNewStream(1);
+                if (stream != 0) hitSoundPool1.Add(stream);
+                stream = this.GetNewStream(2);
+                if (stream != 0) hitSoundPool2.Add(stream);
             }
             this.StartPlayLoop();
         }
@@ -89,8 +86,8 @@ namespace ChartEditor.Utils.AudioUtils
                 this.playEvent.WaitOne();
                 if (!this.isPlaying) break;
 
-                // 当前音乐播放时间
-                int currentTime = (int)((this.MusicPlayer.GetMusicTime() - this.ChartEditModel.ChartInfo.Delay) * 1000);
+                // 当前谱面播放时间
+                int currentTime = (int)(this.Timer.GetCurrentTime() * 1000);
                 
                 for (int i = 0; i < this.ChartEditModel.ColumnNum; i++)
                 {
@@ -266,10 +263,32 @@ namespace ChartEditor.Utils.AudioUtils
 
             foreach (int handle in pool)
             {
-                if (Bass.ChannelIsActive(handle) == PlaybackState.Stopped)
+                if (Bass.ChannelIsActive(handle) != PlaybackState.Playing)
                 {
                     return handle;
                 }
+            }
+            // 音效池数量不足，继续补充
+            switch (hitSoundType)
+            {
+                case 0:
+                    {
+                        int stream = this.GetNewStream(0);
+                        hitSoundPool0.Add(stream);
+                        return stream;
+                    }
+                case 1:
+                    {
+                        int stream = this.GetNewStream(1);
+                        hitSoundPool1.Add(stream);
+                        return stream;
+                    }
+                case 2:
+                    {
+                        int stream = this.GetNewStream(2);
+                        hitSoundPool2.Add(stream);
+                        return stream;
+                    }
             }
             return 0;
         }
@@ -278,6 +297,38 @@ namespace ChartEditor.Utils.AudioUtils
         {
             if (volume < 0 || volume > 1) return;
             this.volume = volume;
+        }
+
+        /// <summary>
+        /// 根据打击音种类获取音频流
+        /// </summary>
+        public int GetNewStream(int hitSoundType)
+        {
+            switch (hitSoundType)
+            {
+                case 0:
+                    {
+                        int stream = Bass.CreateStream(Common.HitSoundPaths[0], Flags: BassFlags.Default);
+                        if (stream == 0) { Console.WriteLine(logTag + "音效加载失败：" + Bass.LastError); return 0; }
+                        hitSoundPool0.Add(stream);
+                        return stream;
+                    }
+                case 1:
+                    {
+                        int stream = Bass.CreateStream(Common.HitSoundPaths[1], Flags: BassFlags.Default);
+                        if (stream == 0) { Console.WriteLine(logTag + "音效加载失败：" + Bass.LastError); return 0; }
+                        hitSoundPool1.Add(stream);
+                        return stream;
+                    }
+                case 2:
+                    {
+                        int stream = Bass.CreateStream(Common.HitSoundPaths[2], Flags: BassFlags.Default);
+                        if (stream == 0) { Console.WriteLine(logTag + "音效加载失败：" + Bass.LastError); return 0; }
+                        hitSoundPool2.Add(stream);
+                        return stream;
+                    }
+            }
+            return 0;
         }
 
         public void Dispose()

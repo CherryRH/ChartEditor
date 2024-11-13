@@ -8,10 +8,12 @@ using MaterialDesignThemes.Wpf;
 using NAudio.Wave;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using static ChartEditor.UserControls.Boards.TrackEditBoard;
 
@@ -74,6 +76,11 @@ namespace ChartEditor.Utils.Controllers
         private int movingCurrentColumnIndex = 0;
 
         /// <summary>
+        /// 谱面计时器
+        /// </summary>
+        private Timer timer;
+
+        /// <summary>
         /// 混音器
         /// </summary>
         private AudioMixer audioMixer;
@@ -91,11 +98,6 @@ namespace ChartEditor.Utils.Controllers
         // 播放状态
         private bool isPlaying = false;
         public bool IsPlaying { get { return isPlaying; } }
-
-        /// <summary>
-        /// 获取当前谱面时间
-        /// </summary>
-        public double CurrentChartTime { get { return this.musicPlayer.GetMusicTime() - this.ChartInfo.Delay; } }
 
         /// <summary>
         /// 鼠标控制
@@ -157,12 +159,14 @@ namespace ChartEditor.Utils.Controllers
         {
             try
             {
+                // 初始化计时器
+                this.timer = new Timer(this.ChartEditModel);
                 // 初始化混音器
                 this.audioMixer = new AudioMixer();
                 // 初始化音乐播放器
-                this.musicPlayer = new MusicPlayer(this.ChartEditModel);
+                this.musicPlayer = new MusicPlayer(this.ChartEditModel, this.timer);
                 // 初始化打击音播放器
-                this.hitSoundPlayer = new HitSoundPlayer(this.ChartEditModel, this.musicPlayer);
+                this.hitSoundPlayer = new HitSoundPlayer(this.ChartEditModel, this.timer);
                 // 绘制网格
                 this.DrawTrackGrid();
                 // 绘制时间轴
@@ -197,9 +201,12 @@ namespace ChartEditor.Utils.Controllers
                 {
                     this.TrackEditBoard.PlayButton.IsChecked = false;
                 }
-                // 当前谱面运行时间，为音乐播放时间减去延迟
-                double currentHeight = this.CurrentChartTime * this.ChartEditModel.ScrollSpeed;
-                this.TrackCanvasViewer.ScrollToVerticalOffset(this.ChartEditModel.TotalHeight - currentHeight);
+                else
+                {
+                    // 当前谱面高度
+                    double currentHeight = this.timer.GetCurrentTime() * this.ChartEditModel.ScrollSpeed;
+                    this.TrackCanvasViewer.ScrollToVerticalOffset(this.ChartEditModel.TotalHeight - currentHeight);
+                }
             }
             else
             {
@@ -369,8 +376,8 @@ namespace ChartEditor.Utils.Controllers
                 {
                     double testWidth = this.TrackCanvasViewer.ActualWidth / 20;
                     double testHeight = this.TrackCanvasViewer.ActualHeight / 20;
-                    double maxSpeedY = 1;
-                    double maxSpeedX = 0.5;
+                    double maxSpeedY = 6;
+                    double maxSpeedX = 3;
                     double pointY = mousePoint.Value.Y;
                     double pointX = mousePoint.Value.X;
                     // 当鼠标靠近边界时，向对应方向滚动
@@ -424,6 +431,7 @@ namespace ChartEditor.Utils.Controllers
                                 this.movingStartPoint = mousePosition;
                                 this.movingCurrentBeatTime = note.StartBeatTime;
                                 this.movingStartBeatTime = note.StartBeatTime;
+                                this.movingCurrentColumnIndex = this.ChartEditModel.GetColumnIndexFromPoint(mousePosition);
                                 this.isMovingNote = true;
                                 break;
                             }
@@ -474,9 +482,10 @@ namespace ChartEditor.Utils.Controllers
                     double pointY = mousePosition.Value.Y;
                     double startPointY = this.movingStartPoint.Value.Y;
                     BeatTime mouseBeatTime = this.movingStartBeatTime.CreateByOffsetY(this.ChartEditModel.Divide, this.ChartEditModel.RowWidth, pointY - startPointY);
+                    int columnIndex = this.ChartEditModel.GetColumnIndexFromPoint(mousePosition);
                     if (this.isMovingNote)
                     {
-                        if (!this.movingCurrentBeatTime.IsEqualTo(mouseBeatTime))
+                        if (!this.movingCurrentBeatTime.IsEqualTo(mouseBeatTime) || this.movingCurrentColumnIndex != columnIndex)
                         {
                             if (!this.hasMoved)
                             {
@@ -485,9 +494,10 @@ namespace ChartEditor.Utils.Controllers
                             this.hasMoved = true;
                             Mouse.OverrideCursor = Cursors.SizeAll;
                             this.TrackCanvas.CaptureMouse();
-                            bool result = this.ChartEditModel.TryMovePickedNote(this.movingCurrentBeatTime, mouseBeatTime);
+                            bool result = this.ChartEditModel.TryMovePickedNote(this.movingCurrentBeatTime, mouseBeatTime, this.movingCurrentColumnIndex, columnIndex);
                             if (result)
                             {
+                                this.movingCurrentColumnIndex = columnIndex;
                                 this.movingCurrentBeatTime = mouseBeatTime;
                                 // 重绘Note位置
                                 foreach (Note note in this.ChartEditModel.PickedNotes)
@@ -499,7 +509,6 @@ namespace ChartEditor.Utils.Controllers
                     }
                     else if (this.isMovingTrack)
                     {
-                        int columnIndex = this.ChartEditModel.GetColumnIndexFromPoint(mousePosition);
                         if (!this.movingCurrentBeatTime.IsEqualTo(mouseBeatTime) || this.movingCurrentColumnIndex != columnIndex)
                         {
                             if (!this.hasMoved)
@@ -868,10 +877,16 @@ namespace ChartEditor.Utils.Controllers
         {
             try
             {
+                if (!this.musicPlayer.SetMusic(Math.Max(this.ChartInfo.Delay, double.Epsilon)))
+                {
+                    this.TrackEditBoard.SetMessage("音乐播放异常，再试一次吧", 2, MessageType.Error);
+                    return;
+                }
                 // 重置打击音播放节点
                 this.hitSoundPlayer.ResetPlayNodes();
 
-                if (!this.musicPlayer.ReplayMusic())
+                this.timer.ReStart();
+                if (!this.musicPlayer.PlayMusic())
                 {
                     this.TrackEditBoard.SetMessage("音乐播放异常，再试一次吧", 2, MessageType.Error);
                     return;
@@ -899,15 +914,21 @@ namespace ChartEditor.Utils.Controllers
         {
             try
             {
-                // 搜索打击音播放节点
-                this.hitSoundPlayer.SetPlayNodes();
-
                 if (this.musicPlayer.IsMusicAboutOver(this.ChartEditModel.CurrentTime))
                 {
                     this.ReplayChart();
                     return;
                 }
-                if (!this.musicPlayer.PlayMusic(this.ChartEditModel.CurrentTime))
+                if (!this.musicPlayer.SetMusic(this.ChartEditModel.CurrentTime))
+                {
+                    this.TrackEditBoard.SetMessage("音乐播放异常，再试一次吧", 2, MessageType.Error);
+                    return;
+                }
+                // 搜索打击音播放节点
+                this.hitSoundPlayer.SetPlayNodes();
+
+                this.timer.StartAt(this.ChartEditModel.CurrentTime);
+                if (!this.musicPlayer.PlayMusic())
                 {
                     this.TrackEditBoard.SetMessage("音乐播放异常，再试一次吧", 2, MessageType.Error);
                     return;
@@ -941,6 +962,7 @@ namespace ChartEditor.Utils.Controllers
         /// </summary>
         public void PauseChart()
         {
+            this.timer.Stop();
             this.musicPlayer.PauseMusic();
             this.hitSoundPlayer.PausePlayLoop();
 
@@ -968,21 +990,18 @@ namespace ChartEditor.Utils.Controllers
                                 // 显示轨道
                                 this.noteDrawer.CreateTrack(newTrack);
                                 this.isTrackPutting = false;
-                                // 设置移入移出事件
-                                newTrack.Rectangle.MouseEnter += TrackRectangle_MouseEnter;
-                                newTrack.Rectangle.MouseLeave += TrackRectangle_MouseLeave;
-                                // 设置点击事件
-                                newTrack.Rectangle.MouseDown += TrackRectangle_MouseDown;
+                                this.SetTrackEvent(newTrack);
                             }
                             else if (this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
                             {
-                                this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
+                                this.TrackEditBoard.SetMessage("此处不允许放置Track", 1, MessageType.Warn);
                             }
                         }
                         else
                         {
-                            bool tryResult = this.ChartEditModel.AddTrackHeader(beatTime, columnIndex);
-                            if (tryResult)
+                            // 尝试放置或插入
+                            int tryResult = this.ChartEditModel.AddTrackHeader(beatTime, columnIndex, out Track insertedTrack);
+                            if (tryResult == 1)
                             {
                                 // 轨道头部放置成功，记录位置
                                 this.isTrackPutting = true;
@@ -990,9 +1009,16 @@ namespace ChartEditor.Utils.Controllers
                                 this.trackHeaderPutColumnIndex = columnIndex;
                                 this.noteDrawer.ShowTrackHeaderAt(beatTime, columnIndex);
                             }
-                            else if (this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
+                            else if (tryResult == 2)
                             {
-                                this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
+                                // 插入轨道（从指定位置切断）
+                                Track newTrack = this.ChartEditModel.InsertTrack(insertedTrack, beatTime);
+                                this.noteDrawer.CreateTrack(newTrack);
+                                this.SetTrackEvent(newTrack);
+                            }
+                            else if (tryResult == 0 && this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
+                            {
+                                this.TrackEditBoard.SetMessage("此处不允许放置或插入Track", 1, MessageType.Warn);
                             }
                         }
                         break;
@@ -1004,13 +1030,11 @@ namespace ChartEditor.Utils.Controllers
                         {
                             // 显示Note
                             this.noteDrawer.CreateNote(newTapNote);
-                            newTapNote.Rectangle.MouseEnter += NoteRectangle_MouseEnter;
-                            newTapNote.Rectangle.MouseLeave += NoteRectangle_MouseLeave;
-                            newTapNote.Rectangle.MouseDown += NoteRectangle_MouseDown;
+                            this.SetNoteEvent(newTapNote);
                         }
                         else if (this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
                         {
-                            this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
+                            this.TrackEditBoard.SetMessage("此处不允许放置TapNote", 1, MessageType.Warn);
                         }
                         break;
                     }
@@ -1021,13 +1045,11 @@ namespace ChartEditor.Utils.Controllers
                         {
                             // 显示Note
                             this.noteDrawer.CreateNote(newFlickNote);
-                            newFlickNote.Rectangle.MouseEnter += NoteRectangle_MouseEnter;
-                            newFlickNote.Rectangle.MouseLeave += NoteRectangle_MouseLeave;
-                            newFlickNote.Rectangle.MouseDown += NoteRectangle_MouseDown;
+                            this.SetNoteEvent(newFlickNote);
                         }
                         else if (this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
                         {
-                            this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
+                            this.TrackEditBoard.SetMessage("此处不允许放置FlickNote", 1, MessageType.Warn);
                         }
                         break;
                     }
@@ -1041,13 +1063,11 @@ namespace ChartEditor.Utils.Controllers
                                 this.noteDrawer.HideHoldNoteHeader();
                                 this.noteDrawer.CreateNote(newHoldNote);
                                 this.isHoldNotePutting = false;
-                                newHoldNote.Rectangle.MouseEnter += NoteRectangle_MouseEnter;
-                                newHoldNote.Rectangle.MouseLeave += NoteRectangle_MouseLeave;
-                                newHoldNote.Rectangle.MouseDown += NoteRectangle_MouseDown;
+                                this.SetNoteEvent(newHoldNote);
                             }
                             else if (this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
                             {
-                                this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
+                                this.TrackEditBoard.SetMessage("此处不允许放置HoldNote", 1, MessageType.Warn);
                             }
                         }
                         else
@@ -1063,7 +1083,7 @@ namespace ChartEditor.Utils.Controllers
                             }
                             else if (this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
                             {
-                                this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
+                                this.TrackEditBoard.SetMessage("此处不允许放置HoldNote", 1, MessageType.Warn);
                             }
                         }
                         break;
@@ -1075,17 +1095,33 @@ namespace ChartEditor.Utils.Controllers
                         {
                             // 显示Note
                             this.noteDrawer.CreateNote(newCatchNote);
-                            newCatchNote.Rectangle.MouseEnter += NoteRectangle_MouseEnter;
-                            newCatchNote.Rectangle.MouseLeave += NoteRectangle_MouseLeave;
-                            newCatchNote.Rectangle.MouseDown += NoteRectangle_MouseDown;
+                            this.SetNoteEvent(newCatchNote);
                         }
                         else if (this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
                         {
-                            this.TrackEditBoard.SetMessage("此处不允许放置", 1, MessageType.Warn);
+                            this.TrackEditBoard.SetMessage("此处不允许放置CatchNote", 1, MessageType.Warn);
                         }
                         break;
                     }
             }
+        }
+
+        private void SetTrackEvent(Track track)
+        {
+            if (track == null) return;
+            // 设置移入移出事件
+            track.Rectangle.MouseEnter += TrackRectangle_MouseEnter;
+            track.Rectangle.MouseLeave += TrackRectangle_MouseLeave;
+            // 设置点击事件
+            track.Rectangle.MouseDown += TrackRectangle_MouseDown;
+        }
+
+        private void SetNoteEvent(Note note)
+        {
+            if (note == null) return;
+            note.Rectangle.MouseEnter += NoteRectangle_MouseEnter;
+            note.Rectangle.MouseLeave += NoteRectangle_MouseLeave;
+            note.Rectangle.MouseDown += NoteRectangle_MouseDown;
         }
 
         private void NoteRectangle_MouseDown(object sender, MouseButtonEventArgs e)
