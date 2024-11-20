@@ -4,8 +4,8 @@
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
 # My Resources
-ChartEditor/Resources/ffmpeg/
-ChartEditor/Resources/ffmpeg.zip
+ChartEditor/Resources/
+*.dll
 
 # User-specific files
 *.rsuser

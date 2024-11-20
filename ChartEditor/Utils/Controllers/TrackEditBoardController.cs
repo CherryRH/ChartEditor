@@ -1015,6 +1015,7 @@ namespace ChartEditor.Utils.Controllers
                                 Track newTrack = this.ChartEditModel.InsertTrack(insertedTrack, beatTime);
                                 this.noteDrawer.CreateTrack(newTrack);
                                 this.SetTrackEvent(newTrack);
+                                this.noteDrawer.RedrawTrackWhenTimeChanged(insertedTrack);
                             }
                             else if (tryResult == 0 && this.TrackEditBoard.Settings.TrackOrNotePutWarnEnabled)
                             {

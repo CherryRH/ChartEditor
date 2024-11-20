@@ -1,6 +1,7 @@
 ﻿using ChartEditor.Models;
 using ChartEditor.ViewModels;
 using ManagedBass;
+using ManagedBass.Fx;
 using System;
 using System.Diagnostics;
 

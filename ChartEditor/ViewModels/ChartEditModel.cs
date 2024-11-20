@@ -257,15 +257,21 @@ namespace ChartEditor.ViewModels
         {
             SkipList<BeatTime, Track> trackList = this.trackSkipLists[columnIndex];
             SkipListNode<BeatTime, Track> preNode = trackList.GetPreNode(start);
-            if (preNode != trackList.Head && preNode.Value.EndBeatTime.IsLaterThan(start))
+            if (preNode != trackList.Head && !preNode.Value.EndBeatTime.IsEarlierThan(start))
             {
+                // 不能在HoldNote中间断开
+                var holdNotePreNode = preNode.Value.HoldNoteSkipList.GetPreNode(start);
+                if (holdNotePreNode != preNode.Value.HoldNoteSkipList.Head && !holdNotePreNode.Value.EndBeatTime.IsEarlierThan(start))
+                {
+                    insertedTrack = null;
+                    return 0;
+                }
                 insertedTrack = preNode.Value;
                 return 2;
             }
             else
             {
                 insertedTrack = null;
-                if (preNode != trackList.Head && !start.IsLaterThan(preNode.Value.EndBeatTime)) return 0;
                 SkipListNode<BeatTime, Track> nextNode = preNode.Next[0];
                 if (nextNode != null && !start.IsEarlierThan(nextNode.Value.StartBeatTime)) return 0;
                 return 1;
@@ -277,7 +283,51 @@ namespace ChartEditor.ViewModels
         /// </summary>
         public Track InsertTrack(Track insertedTrack, BeatTime start)
         {
-
+            Track newTrack = new Track(start, insertedTrack.EndBeatTime, insertedTrack.ColumnIndex, this.GetNextTrackId());
+            newTrack.UpdateTime(this.bpmList);
+            var newNoteList = newTrack.NoteSkipList;
+            var newHoldNoteList = newTrack.HoldNoteSkipList;
+            // 搜索Note的节点
+            var noteList = insertedTrack.NoteSkipList;
+            var notePreNode = noteList.GetPreNode(start);
+            var holdNoteList = insertedTrack.HoldNoteSkipList;
+            var holdNotePreNode = holdNoteList.GetPreNode(start);
+            // 确定原Track的结束时间
+            BeatTime newEndBeatTime = start.GetPreDivideBeatTime(this.divide);
+            if (notePreNode != noteList.Head && notePreNode.Value.StartBeatTime.IsLaterThan(newEndBeatTime))
+            {
+                newEndBeatTime = new BeatTime(notePreNode.Value.StartBeatTime);
+            }
+            if (holdNotePreNode != holdNoteList.Head && holdNotePreNode.Value.EndBeatTime.IsLaterThan(newEndBeatTime))
+            {
+                newEndBeatTime = new BeatTime(holdNotePreNode.Value.EndBeatTime);
+            }
+            // 更新原Track的时间
+            insertedTrack.EndBeatTime = newEndBeatTime;
+            insertedTrack.UpdateTime(this.bpmList);
+            // 转移Note
+            var noteNode = notePreNode.Next[0];
+            while (noteNode != null)
+            {
+                var nextNode = noteNode.Next[0];
+                noteList.Delete(noteNode.Key);
+                noteNode.Value.Track = newTrack;
+                newNoteList.Insert(noteNode.Key, noteNode.Value);
+                noteNode = nextNode;
+            }
+            var holdNoteNode = holdNotePreNode.Next[0];
+            while (holdNoteNode != null)
+            {
+                var nextNode = holdNoteNode.Next[0];
+                holdNoteList.Delete(holdNoteNode.Key);
+                holdNoteNode.Value.Track = newTrack;
+                newHoldNoteList.Insert(holdNoteNode.Key, holdNoteNode.Value);
+                holdNoteNode = nextNode;
+            }
+            // 插入新轨道并更新数量
+            this.trackSkipLists[newTrack.ColumnIndex].Insert(newTrack.StartBeatTime, newTrack);
+            this.TrackNum++;
+            return newTrack;
         }
 
         /// <summary>
