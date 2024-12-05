@@ -363,10 +363,11 @@
     <Compile Include="Utils\Common.cs" />
     <Compile Include="Utils\Controllers\TrackEditBoardController.cs" />
     <Compile Include="Utils\Drawers\ColumnLabelDrawer.cs" />
-    <Compile Include="Utils\Drawers\NoteDrawer.cs" />
+    <Compile Include="Utils\Drawers\ChartDrawer.cs" />
     <Compile Include="Utils\Drawers\SelectBoxDrawer.cs" />
     <Compile Include="Utils\Drawers\TimeLineDrawer.cs" />
     <Compile Include="Utils\Drawers\TrackGridDrawer.cs" />
+    <Compile Include="Utils\Drawers\TrackToolDrawer.cs" />
     <Compile Include="Utils\ImageUtil.cs" />
     <Compile Include="Utils\MathUtil.cs" />
     <Compile Include="Utils\AudioUtils\MusicPlayer.cs" />

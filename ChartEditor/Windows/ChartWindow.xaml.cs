@@ -37,6 +37,8 @@ namespace ChartEditor.Windows
 
         private bool isClosingHandled = false;
 
+        private bool isDialogShowing = false;
+
         public ChartWindow(MainWindowModel mainWindowModel, ChartListModel chartListModel, ChartEditModel chartEditModel)
         {
             InitializeComponent();
@@ -53,9 +55,10 @@ namespace ChartEditor.Windows
 
         private async void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (isClosingHandled) return;
+            if (isClosingHandled || isDialogShowing) return;
 
             e.Cancel = true;
+            isDialogShowing = true;
 
             var result = await DialogHost.Show(new ConfirmDialog("确定要保存谱面吗？"), "ChartWindowDialog");
 
@@ -71,6 +74,7 @@ namespace ChartEditor.Windows
             }
 
             isClosingHandled = true;
+            isDialogShowing = false;
             e.Cancel = false;
 
             this.Close();

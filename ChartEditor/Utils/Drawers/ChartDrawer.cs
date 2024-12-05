@@ -10,16 +10,17 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Effects;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 
 namespace ChartEditor.Utils.Drawers
 {
     /// <summary>
-    /// 实现Canvas中Note的绘制
+    /// 实现Canvas中谱面的绘制
     /// Id: 0 - Track, 1 - TapNote, 2 - FlickNote, 3 - HoldNote, 4 - CatchNote
     /// </summary>
-    public class NoteDrawer
+    public class ChartDrawer
     {
         /// <summary>
         /// TrackCanvas对象
@@ -91,7 +92,7 @@ namespace ChartEditor.Utils.Drawers
         // 动画
         private static DoubleAnimation RectangleStrokeAnimation = AnimationProvider.GetRepeatDoubleAnimation(12, 0, 1.5);
 
-        public NoteDrawer(TrackEditBoard trackEditBoard)
+        public ChartDrawer(TrackEditBoard trackEditBoard)
         {
             this.trackCanvas = trackEditBoard.TrackCanvas;
             this.scrollViewer = trackEditBoard.TrackCanvasViewer;
@@ -388,6 +389,15 @@ namespace ChartEditor.Utils.Drawers
         }
 
         /// <summary>
+        /// 移除一个轨道图形，不包括所有音符
+        /// </summary>
+        public void RemoveTrackOnly(Track track)
+        {
+            if (track == null) return;
+            this.trackCanvas.Children.Remove(track.Rectangle);
+        }
+
+        /// <summary>
         /// 在指定位置显示预览图形
         /// </summary>
         public void ShowPreviewerAt(Point? point)
@@ -405,10 +415,9 @@ namespace ChartEditor.Utils.Drawers
             if (!this.trackCanvas.Children.Contains(this.previewers[this.previewerIndex])) this.trackCanvas.Children.Add(this.previewers[this.previewerIndex]);
             // 重置宽度和位置
             this.previewers[this.previewerIndex].Width = this.ChartEditModel.ColumnWidth - (this.previewerIndex == 0 ? Common.TrackPadding : Common.NotePadding) * 2 * this.ChartEditModel.ColumnWidth;
+            this.previewers[this.previewerIndex].Visibility = Visibility.Visible;
             Canvas.SetLeft(this.previewers[this.previewerIndex], columnIndex * this.ChartEditModel.ColumnWidth + (this.previewerIndex == 0 ? Common.TrackPadding : Common.NotePadding) * this.ChartEditModel.ColumnWidth);
             Canvas.SetBottom(this.previewers[this.previewerIndex], newBeatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
-            // 确保在最顶层
-            Canvas.SetZIndex(this.previewers[this.previewerIndex], PreviewerZIndex);
             this.isPreviewerShowing = true;
         }
 
@@ -420,7 +429,7 @@ namespace ChartEditor.Utils.Drawers
         public void HidePreviewer()
         {
             this.ifShowPreviewer = false;
-            if (this.previewerIndex != -1) this.trackCanvas.Children.Remove(this.previewers[this.previewerIndex]);
+            this.HideAllPreviewers();
             this.isPreviewerShowing = false;
         }
 
@@ -435,11 +444,9 @@ namespace ChartEditor.Utils.Drawers
             this.lastTrackHeaderBeatTime = beatTime;
             this.lastTrackHeaderColumnIndex = columnIndex;
             this.trackHeader.Width = this.ChartEditModel.ColumnWidth - 2 * Common.TrackPadding * this.ChartEditModel.ColumnWidth;
-            this.trackCanvas.Children.Add(this.trackHeader);
+            this.trackHeader.Visibility = Visibility.Visible;
             Canvas.SetLeft(this.trackHeader, columnIndex * this.ChartEditModel.ColumnWidth + Common.TrackPadding * this.ChartEditModel.ColumnWidth);
             Canvas.SetBottom(this.trackHeader, beatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
-            // 在次顶层
-            Canvas.SetZIndex(this.trackHeader, HeaderZIndex);
         }
 
         /// <summary>
@@ -448,7 +455,8 @@ namespace ChartEditor.Utils.Drawers
         public void HideTrackHeader()
         {
             this.isTrackHeaderShowing = false;
-            this.trackCanvas.Children.Remove(this.trackHeader);
+            this.trackHeader.Visibility = Visibility.Collapsed;
+            Canvas.SetRight(this.trackHeader, -100);
         }
 
         /// <summary>
@@ -462,11 +470,9 @@ namespace ChartEditor.Utils.Drawers
             this.lastHoldNoteHeaderBeatTime = beatTime;
             this.lastHoldNoteHeaderColumnIndex = columnIndex;
             this.holdNoteHeader.Width = this.ChartEditModel.ColumnWidth - 2 * Common.NotePadding * this.ChartEditModel.ColumnWidth;
-            this.trackCanvas.Children.Add(this.holdNoteHeader);
+            this.holdNoteHeader.Visibility = Visibility.Visible;
             Canvas.SetLeft(this.holdNoteHeader, columnIndex * this.ChartEditModel.ColumnWidth + Common.NotePadding * this.ChartEditModel.ColumnWidth);
             Canvas.SetBottom(this.holdNoteHeader, beatTime.GetJudgeLineOffset(this.ChartEditModel.RowWidth));
-            // 在次顶层
-            Canvas.SetZIndex(this.trackHeader, HeaderZIndex);
         }
 
         /// <summary>
@@ -475,7 +481,8 @@ namespace ChartEditor.Utils.Drawers
         public void HideHoldNoteHeader()
         {
             this.isHoldNoteHeaderShowing = false;
-            this.trackCanvas.Children.Remove(this.holdNoteHeader);
+            this.holdNoteHeader.Visibility = Visibility.Collapsed;
+            Canvas.SetRight(this.holdNoteHeader, -100);
         }
 
         /// <summary>
@@ -483,13 +490,8 @@ namespace ChartEditor.Utils.Drawers
         /// </summary>
         public void SwitchPreviewer(int id)
         {
-            if (id == -1)
-            {
-                this.HideAllPreviewers();
-                return;
-            }
+            this.HideAllPreviewers();
             if (id < 0 || id >= this.previewers.Count || this.previewerIndex == id) return;
-            if (this.previewerIndex != -1) this.trackCanvas.Children.Remove(this.previewers[this.previewerIndex]);
             this.previewerIndex = id;
             this.isPreviewerShowing = false;
         }
@@ -501,14 +503,15 @@ namespace ChartEditor.Utils.Drawers
         {
             foreach (var item in previewers)
             {
-                this.trackCanvas.Children.Remove(item);
+                item.Visibility = Visibility.Collapsed;
+                Canvas.SetRight(item, -100);
             }
         }
 
         /// <summary>
         /// 让一个矩形高光
         /// </summary>
-        public void RectHighLight(Rectangle rectangle)
+        public void HighLightRect(Rectangle rectangle)
         {
             if (rectangle == null) return;
             rectangle.StrokeThickness = HighLightStrokeThickness;
@@ -643,6 +646,14 @@ namespace ChartEditor.Utils.Drawers
                 RadiusY = Radius,
                 Opacity = PreviewerOpacity
             });
+
+            foreach (Rectangle it in this.previewers)
+            {
+                this.trackCanvas.Children.Add(it);
+                Canvas.SetZIndex(it, PreviewerZIndex);
+            }
+            this.HideAllPreviewers();
+
             // 2种开头图形
             this.trackHeader = new Rectangle
             {
@@ -670,6 +681,13 @@ namespace ChartEditor.Utils.Drawers
                 RadiusY = Radius,
                 Opacity = HeaderOpacity
             };
+
+            this.trackCanvas.Children.Add(this.trackHeader);
+            this.trackCanvas.Children.Add(this.holdNoteHeader);
+            Canvas.SetZIndex(this.trackHeader, HeaderZIndex);
+            Canvas.SetZIndex(this.holdNoteHeader, HeaderZIndex);
+            this.HideTrackHeader();
+            this.HideHoldNoteHeader();
         }
     }
 }

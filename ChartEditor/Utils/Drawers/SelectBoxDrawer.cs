@@ -100,7 +100,7 @@ namespace ChartEditor.Utils.Drawers
             this.selectBox.BeginAnimation(Shape.StrokeDashOffsetProperty, null);
             this.selectBox.Width = 0;
             this.selectBox.Height = 0;
-            Canvas.SetLeft(this.selectBox, -100);
+            Canvas.SetRight(this.selectBox, -100);
             this.selectBox.Visibility = Visibility.Collapsed;
         }
 

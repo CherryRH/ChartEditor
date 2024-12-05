@@ -261,6 +261,14 @@ namespace ChartEditor.Utils
 
             return current;
         }
+
+        /// <summary>
+        /// 跳表是否为空
+        /// </summary>
+        public bool IsEmpty()
+        {
+            return this.Count == 0;
+        }
     }
 
     public class SkipListNode<TKey, TValue>

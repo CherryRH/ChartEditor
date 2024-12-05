@@ -88,5 +88,37 @@ namespace ChartEditor.Utils
                 return gradientBrush;
             }
         }
+
+        /// <summary>
+        /// Track上连接工具框渐变颜色
+        /// </summary>
+        public static LinearGradientBrush TrackConnectUpToolGradientBrush
+        {
+            get
+            {
+                LinearGradientBrush gradientBrush = new LinearGradientBrush();
+                gradientBrush.StartPoint = new Point(0.5, 1);
+                gradientBrush.EndPoint = new Point(0.5, 0);
+                gradientBrush.GradientStops.Add(new GradientStop(Colors.Purple, 0));
+                gradientBrush.GradientStops.Add(new GradientStop(Colors.Transparent, 1));
+                return gradientBrush;
+            }
+        }
+
+        /// <summary>
+        /// Track下连接工具框渐变颜色
+        /// </summary>
+        public static LinearGradientBrush TrackConnectDownToolGradientBrush
+        {
+            get
+            {
+                LinearGradientBrush gradientBrush = new LinearGradientBrush();
+                gradientBrush.StartPoint = new Point(0.5, 0);
+                gradientBrush.EndPoint = new Point(0.5, 1);
+                gradientBrush.GradientStops.Add(new GradientStop(Colors.Purple, 0));
+                gradientBrush.GradientStops.Add(new GradientStop(Colors.Transparent, 1));
+                return gradientBrush;
+            }
+        }
     }
 }

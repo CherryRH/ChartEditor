@@ -295,6 +295,35 @@ namespace ChartEditor.Models
         }
 
         /// <summary>
+        /// 与另一个Track连接
+        /// </summary>
+        public void ConnectTrack(Track track)
+        {
+            if (this.columnIndex != track.ColumnIndex || track == null) return;
+            // id取最大
+            if (track.Id > this.id) this.id = track.Id;
+            // 设置新的首尾时间
+            if (track.StartBeatTime.IsEarlierThan(this.startBeatTime)) this.startBeatTime = new BeatTime(track.StartBeatTime);
+            if (track.EndBeatTime.IsLaterThan(this.endBeatTime)) this.endBeatTime = new BeatTime(track.EndBeatTime);
+            // 插入音符
+            var noteNode = track.NoteSkipList.FirstNode;
+            while (noteNode != null) {
+                Note note = noteNode.Value;
+                this.noteSkipList.Insert(note.StartBeatTime, note);
+                note.Track = this;
+                noteNode = noteNode.Next[0];
+            }
+            var holdNoteNode = track.HoldNoteSkipList.FirstNode;
+            while (holdNoteNode != null)
+            {
+                HoldNote holdNote = holdNoteNode.Value;
+                this.holdNoteSkipList.Insert(holdNote.StartBeatTime, holdNote);
+                holdNote.Track = this;
+                holdNoteNode = holdNoteNode.Next[0];
+            }
+        }
+
+        /// <summary>
         /// 打印所有Note列表
         /// </summary>
         public void PrintNoteSkipList()

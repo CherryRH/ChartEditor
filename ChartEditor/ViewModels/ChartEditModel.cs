@@ -504,15 +504,20 @@ namespace ChartEditor.ViewModels
         /// <summary>
         /// 尝试改变Track的起始时间
         /// </summary>
-        public bool TryChangeTrackStartTime(Track track, BeatTime beatTime)
+        public bool TryChangeTrackStartTime(Track track, BeatTime beatTime, out Track preTrack)
         {
+            preTrack = null;
             if (beatTime.IsLaterThan(track.EndBeatTime) || beatTime.Beat < 0) return false;
             if (track.NoteSkipList.FirstNode != null && track.NoteSkipList.FirstNode.Key.IsEarlierThan(beatTime)) return false;
             if (track.HoldNoteSkipList.FirstNode != null && track.HoldNoteSkipList.FirstNode.Key.IsEarlierThan(beatTime)) return false;
             // 不能超过前一个Track的末端
             SkipList<BeatTime, Track> skipList = this.trackSkipLists[track.ColumnIndex];
             SkipListNode<BeatTime, Track> preNode = skipList.GetPreNode(track.StartBeatTime);
-            if (preNode != skipList.Head && !beatTime.IsLaterThan(preNode.Value.EndBeatTime)) return false;
+            if (preNode != skipList.Head && !beatTime.IsLaterThan(preNode.Value.EndBeatTime))
+            {
+                preTrack = preNode.Value;
+                return false;
+            }
             SkipListNode<BeatTime, Track> thisNode = preNode.Next[0];
             if (thisNode.Value != track) return false;
             track.StartBeatTime = beatTime;
@@ -526,8 +531,9 @@ namespace ChartEditor.ViewModels
         /// <summary>
         /// 尝试改变Track的结束时间
         /// </summary>
-        public bool TryChangeTrackEndTime(Track track, BeatTime beatTime)
+        public bool TryChangeTrackEndTime(Track track, BeatTime beatTime, out Track nextTrack)
         {
+            nextTrack = null;
             if (beatTime.IsEarlierThan(track.StartBeatTime) || beatTime.Beat >= this.BeatNum) return false;
             if (track.NoteSkipList.LastNode != track.NoteSkipList.Head && track.NoteSkipList.LastNode.Key.IsLaterThan(beatTime)) return false;
             if (track.HoldNoteSkipList.LastNode != track.HoldNoteSkipList.Head && track.HoldNoteSkipList.LastNode.Value.EndBeatTime.IsLaterThan(beatTime)) return false;
@@ -536,13 +542,110 @@ namespace ChartEditor.ViewModels
             {
                 // 下一个节点
                 SkipListNode<BeatTime, Track> nextNode = node.Next[0];
-                if (nextNode != null && !beatTime.IsEarlierThan(nextNode.Key)) return false;
+                if (nextNode != null && !beatTime.IsEarlierThan(nextNode.Key))
+                {
+                    nextTrack = nextNode.Value;
+                    return false;
+                }
             }
             else return false;
             track.EndBeatTime = beatTime;
             // 更新时间
             track.EndTime = this.bpmList.GetBeatTimeMs(track.EndBeatTime);
             return true;
+        }
+
+        /// <summary>
+        /// 轨道与后一个连接
+        /// </summary>
+        public Track TrackConnectNext(Track track, out Track anotherTrack)
+        {
+            anotherTrack = null;
+            var trackList = this.trackSkipLists[track.ColumnIndex];
+            if (trackList.TryGetNode(track.StartBeatTime, out SkipListNode<BeatTime, Track> node) && node.Value == track)
+            {
+                // 下一个节点
+                SkipListNode<BeatTime, Track> nextNode = node.Next[0];
+                if (nextNode == null) return null;
+
+                Track newTrack;
+                Track nextTrack = nextNode.Value;
+                // 移除旧Track
+                trackList.Delete(track.StartBeatTime);
+                trackList.Delete(nextTrack.StartBeatTime);
+                // 选择音符较少的与较多的连接
+                int trackNoteCount = track.NoteSkipList.Count + track.HoldNoteSkipList.Count;
+                int nextTrackNoteCount = nextTrack.NoteSkipList.Count + nextTrack.HoldNoteSkipList.Count;
+                if (trackNoteCount >= nextTrackNoteCount)
+                {
+                    newTrack = track;
+                    newTrack.ConnectTrack(nextTrack);
+                    anotherTrack = nextTrack;
+                }
+                else
+                {
+                    newTrack = nextTrack;
+                    newTrack.ConnectTrack(track);
+                    anotherTrack = track;
+                }
+                // 更新信息
+                newTrack.UpdateTime(this.bpmList, false);
+                this.TrackNum--;
+                // 重新插入
+                trackList.Insert(newTrack.StartBeatTime, newTrack);
+                return newTrack;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 轨道与前一个连接
+        /// </summary>
+        public Track TrackConnectPre(Track track, out Track anotherTrack)
+        {
+            anotherTrack = null;
+            var trackList = this.trackSkipLists[track.ColumnIndex];
+            var preNode = trackList.GetPreNode(track.StartBeatTime);
+            if (preNode != trackList.Head)
+            {
+                if (track != preNode.Next[0].Value) return null;
+
+                Track newTrack;
+                Track preTrack = preNode.Value;
+                // 移除旧Track
+                trackList.Delete(track.StartBeatTime);
+                trackList.Delete(preTrack.StartBeatTime);
+                // 选择音符较少的与较多的连接
+                int trackNoteCount = track.NoteSkipList.Count + track.HoldNoteSkipList.Count;
+                int preTrackNoteCount = preTrack.NoteSkipList.Count + preTrack.HoldNoteSkipList.Count;
+                if (trackNoteCount >= preTrackNoteCount)
+                {
+                    newTrack = track;
+                    newTrack.ConnectTrack(preTrack);
+                    anotherTrack = preTrack;
+                }
+                else
+                {
+                    newTrack = preTrack;
+                    newTrack.ConnectTrack(track);
+                    anotherTrack = track;
+                }
+                // 更新信息
+                newTrack.UpdateTime(this.bpmList, false);
+                this.TrackNum--;
+                // 重新插入
+                trackList.Insert(newTrack.StartBeatTime, newTrack);
+                return newTrack;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 轨道与前一个连接
+        /// </summary>
+        public void TrackConnectPre()
+        {
+
         }
 
         /// <summary>
@@ -689,7 +792,7 @@ namespace ChartEditor.ViewModels
         /// <summary>
         /// 尝试移动选中的Track
         /// </summary>
-        public bool TryMovePickedTrack (BeatTime beatTime, int columnIndex)
+        public bool TryMovePickedTrack(BeatTime beatTime, int columnIndex)
         {
             // 拍数差值
             BeatTime diffBeatTime = beatTime.Difference(this.pickedTrack.StartBeatTime);
