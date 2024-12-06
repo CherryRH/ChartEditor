@@ -447,7 +447,7 @@ namespace ChartEditor.UserControls.Boards
             else if (e.Key == Key.D0)
             {
                 // 测试按键
-                //this.TrackEditBoardController.TestKeyDown();
+                this.TrackEditBoardController.TestKeyDown();
             }
         }
 

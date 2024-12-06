@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Closing="Window_Closing"
         Closed="Window_Closed"
-        Title="谱面编辑" Height="800" Width="1200" MinHeight="800" MinWidth="1200">
+        Title="谱面编辑" Height="900" Width="1600" MinHeight="900" MinWidth="1600">
     <materialDesign:DialogHost
         Identifier="ChartWindowDialog"
         CloseOnClickAway="False">

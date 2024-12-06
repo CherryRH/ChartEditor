@@ -209,7 +209,8 @@ namespace ChartEditor.Utils.Controllers
                 else
                 {
                     // 当前谱面高度
-                    double currentHeight = this.timer.GetCurrentTime() * this.ChartEditModel.ScrollSpeed;
+                    double currentTime = this.timer.GetCurrentTime();
+                    double currentHeight = currentTime * this.ChartEditModel.ScrollSpeed;
                     this.TrackCanvasViewer.ScrollToVerticalOffset(this.ChartEditModel.TotalHeight - currentHeight);
                 }
             }
@@ -289,7 +290,8 @@ namespace ChartEditor.Utils.Controllers
         /// </summary>
         public void TestKeyDown()
         {
-            this.hitSoundPlayer.PlayHitSound(0);
+            //this.hitSoundPlayer.PlayHitSound(0);
+            this.SmoothScrollToOffset(this.TrackEditBoard.TrackCanvasViewer, 0);
         }
 
         /// <summary>

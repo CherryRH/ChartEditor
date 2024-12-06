@@ -230,6 +230,8 @@ namespace ChartEditor.Models
         /// </summary>
         public HoldNote AddHoldNoteFooter(BeatTime startTime, BeatTime endTime, int id)
         {
+            // 不能超过结尾
+            if (endTime.IsLaterThan(this.endBeatTime)) return null;
             // 不能与其他HoldNote重叠
             SkipListNode<BeatTime, HoldNote> preNode = this.holdNoteSkipList.GetPreNode(startTime);
             SkipListNode<BeatTime, HoldNote> nextNode = preNode.Next[0];
